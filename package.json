@@ -1,0 +1,15 @@
+{
+  "name": "/app",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "start": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys index.ts"
+  }
+}
