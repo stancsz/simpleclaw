@@ -1,5 +1,6 @@
 import { handleWhatsAppWebhook } from "./webhooks/whatsapp.ts";
 import { handleMessengerWebhook } from "./webhooks/messenger.ts";
+import { handleDiscordWebhook } from "./webhooks/discord.ts";
 import { enforceSecurityLocks } from "./security/triple_lock.ts";
 import { config as agentBrainConfig } from "./config/agent_brain.ts";
 
@@ -24,6 +25,10 @@ const server = Bun.serve({
 
     if (url.pathname === "/messenger") {
       return handleMessengerWebhook(req);
+    }
+
+    if (url.pathname === "/discord") {
+      return handleDiscordWebhook(req);
     }
 
     return new Response(JSON.stringify({ error: "Not Found" }), {

@@ -1,4 +1,4 @@
-import { executeNativeTool } from "../core/bau.ts";
+import { executeNativeTool } from "../core/executor.ts";
 import { haikuIpiSanitizer } from "../security/triple_lock.ts";
 
 export async function handleWhatsAppWebhook(req: Request): Promise<Response> {

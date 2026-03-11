@@ -1,4 +1,5 @@
 import { $ } from "bun";
+import { extensionRegistry } from "./extensions.ts";
 
 // Mock legacy bridge for fallback
 const legacyBridge = {
@@ -20,6 +21,15 @@ export async function executeNativeTool(toolName: string, args: any) {
     git: async (m: string) => await $`git commit -m ${m}`.text(),
   };
 
-  return (handlers[toolName] ? await handlers[toolName](args.path || args.cmd || args.msg) : null)
-         || legacyBridge.dispatch(toolName, args);
+  if (handlers[toolName]) {
+    return await handlers[toolName](args.path || args.cmd || args.msg);
+  }
+
+  // Check if an extension can handle this tool
+  if (extensionRegistry.has(toolName)) {
+    return await extensionRegistry.execute(toolName, args);
+  }
+
+  // Fallback to legacy bridge if no core handler or extension exists
+  return legacyBridge.dispatch(toolName, args);
 }

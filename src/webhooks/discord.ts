@@ -1,7 +1,7 @@
 import { executeNativeTool } from "../core/executor.ts";
 import { haikuIpiSanitizer } from "../security/triple_lock.ts";
 
-export async function handleMessengerWebhook(req: Request): Promise<Response> {
+export async function handleDiscordWebhook(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
   }
@@ -11,10 +11,10 @@ export async function handleMessengerWebhook(req: Request): Promise<Response> {
 
     // Guardian Lock implementation
     const payload = haikuIpiSanitizer(rawPayload);
-    console.log("Received Messenger payload:", payload);
+    console.log("Received Discord payload:", payload);
 
     // Call the native agent BAU to process the message logic
-    const result = await executeNativeTool("shell", { cmd: "echo" }); // Changed to just echo
+    const result = await executeNativeTool("shell", { cmd: ["echo", "discord"] }); // Changed to just echo
     console.log("Agent result:", result);
 
     return new Response(JSON.stringify({ status: "ok", processed: true }), {
@@ -22,7 +22,7 @@ export async function handleMessengerWebhook(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" }
     });
   } catch (error) {
-    console.error("Messenger webhook error:", error);
+    console.error("Discord webhook error:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }
