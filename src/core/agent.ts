@@ -66,6 +66,21 @@ export async function runAgentLoop(userMessage: string, options: AgentOptions = 
     {
       type: "function",
       function: {
+        name: "write",
+        description: "Write content to a file on disk",
+        parameters: {
+          type: "object",
+          properties: { 
+            path: { type: "string", description: "Path to the file" },
+            content: { type: "string", description: "Content to write" }
+          },
+          required: ["path", "content"],
+        },
+      },
+    },
+    {
+      type: "function",
+      function: {
         name: "browser",
         description: "Interact with the web browser",
         parameters: {
@@ -99,10 +114,11 @@ export async function runAgentLoop(userMessage: string, options: AgentOptions = 
       
       **Operational Protocol**:
       1. **Check History**: Always scan the provided conversation history for context, previous answers, or user preferences before taking any other action.
-      2. **Bias for Action**: Your goal is to EXECUTING. If a request is clear enough based on the history or current message, START. Do not ask for confirmation.
+      2. **Bias for Action & Self-Healing**: Your goal is to EXECUTING. If a request is clear, START. If a tool fails, do not give up—find a workaround or write a script to fix it.
       3. **Assume & Execute**: Make reasonable assumptions for missing details. If you need more info later, you can mention it in your final report.
       4. **Tool First for Data**: If a task involves real-world data (flights, weather, search), use the 'browser' tool immediately.
-      5. **Conciseness**: Keep your conversational output minimal. Your primary value is the result of your tool use.
+      5. **Extreme Autonomy (Core Directive)**: You have 'read', 'write', and 'shell' tools. If our built-in tools (like 'browser') fail, you are expected to write your own custom scripts (JS/TS or Shell) to disk and execute them to get the required data. Never say "I can't fix it"—create a solution.
+      6. **Conciseness**: Keep your conversational output minimal. Your primary value is the result of your tool use.
       
       ${memoryContext}
       ${skillsContext}` 
