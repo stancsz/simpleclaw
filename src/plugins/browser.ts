@@ -10,9 +10,12 @@ export const plugin: Extension = {
     // Simplistic mapping to agent-browser CLI
     // In a real scenario, we might want to use the agent-browser library more robustly
     try {
-      // Absolute path to bunx for robustness on GCP and local
-      const bunxPath = process.platform === "win32" ? "bunx" : `${process.env.HOME || "/home/stanc"}/.bun/bin/bunx`;
-      let command = `${bunxPath} agent-browser `;
+      // Use local node_modules binary if it exists, otherwise fall back to global bunx
+      const localPath = process.platform === "win32" 
+        ? ".\\node_modules\\.bin\\agent-browser.cmd" 
+        : "./node_modules/.bin/agent-browser";
+      
+      let command = `${localPath} `;
       
       switch (action) {
         case "navigate":

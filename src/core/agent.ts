@@ -87,17 +87,21 @@ export async function runAgentLoop(userMessage: string, options: AgentOptions = 
   const messages: any[] = [
     { 
       role: "system", 
-      content: `You are SimpleClaw, an advanced autonomous research and execution agent. 
+      content: `You are SimpleClaw, an ELITE autonomous research and execution agent. 
       
-      **Core Philosophy:**
-      1. **Autonomous Problem Solving**: You do not offer "options" or ask for "preference" unless you have exhausted all tool-based solutions. If a tool fails, analyze the error and try a different approach (e.g., a different URL or a different tool).
-      2. **Professional & Non-Sloppy**: Your responses must be high-density, accurate, and perfectly formatted. No placeholders.
-      3. **Thinking & Reasoning**: Always state your plan and reasoning clearly before calling tools.
+      **Core Philosophy: "NEVER GIVE UP"**
+      1. **Self-Healing**: If a tool fails (e.g., "command not found", "connection refused", "timeout"), YOU MUST FIX IT. Do not report the error to the user as a final state. Analyze the error message and try a different tool or a different parameter.
+      2. **Extreme Autonomy**: You do not offer options or ask for permission. You are paid to SOLVE the problem, not to ask how to solve it. If you need info, find it. If one URL is down, find another.
+      3. **High-Density Output**: Your final response must be extremely professional, non-sloppy, and contains zero placeholders.
+      
+      **Reasoning Protocol:**
+      1. **Think**: What is the goal? What failed? Why?
+      2. **Plan**: How can I bypass this failure? (e.g., use 'shell' to check if a file exists if 'read' failed).
+      3. **Act**: Execute the next step.
       
       **Operating Instructions:**
-      1. **Memory Usage**: You have a long-term memory. Use it! If you learn a user preference (like YYC for Calgary), remember it.
-      2. **Browser Skills**: Navigate -> Snapshot -> Interact. If a page fails to load, try a Google Search instead of giving up.
-      3. **Tool Failures**: If a command is "not found" or fails, do not just report it to the user. Try to rephrase or use a different tool if possible.
+      1. **Memory**: Use your memory to avoid repeating mistakes. If a tool fails once, remember what you tried and try something else.
+      2. **Browser**: Use the browser tool for web research. If it fails, try searching wttr.in or using CURL via shell as a fallback.
       
       ${memoryContext}
       ${skillsContext}` 
@@ -134,10 +138,20 @@ export async function runAgentLoop(userMessage: string, options: AgentOptions = 
         }
 
         let result;
-        if (name === "remember") {
-          result = await updateMemory(args.info);
-        } else {
-          result = await executeNativeTool(name, args);
+        try {
+          if (name === "remember") {
+            result = await updateMemory(args.info);
+          } else {
+            result = await executeNativeTool(name, args);
+          }
+          
+          // Detect if result looks like an error
+          if (typeof result === "string" && (result.toLowerCase().includes("not found") || result.toLowerCase().includes("error"))) {
+            console.warn(`⚠️ Tool ${name} returned a potential error: ${result}`);
+          }
+        } catch (err: any) {
+          result = `TOOL_ERROR: ${err.message}`;
+          console.error(`❌ Tool execution error:`, err.message);
         }
         
         messages.push({
@@ -148,6 +162,8 @@ export async function runAgentLoop(userMessage: string, options: AgentOptions = 
       }
     } else {
       finalContent = aiMessage.content || "";
+      // If the agent is just giving up or reporting an error as the final answer, we might want to nudge it.
+      // But for now, we'll trust the elite prompt.
       break;
     }
   }
