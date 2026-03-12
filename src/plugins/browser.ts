@@ -10,13 +10,22 @@ export const plugin: Extension = {
     // Simplistic mapping to agent-browser CLI
     // In a real scenario, we might want to use the agent-browser library more robustly
     try {
-      // Use local node_modules binary if it exists, otherwise fall back to global bunx
-      const localPath = process.platform === "win32" 
+      const bunPath = process.platform === "win32" ? "bun" : `${process.env.HOME || "/home/stanc"}/.bun/bin/bun`;
+      const localBin = process.platform === "win32" 
         ? ".\\node_modules\\.bin\\agent-browser.cmd" 
         : "./node_modules/.bin/agent-browser";
+
+      let command: string;
       
-      let command = `${localPath} `;
-      
+      // Multi-stage execution strategy
+      if (process.platform === "win32") {
+        command = `bunx agent-browser `;
+      } else {
+        // On Linux/GCP, we try to run it via bun directly to avoid shebang 'node' issues
+        // We assume the real entry point is in node_modules/agent-browser/bin/agent-browser.js
+        command = `${bunPath} run ./node_modules/agent-browser/bin/agent-browser.js `;
+      }
+
       switch (action) {
         case "navigate":
           command += `navigate "${url}"`;
@@ -34,7 +43,7 @@ export const plugin: Extension = {
           command += `screenshot`;
           break;
         case "wait":
-          command += `snapshot`; // Fallback
+          command += `snapshot`; 
           break;
         default:
           return `Unknown browser action: ${action}`;
@@ -42,17 +51,24 @@ export const plugin: Extension = {
 
       console.log(`🌐 Browser Skill: Executing "${command}"`);
       
-      // Merge PATH to ensure bun and bunx are found
       const env = { 
         ...process.env,
         PATH: `${process.env.HOME || "/home/stanc"}/.bun/bin:${process.env.PATH}`
       };
 
-      const output = execSync(command, { env }).toString();
-      return output;
+      try {
+        const output = execSync(command, { env, timeout: 60000 }).toString();
+        return output;
+      } catch (innerError: any) {
+        // Fallback to simple bunx if the direct path failed
+        console.warn(`⚠️ First browser attempt failed, trying fallback...`);
+        const fallbackCommand = `bunx agent-browser ${command.split('agent-browser.js ')[1]}`;
+        const output = execSync(fallbackCommand, { env, timeout: 60000 }).toString();
+        return output;
+      }
     } catch (error: any) {
       console.error(`❌ Browser Error:`, error.message);
-      return `Browser error: ${error.message}`;
+      return `TOOL_ERROR: Browser failed. Error: ${error.message}. TIP: If this was a search, try searching wttr.in or using a different URL.`;
     }
   },
 };
