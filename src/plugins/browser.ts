@@ -10,7 +10,7 @@ export const plugin: Extension = {
     // Simplistic mapping to agent-browser CLI
     // In a real scenario, we might want to use the agent-browser library more robustly
     try {
-      let command = "npx agent-browser ";
+      let command = "bunx agent-browser ";
       switch (action) {
         case "navigate":
           command += `navigate ${url}`;
