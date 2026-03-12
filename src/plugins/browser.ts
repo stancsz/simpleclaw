@@ -10,7 +10,10 @@ export const plugin: Extension = {
     // Simplistic mapping to agent-browser CLI
     // In a real scenario, we might want to use the agent-browser library more robustly
     try {
-      let command = "bunx agent-browser ";
+      // Absolute path to bunx for robustness on GCP and local
+      const bunxPath = process.platform === "win32" ? "bunx" : `${process.env.HOME || "/home/stanc"}/.bun/bin/bunx`;
+      let command = `${bunxPath} agent-browser `;
+      
       switch (action) {
         case "navigate":
           command += `navigate "${url}"`;
@@ -28,19 +31,21 @@ export const plugin: Extension = {
           command += `screenshot`;
           break;
         case "wait":
-          // If agent-browser doesn't have a direct 'wait', we can just use a sleep or a snapshot delay
-          command += `snapshot`; // Fallback to snapshot which usually waits for load
+          command += `snapshot`; // Fallback
           break;
         default:
           return `Unknown browser action: ${action}`;
       }
 
       console.log(`🌐 Browser Skill: Executing "${command}"`);
-      const output = execSync(command, { 
-        env: { 
-          ...process.env
-        } 
-      }).toString();
+      
+      // Merge PATH to ensure bun and bunx are found
+      const env = { 
+        ...process.env,
+        PATH: `${process.env.HOME || "/home/stanc"}/.bun/bin:${process.env.PATH}`
+      };
+
+      const output = execSync(command, { env }).toString();
       return output;
     } catch (error: any) {
       console.error(`❌ Browser Error:`, error.message);
