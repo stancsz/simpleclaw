@@ -4,6 +4,7 @@ export interface Extension {
   name: string;
   type: ExtensionType;
   route?: string; // Only for webhook type
+  start?: () => Promise<void>;
   execute: (args: any) => Promise<any> | any;
 }
 
