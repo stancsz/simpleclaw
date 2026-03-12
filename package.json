@@ -12,5 +12,10 @@
   },
   "scripts": {
     "start": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "openai": "^6.27.0"
   }
 }

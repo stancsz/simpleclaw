@@ -1,6 +1,6 @@
-// Lock 3 (Guardian): Mock Haiku 4.5 IPI Sanitizer
-export const haikuIpiSanitizer = (data: any) => {
-  // Pass all external grounded data through the Haiku 4.5 IPI Sanitizer before ingestion
+// Lock 3 (Guardian): Mock AI-powered IPI Sanitizer
+export const aiIpiSanitizer = (data: any) => {
+  // Pass all external grounded data through the IPI Sanitizer before ingestion
   return data;
 };
 

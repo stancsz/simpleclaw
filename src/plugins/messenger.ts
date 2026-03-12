@@ -1,5 +1,5 @@
 import { executeNativeTool } from "../core/executor.ts";
-import { haikuIpiSanitizer } from "../security/triple_lock.ts";
+import { aiIpiSanitizer } from "../security/triple_lock.ts";
 import type { Extension } from "../core/extensions.ts";
 
 export const plugin: Extension = {
@@ -17,7 +17,7 @@ export const plugin: Extension = {
       const rawPayload = await req.json();
 
       // Guardian Lock implementation
-      const payload = haikuIpiSanitizer(rawPayload);
+      const payload = aiIpiSanitizer(rawPayload);
       console.log("Received Messenger payload:", payload);
 
       // Call the native agent BAU to process the message logic

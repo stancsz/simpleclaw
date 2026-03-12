@@ -1,17 +1,32 @@
 import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { extensionRegistry } from "./extensions.ts";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+import { pathToFileURL } from "node:url";
+
 export async function loadPlugins() {
-  const pluginsDir = join(import.meta.dir, "../plugins");
+  const pluginsDir = join(__dirname, "../plugins");
 
   try {
     const files = await readdir(pluginsDir);
 
     for (const file of files) {
       if (file.endsWith(".ts") || file.endsWith(".js")) {
+        const pluginBaseName = file.replace(/\.(ts|js)$/, "");
+        const envVarName = `ENABLE_${pluginBaseName.toUpperCase()}`;
+        
+        if (process.env[envVarName] !== "true") {
+          console.log(`Skipping plugin ${file} (Disabled via ${envVarName})`);
+          continue;
+        }
+
         console.log(`Loading plugin: ${file}`);
-        const module = await import(join(pluginsDir, file));
+        const pluginPath = pathToFileURL(join(pluginsDir, file)).href;
+        const module = await import(pluginPath);
 
         if (module.plugin) {
           extensionRegistry.register(module.plugin);

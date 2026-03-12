@@ -1,4 +1,5 @@
-import { $ } from "bun";
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { extensionRegistry } from "./extensions.ts";
 
 // Mock legacy bridge for fallback
@@ -12,9 +13,9 @@ export async function executeNativeTool(toolName: string, args: any) {
   if (/rm -rf|mkfs|dd|sudo/i.test(JSON.stringify(args))) return "DENIED";
 
   const handlers: any = {
-    read: (p: string) => Bun.file(p).text(),
-    shell: (c: string) => $`${c}`.text(),
-    git: (m: string) => $`git commit -m ${m}`.text(),
+    read: (p: string) => readFileSync(p, "utf-8"),
+    shell: (c: string) => execSync(c).toString(),
+    git: (m: string) => execSync(`git commit -m "${m}"`).toString(),
   };
 
   return (
