@@ -87,6 +87,10 @@ Deploying to low-resource instances (like `e2-micro`) requires specific handling
 *   **Challenge**: Bot logs in but doesn't "see" or respond to messages.
 *   **Requirement**: You MUST enable **"Message Content Intent"** in the [Discord Developer Portal](https://discord.com/developers/applications) under the "Bot" tab. Without this, the bot is deaf.
 
+#### 8. Child Process Environment
+*   **Challenge**: Even if the main process starts correctly via `nohup`, child processes spawned via `execSync` (e.g., in plugins) might not inherit the necessary PATH for `bunx` or other binaries.
+*   **Solution**: Explicitly inject the Bun bin path into the `env` options of the `exec` call within your plugin code.
+
 ### 🚀 Recommended Headless Start
 For a backgrounded "always-on" free tier bot:
 ```bash
