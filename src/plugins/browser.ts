@@ -11,7 +11,7 @@ export const plugin: Extension = {
     // In a real scenario, we might want to use the agent-browser library more robustly
     try {
       let command: string;
-      const binPath = "/app/node_modules/.bin/agent-browser";
+      const binPath = "./node_modules/.bin/agent-browser";
       const winBinPath = ".\\node_modules\\.bin\\agent-browser.cmd";
       
       if (process.platform === "win32") {
@@ -54,7 +54,7 @@ export const plugin: Extension = {
       
       try {
         const output = execSync(command, { 
-          cwd: process.platform === "win32" ? process.cwd() : "/app",
+          cwd: process.cwd(),
           timeout: 60000,
           env: { 
             ...process.env, 
