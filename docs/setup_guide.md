@@ -56,25 +56,42 @@ The Terraform script automatically installs Docker and sets up a **2GB Swap file
     ```
     Ensure `OPENAI_API_KEY` is set and `ENABLE_BROWSER=true`.
 
-## Phase 3: Launching the Application
+## Phase 3: Launching the Application (Production Flow)
 
-We use Docker Compose to run both the management server and the bot worker.
+Building Docker images directly on a 1GB RAM `e2-micro` instance is discouraged as it often leads to OOM (Out Of Memory) hangs. Instead, follow the **Build-Push-Pull** flow:
 
-1.  **Start Containers**:
+1.  **Configure GCR Locally**:
     ```bash
-    docker-compose up -d --build
+    gcloud auth configure-docker --quiet
     ```
 
-2.  **Verify**:
-    - Access the management UI at `http://[INSTANCE_IP]:3000`.
-    - Check logs: `docker-compose logs -f`.
+2.  **Build and Tag Locally**:
+    ```bash
+    docker build -t gcr.io/[PROJECT_ID]/simpleclaw-bot:latest .
+    docker push gcr.io/[PROJECT_ID]/simpleclaw-bot:latest
+    ```
 
-## Phase 4: Testing the Agent
+3.  **Deploy on Server**:
+    SSH into the VM and run:
+    ```bash
+    cd simpleclaw
+    sudo docker-compose pull
+    sudo docker-compose up -d
+    ```
 
-Once running, you can test the Agentic Browser capabilities:
-- **CLI**: Use `npx tsx cli/index.ts` (locally or on server) to chat with the agent.
-- **Tools**: Try asking *"Go to news.ycombinator.com and tell me the top story."*
+### 🛠️ Low-RAM Deployment (Learnings)
+
+1.  **Native Bun Fallback**: If Docker is too heavy for your specific instance, run the worker natively using Bun. This uses ~150MB of RAM compared to ~1.2GB for a full Docker build/run cycle.
+    ```bash
+    nohup ~/.bun/bin/bun run src/index.ts > worker.log 2>&1 &
+    ```
+2.  **Anti-Bot Bypass**: If sites like Google block the bot, the Browser skill is optimized to:
+    -   Rotate User-Agents randomly.
+    -   Use direct navigation URLs (e.g., Google Flights search params) to skip CAPTCHA-heavy landing pages.
+3.  **Discord Context**: The bot now automatically reads the last 10 messages in a channel, allowing it to maintain context (flight dates, user preferences) without asking redundant questions.
+4.  **Local Dev Speed**: In local development, `docker-compose.yml` mounts the `./src` folder. You can apply code changes instantly using `docker-compose restart bot-worker` without a rebuild.
 
 ---
 > [!TIP]
-> If you encounter "Out of Memory" errors despite the swap, consider upgrading to an `e2-small` instance.
+> Always run `sudo docker system prune -af` on the server periodically to reclaim disk space from old build layers.
+

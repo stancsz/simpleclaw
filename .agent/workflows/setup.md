@@ -113,11 +113,40 @@ Deploying to low-resource instances (like `e2-micro`) requires specific handling
 *   **Challenge**: Even if the main process starts correctly via `nohup`, child processes spawned via `execSync` (e.g., in plugins) might not inherit the necessary PATH for `bunx` or other binaries.
 *   **Solution**: Explicitly inject the Bun bin path into the `env` options of the `exec` call within your plugin code.
 
+#### 9. Remote Docker Deployment (GCR/DockerHub)
+*   **Challenge**: Building Docker images on `e2-micro` (1GB RAM) will almost always freeze the VM or OOM.
+*   **Solution**: **Build Locally, Push to Registry**.
+    1.  Tag and push locally: `docker tag simpleclaw-bot:deploy gcr.io/YOUR_PROJECT/simpleclaw-bot:latest`
+    2.  Push: `docker push gcr.io/YOUR_PROJECT/simpleclaw-bot:latest`
+    3.  Pull on VM: `sudo docker-compose pull && sudo docker-compose up -d`
+*   **Credential Tip**: If using `sudo docker-compose`, you must run `sudo gcloud auth configure-docker` so the root user has the registry keys.
+
+#### 10. Disk Space Management
+*   **Challenge**: 10GB-30GB root disks fill up quickly with Docker layers and logs.
+*   **Solution**: Run `sudo docker system prune -af` regularly to clear build caches and dangling images.
+*   **Solution**: Use a strict `.dockerignore` (exclude `.git`, `node_modules`, `terraform`, `docs`) to keep the build context small.
+
 ### 🚀 Recommended Headless Start
-For a backgrounded "always-on" free tier bot:
+
+#### Option A: Docker (Stable Context)
+```bash
+sudo docker-compose pull && sudo docker-compose up -d
+```
+
+#### Option B: Native Bun (Lowest RAM)
 ```bash
 # Run Worker (using absolute paths for reliability in nohup)
 nohup /home/$USER/.bun/bin/bun run /home/$USER/simpleclaw/src/index.ts > /home/$USER/simpleclaw/worker.log 2>&1 &
+```
+
+#### Option C: PM2 (Self-Recoverable & Recommended)
+PM2 provides auto-restart if the bot crashes.
+```bash
+npm install -g pm2
+pm2 start "/home/$USER/.bun/bin/bun run /home/$USER/simpleclaw/src/index.ts" --name "simpleclaw-bot"
+pm2 save
+pm2 startup
+```
 
 # Run Dashboard
 cd server && nohup /home/$USER/.bun/bin/bun run dev -- -p 3000 > server.log 2>&1 &

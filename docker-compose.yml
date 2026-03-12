@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   bot-worker:
-    build: .
+    image: gcr.io/simpleclaw-490004/simpleclaw-bot:latest
     container_name: simpleclaw-bot
     restart: unless-stopped
     # Using host network mode allows the agent to reach the internet 
