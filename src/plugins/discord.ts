@@ -51,14 +51,22 @@ const openai = new OpenAI({
 import { executeNativeTool } from "../core/executor.ts";
 
 client.on("messageCreate", async (message) => {
+  const guildId = (process.env.DISCORD_GUILD_ID || "").trim();
+  const channelId = (process.env.DISCORD_CHANNEL_ID || "").trim();
+
+  console.log(`📡 Raw Message Detected: "${message.content}" from ${message.author.tag} in channel ${message.channelId}`);
+  
   if (message.author.bot) return;
 
   const isMentioned = client.user && message.mentions.has(client.user);
-  const isDirectChannel = message.channelId === process.env.DISCORD_CHANNEL_ID;
+  const isDirectChannel = message.channelId === channelId;
 
-  console.log(`📩 [${(message.channel as any).name || message.channelId}] ${message.author.tag}: "${message.content}" (Mentioned: ${!!isMentioned}, Direct: ${isDirectChannel})`);
+  console.log(`🔍 Check: Mentioned=${!!isMentioned}, DirectChannel=${isDirectChannel} (Target: ${channelId})`);
 
-  if (!isMentioned && !isDirectChannel) return;
+  if (!isMentioned && !isDirectChannel) {
+    console.log(`⏭️ Skipping message: Not mentioned and not in target channel.`);
+    return;
+  }
 
   // Guardian Lock implementation
   const sanitizedContent = aiIpiSanitizer(message.content);
@@ -125,17 +133,22 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// Auto-login if token is present
-if (process.env.DISCORD_BOT_TOKEN) {
-  client.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
-    console.error("Failed to login to Discord:", err.message);
-  });
-}
+// Removed side-effect login to prevent ghost instances
+export const startBot = async () => {
+  if (process.env.DISCORD_BOT_TOKEN) {
+    try {
+      await client.login(process.env.DISCORD_BOT_TOKEN);
+    } catch (err: any) {
+      console.error("Failed to login to Discord:", err.message);
+    }
+  }
+};
 
 export const plugin: Extension = {
   name: "discord",
   type: "webhook", // Kept as webhook type to maintain registry compatibility
   route: "/discord",
+  start: startBot, // Add start capability
   execute: async (req: Request): Promise<Response> => {
     // This allows manual triggering via webhook if needed
     return new Response(JSON.stringify({ 

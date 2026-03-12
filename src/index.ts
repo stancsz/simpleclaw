@@ -12,7 +12,7 @@ await loadPlugins();
 
 import { createServer } from "node:http";
 
-const port = 3015;
+const port = 3018;
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://localhost:${port}`);
 
@@ -56,13 +56,22 @@ const server = createServer(async (req, res) => {
 
 server.on("error", (err: any) => {
   if (err.code === "EADDRINUSE") {
-    console.error(`❌ Port ${port} is already in use. Exiting to prevent dangling processes.`);
+    console.error(`❌ Port ${port} is already in use. Exiting to prevent ghost processes.`);
     process.exit(1);
   } else {
     console.error("❌ Server error:", err);
   }
 });
 
-server.listen(port, () => {
-  console.log(`Listening on http://localhost:${port}`);
+server.listen(port, async () => {
+  console.log(`🚀 SimpleClaw Server listening on http://localhost:${port}`);
+  
+  // Start active plugins only AFTER server is up
+  const activePlugins = extensionRegistry.getAll();
+  for (const plugin of activePlugins) {
+    if (plugin.start) {
+      console.log(`🔌 Starting plugin: ${plugin.name}...`);
+      await plugin.start();
+    }
+  }
 });
