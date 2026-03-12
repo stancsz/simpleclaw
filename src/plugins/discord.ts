@@ -101,12 +101,33 @@ client.on("messageCreate", async (message) => {
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "browser",
+          description: "Interact with the web browser",
+          parameters: {
+            type: "object",
+            properties: {
+              action: { 
+                type: "string", 
+                enum: ["navigate", "click", "type", "snapshot", "screenshot"],
+                description: "The action to perform" 
+              },
+              url: { type: "string", description: "The URL for navigate action" },
+              selector: { type: "string", description: "CSS selector for click/type action" },
+              text: { type: "string", description: "Text for type action" },
+            },
+            required: ["action"],
+          },
+        },
+      },
     ];
 
     const skillsContext = await loadSkillsContext();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [
         { 
           role: "system", 
