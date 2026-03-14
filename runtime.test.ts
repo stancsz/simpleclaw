@@ -5,6 +5,7 @@ import {
   type RuntimeDispatchEvent,
 } from "./src/core/dispatcher.ts";
 import type { AgentEvent } from "./src/core/agent.ts";
+import { formatFirstTaskLatencyProfile, type FirstTaskLatencyProfile } from "./cli/index.ts";
 import { extensionRegistry, type Extension } from "./src/core/extensions.ts";
 import { createCapabilityCatalog } from "./src/core/capabilities.ts";
 import {
@@ -16,7 +17,12 @@ import {
   getVisibleCapabilities,
 } from "./src/core/policy.ts";
 import { createCapabilityExecutor } from "./src/core/executor.ts";
-import { createGovernedRuntime, resolveRuntimeMode } from "./src/core/runtime.ts";
+import {
+  createGovernedRuntime,
+  createStartupProfiler,
+  resolveRuntimeMode,
+  type RuntimeStartupProfile,
+} from "./src/core/runtime.ts";
 import { loadSkillsContext } from "./src/core/skills.ts";
 import { enforceSecurityLocks } from "./src/security/triple_lock.ts";
 
@@ -29,6 +35,50 @@ function createDeferred<T>() {
   });
   return { promise, resolve, reject };
 }
+
+describe("startup profiling", () => {
+  test("collects ordered startup phases when enabled", async () => {
+    const profiler = createStartupProfiler(true);
+
+    await profiler.measure("plugins", async () => {
+      await Promise.resolve();
+    });
+    await profiler.measure("governedRuntime", async () => {
+      await Promise.resolve();
+    });
+
+    const summary = profiler.finish();
+
+    expect(summary).toBeDefined();
+    expect(summary?.enabled).toBe(true);
+    expect(summary?.totalBootstrapMs).toBeGreaterThanOrEqual(0);
+    expect(summary?.phases.map((phase) => phase.name)).toEqual(["plugins", "governedRuntime"]);
+    expect(summary?.phases.every((phase) => phase.durationMs >= 0)).toBe(true);
+  });
+
+  test("omits startup summary when disabled", async () => {
+    const profiler = createStartupProfiler(false);
+    await profiler.measure("plugins", async () => {
+      await Promise.resolve();
+    });
+
+    expect(profiler.finish()).toBeUndefined();
+  });
+
+  test("formats first-task latency summary from collected milestones", () => {
+    const profile: FirstTaskLatencyProfile = {
+      promptToTaskStartedMs: 1.5,
+      promptToIterationStartedMs: 3.25,
+      promptToToolStartedMs: 6,
+      promptToFinalResponseMs: 12.75,
+      promptToTaskCompletedMs: 13.5,
+    };
+
+    expect(formatFirstTaskLatencyProfile(profile)).toBe(
+      "submit→taskStarted 1.5ms | submit→iterationStarted 3.3ms | submit→toolStarted 6.0ms | submit→finalResponse 12.8ms | submit→taskCompleted 13.5ms",
+    );
+  });
+});
 
 describe("dispatcher behavior", () => {
   test("serializes work within one scope", async () => {

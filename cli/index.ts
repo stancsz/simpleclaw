@@ -1,7 +1,9 @@
+import { performance } from "node:perf_hooks";
 import * as readline from "node:readline";
 import { stdin as input, stdout as output } from "node:process";
 import type { AgentDispatcher, RuntimeDispatchEvent } from "../src/core/dispatcher.ts";
 import type { ConversationMessage } from "../src/core/agent.ts";
+import type { RuntimeStartupProfile } from "../src/core/runtime.ts";
 
 const colors = {
   reset: "\x1b[0m",
@@ -19,12 +21,46 @@ const prefix = `${colors.cyan}${colors.bold}🦀 SimpleClaw >${colors.reset} `;
 const spinnerFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const CLI_SCOPE = "cli:session";
 
+export interface FirstTaskLatencyProfile {
+  promptToTaskStartedMs?: number;
+  promptToIterationStartedMs?: number;
+  promptToToolStartedMs?: number;
+  promptToFinalResponseMs?: number;
+  promptToTaskCompletedMs?: number;
+}
+
+export interface CliTransportOptions {
+  startupProfile?: RuntimeStartupProfile;
+}
+
 export interface CliTransport {
-  start(): void;
+  start(startupProfile?: RuntimeStartupProfile): void;
   close(): void;
 }
 
-export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
+export function formatFirstTaskLatencyProfile(profile: FirstTaskLatencyProfile): string {
+  const parts = [
+    profile.promptToTaskStartedMs !== undefined
+      ? `submit→taskStarted ${profile.promptToTaskStartedMs.toFixed(1)}ms`
+      : undefined,
+    profile.promptToIterationStartedMs !== undefined
+      ? `submit→iterationStarted ${profile.promptToIterationStartedMs.toFixed(1)}ms`
+      : undefined,
+    profile.promptToToolStartedMs !== undefined
+      ? `submit→toolStarted ${profile.promptToToolStartedMs.toFixed(1)}ms`
+      : undefined,
+    profile.promptToFinalResponseMs !== undefined
+      ? `submit→finalResponse ${profile.promptToFinalResponseMs.toFixed(1)}ms`
+      : undefined,
+    profile.promptToTaskCompletedMs !== undefined
+      ? `submit→taskCompleted ${profile.promptToTaskCompletedMs.toFixed(1)}ms`
+      : undefined,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.join(" | ");
+}
+
+export function createCliTransport(dispatcher: AgentDispatcher, options: CliTransportOptions = {}): CliTransport {
   const rl = readline.createInterface({ input, output });
   const history: ConversationMessage[] = [];
   const inFlightTasks = new Set<Promise<unknown>>();
@@ -34,6 +70,114 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
   let activePromptBuffer = "";
   let closing = false;
   let closePromise: Promise<void> | null = null;
+  let startupProfile = options.startupProfile;
+  let firstTaskProfilePrinted = false;
+  let firstTaskSubmittedAt: number | null = null;
+  let firstTaskLatencyProfile: FirstTaskLatencyProfile | null = null;
+
+  const maybeCaptureFirstTaskMetric = (
+    key: keyof FirstTaskLatencyProfile,
+    submittedAt: number | null,
+    profile: FirstTaskLatencyProfile | null,
+  ) => {
+    if (submittedAt === null || !profile || profile[key] !== undefined) {
+      return;
+    }
+    profile[key] = performance.now() - submittedAt;
+  };
+
+  const printFirstTaskProfileIfComplete = () => {
+    if (firstTaskProfilePrinted || !firstTaskLatencyProfile) {
+      return;
+    }
+    if (firstTaskLatencyProfile.promptToTaskCompletedMs === undefined) {
+      return;
+    }
+    const summary = formatFirstTaskLatencyProfile(firstTaskLatencyProfile);
+    if (summary) {
+      printDurable("Profile", `First task ${summary}`, colors.dim);
+      firstTaskProfilePrinted = true;
+    }
+  };
+
+  const formatStartupProfile = (profile: RuntimeStartupProfile, promptReadyMs: number): string => {
+    const slowestPhase = profile.phases.reduce<RuntimeStartupProfile["phases"][number] | undefined>((slowest, phase) => {
+      if (!slowest || phase.durationMs > slowest.durationMs) {
+        return phase;
+      }
+      return slowest;
+    }, undefined);
+    const slowestSummary = slowestPhase
+      ? `${slowestPhase.name} ${slowestPhase.durationMs.toFixed(1)}ms`
+      : "n/a";
+    return `bootstrap ${profile.totalBootstrapMs.toFixed(1)}ms | prompt-ready ${promptReadyMs.toFixed(1)}ms | slowest ${slowestSummary}`;
+  };
+
+  const maybePrintStartupProfile = () => {
+    if (!startupProfile?.enabled) {
+      return;
+    }
+    const promptReadyMs = performance.now() - startupProfile.startedAt;
+    printDurable("Profile", formatStartupProfile(startupProfile, promptReadyMs), colors.dim);
+    startupProfile = undefined;
+  };
+
+  const beginFirstTaskProfile = () => {
+    if (firstTaskSubmittedAt !== null) {
+      return;
+    }
+    firstTaskSubmittedAt = performance.now();
+    firstTaskLatencyProfile = {};
+  };
+
+  const resetFirstTaskProfileIfNeeded = () => {
+    if (!firstTaskProfilePrinted) {
+      firstTaskSubmittedAt = null;
+      firstTaskLatencyProfile = null;
+    }
+  };
+
+  const isFirstProfiledTaskEvent = (event: RuntimeDispatchEvent) =>
+    event.source === "cli" && firstTaskSubmittedAt !== null;
+
+  const captureFirstTaskEvent = (event: RuntimeDispatchEvent) => {
+    if (!isFirstProfiledTaskEvent(event)) {
+      return;
+    }
+
+    switch (event.type) {
+      case "taskStarted":
+        maybeCaptureFirstTaskMetric("promptToTaskStartedMs", firstTaskSubmittedAt, firstTaskLatencyProfile);
+        break;
+      case "iterationStarted":
+        maybeCaptureFirstTaskMetric("promptToIterationStartedMs", firstTaskSubmittedAt, firstTaskLatencyProfile);
+        break;
+      case "toolStarted":
+        maybeCaptureFirstTaskMetric("promptToToolStartedMs", firstTaskSubmittedAt, firstTaskLatencyProfile);
+        break;
+      case "finalResponse":
+        maybeCaptureFirstTaskMetric("promptToFinalResponseMs", firstTaskSubmittedAt, firstTaskLatencyProfile);
+        break;
+      case "taskCompleted":
+        maybeCaptureFirstTaskMetric("promptToTaskCompletedMs", firstTaskSubmittedAt, firstTaskLatencyProfile);
+        printFirstTaskProfileIfComplete();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const finalizeFirstTaskProfile = () => {
+    printFirstTaskProfileIfComplete();
+    if (firstTaskProfilePrinted) {
+      firstTaskSubmittedAt = null;
+      firstTaskLatencyProfile = null;
+    }
+  };
+
+  const resetFirstTaskProfileOnError = () => {
+    resetFirstTaskProfileIfNeeded();
+  };
 
   const trackTask = <T>(promise: Promise<T>): Promise<T> => {
     inFlightTasks.add(promise);
@@ -120,6 +264,7 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
   };
 
   const renderEvent = async (event: RuntimeDispatchEvent) => {
+    captureFirstTaskEvent(event);
 
     switch (event.type) {
       case "taskQueued":
@@ -156,7 +301,11 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
         renderStatus(`Delegating to ${event.worker} (attempt ${event.attempt})`);
         break;
       case "workerDelegationCompleted":
-        printDurable("Delegate", `${event.worker} ${event.status}: ${event.summary}`, event.status === "completed" ? colors.blue : colors.yellow);
+        printDurable(
+          "Delegate",
+          `${event.worker} ${event.status}: ${event.summary}`,
+          event.status === "completed" ? colors.blue : colors.yellow,
+        );
         break;
       case "heartbeatEvaluated":
         renderStatus(`Heartbeat: ${event.outcome.reason}`);
@@ -210,6 +359,7 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
 
   const submitUserPrompt = async (prompt: string) => {
     activePromptBuffer = "";
+    beginFirstTaskProfile();
     const result = await dispatcher.submit({
       source: "cli",
       prompt,
@@ -219,6 +369,7 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
       dedupeKey: `prompt:${prompt}`,
     });
 
+    finalizeFirstTaskProfile();
     history.push({ role: "user", content: prompt });
     if (result.content) {
       history.push({ role: "assistant", content: result.content });
@@ -231,10 +382,14 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
   };
 
   return {
-    start() {
+    start(nextStartupProfile?: RuntimeStartupProfile) {
+      if (nextStartupProfile) {
+        startupProfile = nextStartupProfile;
+      }
       console.clear();
       console.log(`${colors.blue}${colors.bold}🦀 SimpleClaw CLI${colors.reset}`);
       console.log(`${colors.dim}Type /help for commands. Type /exit to quit.${colors.reset}\n`);
+      maybePrintStartupProfile();
       renderPrompt();
 
       rl.on("line", async (line) => {
@@ -254,6 +409,7 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
 
         const task = trackTask(
           submitUserPrompt(trimmed).catch((error: any) => {
+            resetFirstTaskProfileOnError();
             printDurable("Error", error instanceof Error ? error.message : String(error), colors.red);
           }),
         );

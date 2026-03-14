@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import { createServer, type Server } from "node:http";
 import os from "node:os";
 import { extensionRegistry, type Extension, type RuntimeMode } from "./extensions.ts";
@@ -45,6 +46,24 @@ export interface GovernedAgentRuntime {
   auditLog: string[];
 }
 
+export interface RuntimeStartupPhaseTiming {
+  name:
+    | "plugins"
+    | "governedRuntime"
+    | "heartbeatRegistration"
+    | "cliTransport"
+    | "serverStartup"
+    | "extensionStartup";
+  durationMs: number;
+}
+
+export interface RuntimeStartupProfile {
+  enabled: boolean;
+  startedAt: number;
+  totalBootstrapMs: number;
+  phases: RuntimeStartupPhaseTiming[];
+}
+
 export interface RuntimeContext {
   mode: RuntimeMode;
   port: number;
@@ -52,19 +71,61 @@ export interface RuntimeContext {
   cli?: CliTransport;
   server?: Server;
   governed: GovernedAgentRuntime;
+  startupProfile?: RuntimeStartupProfile;
   submitWork: (input: AgentDispatchSubmitInput) => Promise<void>;
   close: () => Promise<void>;
 }
 
 let pluginsLoaded = false;
 
+export function isStartupProfilingEnabled(): boolean {
+  const value = process.env.SIMPLECLAW_PROFILE_STARTUP;
+  return value === "1" || value === "true";
+}
+
+export function createStartupProfiler(enabled = isStartupProfilingEnabled()) {
+  const startedAt = performance.now();
+  const phases: RuntimeStartupPhaseTiming[] = [];
+
+  return {
+    enabled,
+    startedAt,
+    async measure<T>(name: RuntimeStartupPhaseTiming["name"], run: () => Promise<T>): Promise<T> {
+      if (!enabled) {
+        return await run();
+      }
+      const phaseStartedAt = performance.now();
+      const result = await run();
+      phases.push({
+        name,
+        durationMs: performance.now() - phaseStartedAt,
+      });
+      return result;
+    },
+    finish(): RuntimeStartupProfile | undefined {
+      if (!enabled) {
+        return undefined;
+      }
+      return {
+        enabled: true,
+        startedAt,
+        totalBootstrapMs: performance.now() - startedAt,
+        phases: [...phases],
+      };
+    },
+  };
+}
+
 export async function startRuntime(options: RuntimeStartOptions = {}): Promise<RuntimeContext> {
   const mode = resolveRuntimeMode(options.mode);
   const port = options.port ?? DEFAULT_PORT;
+  const startupProfiler = createStartupProfiler();
 
   if (!pluginsLoaded) {
-    await loadPlugins();
-    pluginsLoaded = true;
+    await startupProfiler.measure("plugins", async () => {
+      await loadPlugins();
+      pluginsLoaded = true;
+    });
   }
 
   let governed!: GovernedAgentRuntime;
@@ -90,32 +151,40 @@ export async function startRuntime(options: RuntimeStartOptions = {}): Promise<R
   });
   const cleanupTasks: Array<() => Promise<void> | void> = [];
 
-  governed = await createGovernedRuntime(mode, dispatcher);
+  governed = await startupProfiler.measure("governedRuntime", async () => {
+    return await createGovernedRuntime(mode, dispatcher);
+  });
 
   if (options.heartbeat?.enabled !== false) {
     const heartbeatIntervalMs = options.heartbeat?.intervalMs ?? getDefaultHeartbeatIntervalMs();
-    startHeartbeatScheduler(
-      dispatcher,
-      {
-        source: "heartbeat",
-        scope: DEFAULT_HEARTBEAT_SCOPE,
-        model: process.env.AGENT_MODEL || "gpt-5-nano",
-        maxIterations: 3,
-      },
-      heartbeatIntervalMs,
-    );
+    await startupProfiler.measure("heartbeatRegistration", async () => {
+      startHeartbeatScheduler(
+        dispatcher,
+        {
+          source: "heartbeat",
+          scope: DEFAULT_HEARTBEAT_SCOPE,
+          model: process.env.AGENT_MODEL || "gpt-5-nano",
+          maxIterations: 3,
+        },
+        heartbeatIntervalMs,
+      );
+    });
     cleanupTasks.push(() => stopHeartbeatScheduler());
   }
 
   let cli: CliTransport | undefined;
   if (mode === "cli" || mode === "hybrid") {
-    cli = createCliTransport(dispatcher);
+    cli = await startupProfiler.measure("cliTransport", async () => {
+      return createCliTransport(dispatcher);
+    });
     cleanupTasks.push(() => cli?.close());
   }
 
   let server: Server | undefined;
   if (mode === "server" || mode === "hybrid") {
-    server = await createWebhookServer(port, mode);
+    server = await startupProfiler.measure("serverStartup", async () => {
+      return await createWebhookServer(port, mode);
+    });
     cleanupTasks.push(
       () =>
         new Promise<void>((resolve, reject) => {
@@ -130,7 +199,11 @@ export async function startRuntime(options: RuntimeStartOptions = {}): Promise<R
     );
   }
 
-  await startActiveExtensions(mode);
+  await startupProfiler.measure("extensionStartup", async () => {
+    await startActiveExtensions(mode);
+  });
+
+  const startupProfile = startupProfiler.finish();
 
   return {
     mode,
@@ -139,6 +212,7 @@ export async function startRuntime(options: RuntimeStartOptions = {}): Promise<R
     cli,
     server,
     governed,
+    startupProfile,
     submitWork: async (input) => {
       await dispatcher.submit(input);
     },
