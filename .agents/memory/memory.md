@@ -17,6 +17,7 @@ This file contains key information, preferences, and project details learned dur
 - **Plugins**: Discord (Active), Messenger (Active), Browser (Active).
 
 ## Knowledge Entries
+- [2026-03-14] User name: Stan
 - [2026-03-12] Browser click selector fix: use proper CSS selector with quotes when matching hrefs. Example working selector: a[href='https://iana.org/domains/example'] instead of a[href=https://iana.org/domains/example].
 - [2026-03-12] Browser click selector fix: use proper CSS selector with quotes when matching hrefs. Example working selector: a[href='https://iana.org/domains/example'] instead of a[href=https://iana.org/domains/example].
 - [2026-03-12] Implemented core reasoning loop and upgraded to gpt-5-nano.
