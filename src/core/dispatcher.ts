@@ -19,6 +19,38 @@ export interface AgentDispatchSubmitInput {
   dedupeKey?: string;
 }
 
+export type WorkerDelegationStatus = "completed" | "blocked" | "partial";
+
+export type WorkerDispatchEvent =
+  | {
+      type: "workerDelegationStarted";
+      taskId: string;
+      source: string;
+      scope: string;
+      worker: string;
+      objective: string;
+      attempt: number;
+    }
+  | {
+      type: "workerDelegationCompleted";
+      taskId: string;
+      source: string;
+      scope: string;
+      worker: string;
+      status: WorkerDelegationStatus;
+      summary: string;
+      attempt: number;
+    };
+
+export type PolicyDispatchEvent = {
+  type: "capabilityDenied";
+  taskId: string;
+  source: string;
+  scope: string;
+  capabilityName: string;
+  reason: string;
+};
+
 export type DispatchTaskStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
 export interface DispatchTaskSnapshot {
@@ -50,6 +82,8 @@ export type RuntimeDispatchEvent =
   | { type: "taskFailed"; taskId: string; source: string; scope: string; error: Error }
   | { type: "taskCancelled"; taskId: string; source: string; scope: string; reason: string }
   | { type: "taskDeduped"; taskId: string; source: string; scope: string; dedupeKey: string }
+  | WorkerDispatchEvent
+  | PolicyDispatchEvent
   | ({ taskId: string; source: string; scope: string } & AgentEvent);
 
 export interface AgentDispatcher {

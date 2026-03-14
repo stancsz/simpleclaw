@@ -1,16 +1,91 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { extensionRegistry } from "./extensions.ts";
+import type { CapabilityCatalog, CapabilityExecutionContext, CapabilityResult } from "./capabilities.ts";
+import {
+  canExecuteCapability,
+  getStructuredCapabilityDenial,
+  getStructuredCapabilityDisabled,
+  getStructuredCapabilityUnknown,
+} from "./policy.ts";
 
-// Mock legacy bridge for fallback
 const legacyBridge = {
   dispatch: (toolName: string, args: any) => {
     return `Legacy fallback for ${toolName} with args: ${JSON.stringify(args)}`;
   },
 };
 
-const stripAnsi = (str: string) => 
-  str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+const stripAnsi = (str: string) =>
+  str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
+
+export interface CapabilityExecutorDependencies {
+  catalog: CapabilityCatalog;
+}
+
+export interface CapabilityExecutionOutcome {
+  ok: boolean;
+  status: "completed" | "blocked" | "partial";
+  output: string;
+  data?: unknown;
+}
+
+export function createCapabilityExecutor(dependencies: CapabilityExecutorDependencies) {
+  const { catalog } = dependencies;
+
+  return {
+    execute: async (
+      capabilityName: string,
+      args: Record<string, unknown>,
+      context: CapabilityExecutionContext,
+    ): Promise<CapabilityExecutionOutcome> => {
+      const capability = catalog.get(capabilityName);
+      if (!capability) {
+        return {
+          ok: false,
+          status: "blocked",
+          output: getStructuredCapabilityUnknown(capabilityName),
+        };
+      }
+
+      const decision = canExecuteCapability(capability, context.runtime);
+      if (decision.status === "disabled") {
+        return {
+          ok: false,
+          status: "blocked",
+          output: getStructuredCapabilityDisabled(capabilityName, decision.reason),
+        };
+      }
+
+      if (decision.status === "denied") {
+        return {
+          ok: false,
+          status: "blocked",
+          output: getStructuredCapabilityDenial(capabilityName, decision.reason),
+        };
+      }
+
+      const result = await capability.handler(args, context);
+      return normalizeCapabilityResult(result);
+    },
+    executeLegacy: async (toolName: string, args: Record<string, unknown>) => {
+      const result = await executeNativeTool(toolName, args);
+      return normalizeCapabilityResult({
+        status: "completed",
+        content: typeof result === "string" ? result : JSON.stringify(result),
+        data: result,
+      });
+    },
+  };
+}
+
+function normalizeCapabilityResult(result: CapabilityResult): CapabilityExecutionOutcome {
+  return {
+    ok: result.status !== "blocked",
+    status: result.status,
+    output: typeof result.content === "string" ? stripAnsi(result.content) : JSON.stringify(result.content),
+    data: result.data,
+  };
+}
 
 export async function executeNativeTool(toolName: string, args: any) {
   if (/sudo/i.test(JSON.stringify(args))) return "DENIED: Sudo usage restricted for safety.";
@@ -23,10 +98,17 @@ export async function executeNativeTool(toolName: string, args: any) {
     },
     shell: (c: string) => execSync(c).toString(),
     git: (m: string) => execSync(`git commit -m "${m}"`).toString(),
+    browser: async (input: Record<string, unknown>) => {
+      const extension = extensionRegistry.get("browser");
+      if (!extension) {
+        throw new Error("browser extension not available");
+      }
+      return await extension.execute(input);
+    },
   };
 
   const result = (
-    (await handlers[toolName]?.(args.path || args.cmd || args.msg, args.content)) ??
+    (await handlers[toolName]?.(args.path || args.cmd || args.msg || args, args.content)) ??
     (await extensionRegistry.execute(toolName, args).catch(() => null)) ??
     legacyBridge.dispatch(toolName, args)
   );

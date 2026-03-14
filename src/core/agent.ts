@@ -1,14 +1,17 @@
 import { loadSkillsContext } from "./skills.ts";
-import { executeNativeTool } from "./executor.ts";
-import { loadLongTermMemory, updateMemory } from "./memory.ts";
+import { loadLongTermMemory } from "./memory.ts";
 import {
   buildSystemPrompt,
   resolveAgentTaskKind,
-  shouldAllowMemoryWrite,
   shouldEnableBootstrapProtocol,
   shouldPreferDirectResponse,
 } from "./policy.ts";
-import os from "node:os";
+import type {
+  CapabilityCatalog,
+  CapabilityExecutionContext,
+  CapabilityToolDefinition,
+  RuntimeCapabilityContext,
+} from "./capabilities.ts";
 
 export interface HeartbeatAgentOutcome {
   status: "noop" | "invoked";
@@ -27,7 +30,10 @@ export type AgentEvent =
   | { type: "heartbeatEvaluated"; outcome: HeartbeatAgentOutcome }
   | { type: "heartbeatNoop"; outcome: HeartbeatAgentOutcome }
   | { type: "heartbeatSkipped"; reason: string }
-  | { type: "autonomousTaskCompleted"; content: string };
+  | { type: "autonomousTaskCompleted"; content: string }
+  | { type: "capabilityDenied"; iteration: number; capabilityName: string; reason: string }
+  | { type: "workerDelegationStarted"; worker: string; objective: string; attempt: number }
+  | { type: "workerDelegationCompleted"; worker: string; status: string; summary: string; attempt: number };
 
 export interface AgentLoopResult {
   content: string;
@@ -42,6 +48,14 @@ export interface AgentOptions {
   source?: string;
   onIteration?: (message: string) => Promise<void> | void;
   emitEvent?: (event: AgentEvent) => Promise<void> | void;
+  runtimeContext?: RuntimeCapabilityContext;
+  capabilityCatalog?: CapabilityCatalog;
+  capabilityExecutor?: (
+    capabilityName: string,
+    args: Record<string, unknown>,
+    context: CapabilityExecutionContext,
+  ) => Promise<{ ok: boolean; status: string; output: string; data?: unknown }>;
+  toolDefinitions?: CapabilityToolDefinition[];
   heartbeat?: {
     enabled: boolean;
     intervalMs?: number;
@@ -78,6 +92,7 @@ type OpenAIClient = {
 };
 
 let openaiClientPromise: Promise<OpenAIClient> | undefined;
+let dotenvConfigPromise: Promise<unknown> | undefined;
 
 async function getOpenAIClient(): Promise<OpenAIClient> {
   if (!openaiClientPromise) {
@@ -92,6 +107,14 @@ async function getOpenAIClient(): Promise<OpenAIClient> {
   return await openaiClientPromise;
 }
 
+async function ensureDotenvLoaded(): Promise<void> {
+  if (!dotenvConfigPromise) {
+    dotenvConfigPromise = import("dotenv/config").catch(() => undefined);
+  }
+
+  await dotenvConfigPromise;
+}
+
 function stringifyToolResult(result: unknown): string {
   return typeof result === "string" ? result : JSON.stringify(result);
 }
@@ -104,91 +127,29 @@ async function emitAgentEvent(options: AgentOptions, event: AgentEvent): Promise
   await options.emitEvent?.(event);
 }
 
-function buildToolDefinitions() {
-  return [
-    {
-      type: "function",
-      function: {
-        name: "remember",
-        description: "Store a new piece of information in long-term memory. Use this only for important facts, preferences, or project updates.",
-        parameters: {
-          type: "object",
-          properties: { info: { type: "string", description: "The information to remember" } },
-          required: ["info"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "shell",
-        description: "Execute a shell command",
-        parameters: {
-          type: "object",
-          properties: { cmd: { type: "string" } },
-          required: ["cmd"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "read",
-        description: "Read a file from disk",
-        parameters: {
-          type: "object",
-          properties: { path: { type: "string" } },
-          required: ["path"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "write",
-        description: "Write content to a file on disk",
-        parameters: {
-          type: "object",
-          properties: {
-            path: { type: "string", description: "Path to the file" },
-            content: { type: "string", description: "Content to write" },
-          },
-          required: ["path", "content"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "browser",
-        description: "Interact with the web browser",
-        parameters: {
-          type: "object",
-          properties: {
-            action: {
-              type: "string",
-              enum: ["navigate", "click", "type", "snapshot", "screenshot", "wait"],
-              description: "The action to perform",
-            },
-            url: { type: "string", description: "The URL for navigate action" },
-            selector: { type: "string", description: "CSS selector for click/type action" },
-            text: { type: "string", description: "Text for type action" },
-          },
-          required: ["action"],
-        },
-      },
-    },
-  ];
-}
-
-let dotenvConfigPromise: Promise<unknown> | undefined;
-
-async function ensureDotenvLoaded(): Promise<void> {
-  if (!dotenvConfigPromise) {
-    dotenvConfigPromise = import("dotenv/config").catch(() => undefined);
+async function resolveRuntimeContext(userMessage: string, options: AgentOptions): Promise<RuntimeCapabilityContext> {
+  if (options.runtimeContext) {
+    return options.runtimeContext;
   }
 
-  await dotenvConfigPromise;
+  const skillsContext = await loadSkillsContext();
+  const memoryContext = await loadLongTermMemory();
+  return {
+    mode: "cli",
+    taskKind: resolveAgentTaskKind({ source: options.source, prompt: userMessage }),
+    source: options.source,
+    prompt: userMessage,
+    memoryContext,
+    skillsContext,
+    platform: process.platform,
+    dispatcher: {
+      submit: async () => ({ content: "", iterations: 0, messages: [], completed: false }),
+      getInFlightTasks: () => [],
+      getTaskSnapshots: () => [],
+      cancelTask: () => false,
+      hasConflictingTask: () => false,
+    },
+  };
 }
 
 export async function runAgentLoop(
@@ -198,26 +159,18 @@ export async function runAgentLoop(
 ): Promise<AgentLoopResult> {
   await ensureDotenvLoaded();
 
+  const runtimeContext = await resolveRuntimeContext(userMessage, options);
   const model = options.model || process.env.AGENT_MODEL || "gpt-5-nano";
   const maxIterations = options.maxIterations || 10;
-  const toolDefinitions = buildToolDefinitions();
-
-  const skillsContext = await loadSkillsContext();
-  const memoryContext = await loadLongTermMemory();
-  const platform = os.platform();
-  const taskKind = resolveAgentTaskKind({
-    source: options.source,
-    prompt: userMessage,
-  });
-  const preferDirectResponse = shouldPreferDirectResponse({
-    source: options.source,
-    prompt: userMessage,
-  });
+  const taskKind = resolveAgentTaskKind({ source: options.source, prompt: userMessage });
+  const preferDirectResponse = shouldPreferDirectResponse({ source: options.source, prompt: userMessage });
+  const visibleCapabilityNames = (options.toolDefinitions ?? []).map((tool) => tool.function.name);
   const systemPrompt = buildSystemPrompt({
     kind: taskKind,
-    platform,
-    memoryContext,
-    skillsContext,
+    platform: runtimeContext.platform,
+    memoryContext: runtimeContext.memoryContext,
+    skillsContext: runtimeContext.skillsContext,
+    visibleCapabilityNames,
   });
 
   const messages: any[] = [
@@ -231,10 +184,6 @@ export async function runAgentLoop(
     ...history,
     { role: "user", content: userMessage },
   ];
-
-  const activeTools = toolDefinitions.filter((tool) =>
-    shouldAllowMemoryWrite(taskKind, tool.function.name),
-  );
 
   let iterations = 0;
   let finalContent = "";
@@ -259,7 +208,7 @@ export async function runAgentLoop(
     const response = await openai.chat.completions.create({
       model,
       messages,
-      tools: activeTools as any,
+      tools: (options.toolDefinitions ?? []) as any,
     });
 
     const aiMessage = response.choices[0]?.message;
@@ -281,7 +230,7 @@ export async function runAgentLoop(
         const args = JSON.parse(argsString);
 
         if (options.onIteration) {
-          await options.onIteration(`🛠️ Using ${name}...`);
+          await options.onIteration(`Using ${name}...`);
         }
 
         await emitAgentEvent(options, {
@@ -291,31 +240,34 @@ export async function runAgentLoop(
           args: sanitizeToolArgs(args),
         });
 
-        let result: unknown;
+        let result = "";
         try {
-          if (name === "remember") {
-            if (!shouldAllowMemoryWrite(taskKind, name)) {
-              result = "TOOL_ERROR: remember is not allowed for this task policy";
-            } else {
-              result = await updateMemory(args.info);
-            }
-          } else {
-            result = await executeNativeTool(name, args);
+          if (!options.capabilityExecutor) {
+            throw new Error("capability executor not configured");
           }
 
-          if (String(result).startsWith("TOOL_ERROR:")) {
+          const outcome = await options.capabilityExecutor(name, args, { runtime: runtimeContext });
+          result = outcome.output;
+
+          if (!outcome.ok) {
             await emitAgentEvent(options, {
               type: "toolFailed",
               iteration: iterations,
               toolName: name,
-              error: String(result),
+              error: result,
+            });
+            await emitAgentEvent(options, {
+              type: "capabilityDenied",
+              iteration: iterations,
+              capabilityName: name,
+              reason: result,
             });
           } else {
             await emitAgentEvent(options, {
               type: "toolCompleted",
               iteration: iterations,
               toolName: name,
-              result: stringifyToolResult(result),
+              result,
             });
           }
         } catch (error: any) {

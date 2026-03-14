@@ -1,11 +1,20 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import {
   createAgentDispatcher,
   type AgentLoopRunner,
   type RuntimeDispatchEvent,
 } from "./src/core/dispatcher.ts";
 import { extensionRegistry, type Extension } from "./src/core/extensions.ts";
-import { resolveRuntimeMode } from "./src/core/runtime.ts";
+import { createCapabilityCatalog } from "./src/core/capabilities.ts";
+import {
+  canExecuteCapability,
+  getCapabilityAuditLog,
+  getStructuredCapabilityUnknown,
+  getVisibleCapabilities,
+} from "./src/core/policy.ts";
+import { createCapabilityExecutor } from "./src/core/executor.ts";
+import { createGovernedRuntime, resolveRuntimeMode } from "./src/core/runtime.ts";
+import { loadSkillsContext } from "./src/core/skills.ts";
 import { enforceSecurityLocks } from "./src/security/triple_lock.ts";
 
 function createDeferred<T>() {
@@ -110,6 +119,119 @@ describe("dispatcher behavior", () => {
   });
 });
 
+describe("capability policy", () => {
+  const runtimeContext = {
+    mode: "cli" as const,
+    taskKind: "interactive" as const,
+    prompt: "Implement a feature",
+    memoryContext: "memory",
+    skillsContext: "skills",
+    platform: process.platform,
+    dispatcher: createAgentDispatcher({ runAgentLoop: async () => ({ content: "", iterations: 0, messages: [], completed: true }) }),
+  };
+
+  test("approved capability is visible and executable", () => {
+    const capability = {
+      name: "read",
+      description: "Read a file",
+      inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] },
+      category: "native" as const,
+      approvalClass: "default" as const,
+      handler: async () => ({ status: "completed" as const, content: "ok" }),
+    };
+
+    expect(getVisibleCapabilities([capability], runtimeContext)).toHaveLength(1);
+    expect(canExecuteCapability(capability, runtimeContext).status).toBe("allowed");
+  });
+
+  test("restricted capability is hidden and disabled with stable reason", () => {
+    const capability = {
+      name: "shell",
+      description: "Run shell",
+      inputSchema: { type: "object", properties: { cmd: { type: "string" } }, required: ["cmd"] },
+      category: "native" as const,
+      approvalClass: "restricted" as const,
+      handler: async () => ({ status: "completed" as const, content: "ok" }),
+    };
+
+    expect(getVisibleCapabilities([capability], runtimeContext)).toHaveLength(0);
+    expect(canExecuteCapability(capability, runtimeContext).status).toBe("disabled");
+    expect(getCapabilityAuditLog([capability], runtimeContext)[0]).toContain("approval class restricted is not enabled");
+  });
+
+  test("extension-backed capability appears only when plugin and policy allow it", () => {
+    const capability = {
+      name: "browser",
+      description: "Browser",
+      inputSchema: { type: "object", properties: { action: { type: "string" } }, required: ["action"] },
+      category: "extension" as const,
+      approvalClass: "network" as const,
+      runtimeModes: ["cli" as const],
+      handler: async () => ({ status: "completed" as const, content: "ok" }),
+    };
+
+    expect(getVisibleCapabilities([capability], runtimeContext)).toHaveLength(1);
+  });
+});
+
+describe("capability executor", () => {
+  const runtime = {
+    mode: "cli" as const,
+    taskKind: "interactive" as const,
+    prompt: "test",
+    memoryContext: "",
+    skillsContext: "",
+    platform: process.platform,
+    dispatcher: createAgentDispatcher({ runAgentLoop: async () => ({ content: "", iterations: 0, messages: [], completed: true }) }),
+  };
+
+  test("unknown capability returns structured error", async () => {
+    const executor = createCapabilityExecutor({ catalog: createCapabilityCatalog([]) });
+    const result = await executor.execute("missing", {}, { runtime });
+    expect(result.ok).toBe(false);
+    expect(result.output).toBe(getStructuredCapabilityUnknown("missing"));
+  });
+
+  test("denied capability never reaches handler", async () => {
+    const handler = mock(async () => ({ status: "completed" as const, content: "should not run" }));
+    const executor = createCapabilityExecutor({
+      catalog: createCapabilityCatalog([
+        {
+          name: "shell",
+          description: "Run shell",
+          inputSchema: { type: "object", properties: {}, required: [] },
+          category: "native",
+          approvalClass: "restricted",
+          handler,
+        },
+      ]),
+    });
+
+    const result = await executor.execute("shell", {}, { runtime });
+    expect(result.ok).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("approved capability returns normalized output", async () => {
+    const executor = createCapabilityExecutor({
+      catalog: createCapabilityCatalog([
+        {
+          name: "read",
+          description: "Read",
+          inputSchema: { type: "object", properties: {}, required: [] },
+          category: "native",
+          approvalClass: "default",
+          handler: async () => ({ status: "completed", content: "done" }),
+        },
+      ]),
+    });
+
+    const result = await executor.execute("read", {}, { runtime });
+    expect(result.ok).toBe(true);
+    expect(result.output).toBe("done");
+  });
+});
+
 describe("runtime defaults", () => {
   const originalArgv = [...process.argv];
   const originalEnv = process.env.SIMPLECLAW_RUNTIME_MODE;
@@ -128,6 +250,56 @@ describe("runtime defaults", () => {
     delete process.env.SIMPLECLAW_RUNTIME_MODE;
 
     expect(resolveRuntimeMode()).toBe("cli");
+  });
+
+  test("builds governed runtime with approved tools", async () => {
+    const governed = await createGovernedRuntime(
+      "cli",
+      createAgentDispatcher({ runAgentLoop: async () => ({ content: "", iterations: 0, messages: [], completed: true }) }),
+    );
+
+    expect(governed.tools.some((tool) => tool.function.name === "delegate_to_opencode")).toBe(true);
+    expect(governed.tools.some((tool) => tool.function.name === "shell")).toBe(false);
+    expect(governed.auditLog.length).toBeGreaterThan(0);
+  });
+});
+
+describe("delegation orchestration", () => {
+  test("same-scope work serializes and duplicate work dedupes", async () => {
+    const started: string[] = [];
+    const gate = createDeferred<void>();
+    const runner: AgentLoopRunner = async (prompt) => {
+      started.push(prompt);
+      if (prompt.includes("first")) {
+        await gate.promise;
+      }
+      return { content: prompt, iterations: 1, messages: [], completed: true };
+    };
+
+    const dispatcher = createAgentDispatcher({ runAgentLoop: runner });
+
+    const first = dispatcher.submit({
+      source: "delegate",
+      scope: "worker:opencode:test",
+      prompt: "first delegation",
+      dedupeKey: "same",
+    });
+
+    const duplicate = dispatcher.submit({
+      source: "delegate",
+      scope: "worker:opencode:test",
+      prompt: "duplicate delegation",
+      dedupeKey: "same",
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gate.resolve();
+
+    const duplicateResult = await duplicate;
+    await first;
+
+    expect(duplicateResult.completed).toBe(false);
+    expect(started).toEqual(["first delegation"]);
   });
 });
 
@@ -154,5 +326,12 @@ describe("extension registry", () => {
 
     extensionRegistry.register(extension);
     expect(extensionRegistry.findWebhook("/test-runtime-route")?.name).toBe(extension.name);
+  });
+});
+
+describe("skills loading", () => {
+  test("loads the OpenCode prompt skill", async () => {
+    const context = await loadSkillsContext();
+    expect(context).toContain("OpenCode Delegation Skill");
   });
 });

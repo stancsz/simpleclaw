@@ -143,6 +143,15 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
       case "toolFailed":
         printDurable("Status", `Tool ${event.toolName} failed: ${event.error}`, colors.yellow);
         break;
+      case "capabilityDenied":
+        printDurable("Policy", `${event.capabilityName} denied: ${event.reason}`, colors.yellow);
+        break;
+      case "workerDelegationStarted":
+        renderStatus(`Delegating to ${event.worker} (attempt ${event.attempt})`);
+        break;
+      case "workerDelegationCompleted":
+        printDurable("Delegate", `${event.worker} ${event.status}: ${event.summary}`, event.status === "completed" ? colors.blue : colors.yellow);
+        break;
       case "heartbeatEvaluated":
         renderStatus(`Heartbeat: ${event.outcome.reason}`);
         break;
@@ -163,6 +172,9 @@ export function createCliTransport(dispatcher: AgentDispatcher): CliTransport {
         break;
       case "taskFailed":
         printDurable("Error", event.error.message, colors.red);
+        break;
+      case "taskCancelled":
+        printDurable("Status", event.reason, colors.dim);
         break;
       case "maxIterationsReached":
         printDurable("Status", "Reached maximum iterations.", colors.yellow);
