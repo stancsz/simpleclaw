@@ -1,12 +1,79 @@
 import "dotenv/config";
 import { extensionRegistry } from "./core/extensions.ts";
+import { runAgentLoop } from "./core/agent.ts";
 import { enforceSecurityLocks } from "./security/triple_lock.ts";
+import { getDefaultHeartbeatIntervalMs } from "./core/heartbeat.ts";
 import { loadPlugins } from "./core/loader.ts";
 import { createServer } from "node:http";
 
 const port = 3018;
+let heartbeatTimer: NodeJS.Timeout | null = null;
+let heartbeatInFlight = false;
+
+function startHeartbeatScheduler() {
+  if (heartbeatTimer) {
+    return;
+  }
+
+  const intervalMs = getDefaultHeartbeatIntervalMs();
+  heartbeatTimer = setInterval(async () => {
+    if (heartbeatInFlight) {
+      console.log("💓 Heartbeat skipped: prior run still active");
+      return;
+    }
+
+    heartbeatInFlight = true;
+    console.log("💓 Heartbeat started");
+
+    try {
+      await runAgentLoop("[heartbeat bootstrap]", {
+        model: "gpt-5-nano",
+        heartbeat: {
+          enabled: true,
+          intervalMs,
+          maxIterations: 3,
+          onTickSkip: async () => {
+            console.log("💓 Heartbeat skipped: prior run still active");
+          },
+          onTickStart: async () => {
+            console.log("💓 Heartbeat evaluating pending work");
+          },
+          onTickComplete: async (outcome) => {
+            if (outcome.status === "invoked") {
+              console.log(`💓 Heartbeat invoked agent loop: ${outcome.reason}`);
+            } else {
+              console.log(`💓 Heartbeat no-op: ${outcome.reason}`);
+            }
+            console.log("💓 Heartbeat completed");
+          },
+          onTickError: async (error) => {
+            console.error("💓 Heartbeat failed:", error.message);
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error("💓 Heartbeat failed:", error.message);
+    } finally {
+      heartbeatInFlight = false;
+    }
+  }, intervalMs);
+
+  console.log(`💓 Heartbeat scheduler started (intervalMs=${intervalMs})`);
+}
+
+function stopHeartbeatScheduler() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+process.once("exit", stopHeartbeatScheduler);
+process.once("SIGINT", stopHeartbeatScheduler);
+process.once("SIGTERM", stopHeartbeatScheduler);
 
 export async function startClaw(config: any = {}) {
+  startHeartbeatScheduler();
   await loadPlugins();
   const server = createServer(async (req, res) => {
     const url = new URL(req.url || "/", `http://localhost:${port}`);

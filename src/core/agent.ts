@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { loadSkillsContext } from "./skills.ts";
 import { executeNativeTool } from "./executor.ts";
 import "dotenv/config";
+import { maybeStartHeartbeatLoop } from "./heartbeat.ts";
 import { loadLongTermMemory, updateMemory } from "./memory.ts";
 import os from "node:os";
 
@@ -15,6 +16,15 @@ export interface AgentOptions {
   model?: string;
   maxIterations?: number;
   onIteration?: (message: string) => Promise<void> | void;
+  heartbeat?: {
+    enabled: boolean;
+    intervalMs?: number;
+    maxIterations?: number;
+    onTickStart?: () => Promise<void> | void;
+    onTickSkip?: () => Promise<void> | void;
+    onTickComplete?: (outcome: { status: "noop" | "invoked"; reason: string }) => Promise<void> | void;
+    onTickError?: (error: Error) => Promise<void> | void;
+  };
 }
 
 export interface ConversationMessage {
@@ -25,7 +35,14 @@ export interface ConversationMessage {
 export async function runAgentLoop(userMessage: string, options: AgentOptions = {}, history: ConversationMessage[] = []) {
   const model = options.model || process.env.AGENT_MODEL || "gpt-5-nano";
   const maxIterations = options.maxIterations || 10; // Lower default for responsiveness
-  
+
+  await maybeStartHeartbeatLoop(options, async (prompt, runOptions) => {
+    await runAgentLoop(prompt, {
+      model: runOptions.model || model,
+      maxIterations: runOptions.maxIterations,
+    });
+  });
+
   const tools = [
     {
       type: "function",
