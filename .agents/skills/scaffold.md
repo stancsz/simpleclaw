@@ -160,24 +160,29 @@ To get started without the devcontainer, just use the host directly — the devc
 
 ---
 
-## Running the Agent
+## Running the Dogfood Loop
 
 Once all files above exist:
 
 ```bash
 # Run one cycle (good for testing)
-CRYSTAL_BALL_ONCE=1 bash custom/script.sh
+DOGFOOD_ONCE=1 bash loop/dogfood.sh
 
 # Run for 4 hours (default)
-bash custom/script.sh
+bash loop/dogfood.sh
 
-# Run with a specific model
-OPENCODE_MODEL=deepseek/deepseek-reasoner bash custom/script.sh
+# Run with the reasoning model
+OPENCODE_MODEL=deepseek/deepseek-reasoner bash loop/dogfood.sh
+
+# Override runtime
+RUN_HOURS=8 bash loop/dogfood.sh
 ```
 
-The runner (`custom/script.sh`) will:
+The runner (`loop/dogfood.sh`) will:
 1. Source `.env` automatically
 2. Map `OPENAI_API_KEY` → `DEEPSEEK_API_KEY` for opencode
-3. Read `CLAUDE.md` and invoke `opencode run` with the task prompt
-4. Reset `CLAUDE.md` via `git checkout` after each cycle
-5. Sleep and repeat until the time window expires
+3. Read `CLAUDE.md`, `SPEC.md`, and `OUTBOX.md` each cycle
+4. Invoke `opencode run` with a structured 5-step self-improvement prompt
+5. Reset `CLAUDE.md` via `git checkout` after each cycle
+6. Write cycle results to `.agents/comm/INBOX.md`
+7. Sleep 10s and repeat until the time window expires
