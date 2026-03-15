@@ -9,11 +9,11 @@ import chalk from "chalk";
 async function main() {
     console.log(chalk.blue.bold("🤖 SimpleClaw Smart Job Delegator: Initializing..."));
 
-    console.log(chalk.cyan("🔍 Fetching latest state from main..."));
-    execSync("git fetch origin main");
-    const claudeMd = execSync("git show origin/main:CLAUDE.md", { encoding: "utf-8" });
-    const specMd = execSync("git show origin/main:SPEC.md", { encoding: "utf-8" });
-    const swarmSpec = execSync("git show origin/main:SWARM_SPEC.md", { encoding: "utf-8" });
+    console.log(chalk.cyan("🔍 Fetching latest state from development..."));
+    execSync("git fetch origin development");
+    const claudeMd = execSync("git show origin/development:CLAUDE.md", { encoding: "utf-8" });
+    const specMd = execSync("git show origin/development:SPEC.md", { encoding: "utf-8" });
+    const swarmSpec = execSync("git show origin/development:SWARM_SPEC.md", { encoding: "utf-8" });
 
     console.log(chalk.cyan("🔍 Fetching open Pull Requests..."));
     let prsJson = "";

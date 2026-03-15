@@ -41,13 +41,13 @@ async function main() {
         console.log(chalk.cyan(`Checking out PR #${pr.number}...`));
         execSync(`gh pr checkout ${pr.number}`);
         
-        console.log(chalk.cyan("🔍 Fetching mission parameters (CLAUDE.md & SPEC.md) from main..."));
-        execSync("git fetch origin main");
-        const claudeMd = execSync("git show origin/main:CLAUDE.md", { encoding: "utf-8" });
-        const specMd = execSync("git show origin/main:SPEC.md", { encoding: "utf-8" });
+        console.log(chalk.cyan("🔍 Fetching mission parameters (CLAUDE.md & SPEC.md) from development..."));
+        execSync("git fetch origin development");
+        const claudeMd = execSync("git show origin/development:CLAUDE.md", { encoding: "utf-8" });
+        const specMd = execSync("git show origin/development:SPEC.md", { encoding: "utf-8" });
         
         // Get diff
-        const diff = execSync("git diff main...HEAD", { encoding: "utf-8" });
+        const diff = execSync("git diff development...HEAD", { encoding: "utf-8" });
 
         const systemPrompt = `You are the "Principal Integrity Officer" for SimpleClaw.
 Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
@@ -109,11 +109,11 @@ ${diff}
             console.log(chalk.cyan("Merging PR (Squash Mode)..."));
             execSync(`gh pr merge ${pr.number} --squash --delete-branch`);
             
-            // Go back to main
-            execSync("git checkout main");
-            execSync("git pull origin main");
+            // Go back to development
+            execSync("git checkout development");
+            execSync("git pull origin development");
             
-            // Note: If we want to add a note to CLAUDE.md on main AFTER merge:
+            // Note: If we want to add a note to CLAUDE.md on development AFTER merge:
             const claudeMdPath = path.resolve(process.cwd(), "CLAUDE.md");
             const updatedClaudeMd = fs.readFileSync(claudeMdPath, "utf-8");
             const date = new Date().toISOString().split('T')[0];
@@ -127,7 +127,7 @@ ${diff}
             
             execSync('git add CLAUDE.md');
             execSync(`git commit -m "docs: Note merge of PR #${pr.number} in CLAUDE.md"`);
-            execSync('git push origin main');
+            execSync('git push origin development');
             
             console.log(chalk.green("✅ PR Merged and CLAUDE.md updated."));
         } else {
@@ -135,8 +135,8 @@ ${diff}
             execSync(`gh pr close ${pr.number} --comment "Closing based on review: ${review.comment}"`);
         }
 
-        // Clean up and back to main
-        execSync("git checkout main");
+        // Clean up and back to development
+        execSync("git checkout development");
     }
 }
 
