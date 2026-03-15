@@ -1,0 +1,12 @@
+.git
+node_modules
+terraform
+docs
+logs
+cli
+*.db
+*.log
+.env
+.agent
+.gemini
+_agent

@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  bot-worker:
+    image: gcr.io/simpleclaw-490004/simpleclaw-bot:latest
+    container_name: simpleclaw-bot
+    restart: unless-stopped
+    # Using host network mode allows the agent to reach the internet 
+    # and local ports more easily on many Linux distros.
+    network_mode: host 
+    env_file: ../.env
+    environment:
+      - ROLE=worker
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/server/node_modules
+      - /app/worker/node_modules
+
+  management-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: simpleclaw-ui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: ../.env
+    environment:
+      - ROLE=server
+    volumes:
+      - ../server/local.db:/app/server/local.db
+      - ../.agents/local.db:/app/local.db
+    # Disabled by default to save RAM on production
+    profiles: ["ui"] 

@@ -32,3 +32,53 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Finder (MacOS) folder config
 .DS_Store
+**.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+_override.tf
+_override.tf.json
+.terraformrc
+terraform.rc
+**.tar
+
+# 🔒 Git Lock: Protect root directory from new top-level entries
+/*
+!/.agents/
+!/cli/
+!/docker/
+!/docs/
+!/electron/
+!/server/
+!/src/
+!/terraform/
+!/worker/
+!/.env.example
+!/.gitignore
+!/README.md
+!/CLAUDE.md
+!/SPEC.md
+!/SWARM_SPEC.md
+!/EEW_SPEC.md
+!/bun.lock
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/runtime.test.ts
+!/loop/
+!/setup.sh
+!/.github/
+
+# memory (keep local unless explicitly shared)
+.agents/memory/
+
+# but track protocol-related memory if needed
+!/.agents/memory/memory.md

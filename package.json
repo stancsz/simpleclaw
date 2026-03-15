@@ -1,15 +1,67 @@
 {
-  "name": "/app",
+  "name": "simpleclaw",
+  "version": "0.1.0",
+  "description": "High-performance, local-first autonomous agent workstation",
+  "main": "electron/main.js",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.10",
+    "@types/node": "^25.4.0",
+    "@types/screenshot-desktop": "^1.15.0",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "scripts": {
-    "start": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts"
+    "start": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts",
+    "start:server": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=server",
+    "start:hybrid": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=hybrid",
+    "test": "bun test",
+    "test:plugins": "./scripts/test-plugins.sh",
+    "electron:dev": "NODE_ENV=development electron .",
+    "electron:build": "npm run build:server && electron-builder",
+    "build:server": "cd server && npm run build",
+    "package:win": "electron-builder --win",
+    "package:mac": "electron-builder --mac",
+    "package:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "agent-browser": "^0.17.1",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "openai": "^6.27.0",
+    "screenshot-desktop": "^1.15.3"
+  },
+  "build": {
+    "appId": "com.simpleclaw.app",
+    "productName": "SimpleClaw",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "src/**/*",
+      "cli/**/*",
+      ".agents/**/*",
+      "!**/node_modules/**/*",
+      "!**/.next/**/*",
+      "!**/dist/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development"
+    }
   }
 }
