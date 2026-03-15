@@ -106,8 +106,8 @@ ${diff}
 
         if (review.decision === "merge") {
             // Update CLAUDE.md with a merge note if requested
-            console.log(chalk.cyan("Merging PR..."));
-            execSync(`gh pr merge ${pr.number} --merge --delete-branch`);
+            console.log(chalk.cyan("Merging PR (Squash Mode)..."));
+            execSync(`gh pr merge ${pr.number} --squash --delete-branch`);
             
             // Go back to main
             execSync("git checkout main");
