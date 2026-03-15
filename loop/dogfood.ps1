@@ -67,10 +67,24 @@ function Log($msg) {
     Write-Host "--- [$([datetime]::Now.ToString('HH:mm:ss'))] $msg ---"
 }
 
-function Restore-ClaudeMd {
-    git ls-files --error-unmatch CLAUDE.md 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        git checkout -- CLAUDE.md | Out-Null
+function Update-AgentWorkspace($CycleNum, $Status) {
+    $claudePath = "CLAUDE.md"
+    if (-not (Test-Path $claudePath)) { return }
+
+    $timestamp = [datetime]::Now.ToString("yyyy-MM-dd HH:mm")
+    $statusIcon = if ($Status -eq 0) { "✅" } else { "❌ (exit $Status)" }
+    $entry = "- [$timestamp] Cycle #$CycleNum $statusIcon"
+
+    $content = Get-Content $claudePath -Raw
+    $marker = "# AGENT WORKSPACE (MODIFIABLE BY AGENT)"
+
+    if ($content -match [regex]::Escape($marker)) {
+        # Insert the new entry on the line immediately after the section header
+        $updated = $content -replace "(?m)^(# AGENT WORKSPACE \(MODIFIABLE BY AGENT\)[ \t]*)\r?\n", "`$1`n$entry`n"
+        Set-Content $claudePath $updated -NoNewline
+    } else {
+        # Marker missing — append section at end as a fallback
+        Add-Content $claudePath "`n$marker`n$entry"
     }
 }
 
@@ -129,7 +143,7 @@ while ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() -lt $EndEpoch) {
         Log "Cycle #$Cycle complete"
     }
 
-    Restore-ClaudeMd
+    Update-AgentWorkspace $Cycle $status
 
     if ($Once) { break }
 
