@@ -26,7 +26,7 @@ This directory contains the automation logic for SimpleClaw's autonomous develop
 ## Environment Variables Needed (GitHub Secrets)
 - `DEEPSEEK_API_KEY`: API key for DeepSeek (used for delegation reasoning).
 - `JULES_API_KEY`: Google Cloud API key for Jules (the development agent).
-- `GH_TOKEN`: Your GitHub PAT with repo permissions (secret named GH_TOKEN).
+- `GH_TOKEN`: Handled automatically by GitHub Actions (using the built-in `github.token`).
 
 ## Technical Details
 - Built with TypeScript and run via `tsx`.
