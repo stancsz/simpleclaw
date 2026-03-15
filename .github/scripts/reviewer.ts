@@ -46,8 +46,8 @@ async function main() {
         const claudeMd = execSync("git show origin/development:CLAUDE.md", { encoding: "utf-8" });
         const specMd = execSync("git show origin/development:SPEC.md", { encoding: "utf-8" });
         
-        // Get diff
-        const diff = execSync("git diff development...HEAD", { encoding: "utf-8" });
+        // Get diff against development
+        const diff = execSync("git diff origin/development...HEAD", { encoding: "utf-8" });
 
         const systemPrompt = `You are the "Principal Integrity Officer" for SimpleClaw.
 Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
