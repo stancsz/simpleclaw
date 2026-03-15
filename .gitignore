@@ -56,20 +56,28 @@ terraform.rc
 !/cli/
 !/docker/
 !/docs/
+!/electron/
 !/server/
 !/src/
 !/terraform/
+!/worker/
 !/.env.example
 !/.gitignore
 !/README.md
+!/CLAUDE.md
+!/SPEC.md
+!/SWARM_SPEC.md
+!/EEW_SPEC.md
 !/bun.lock
 !/package.json
 !/package-lock.json
 !/tsconfig.json
+!/runtime.test.ts
 !/loop/
 !/setup.sh
 
-# memory
+# memory (keep local unless explicitly shared)
 .agents/memory/
 
-./*.md
+# but track protocol-related memory if needed
+!/.agents/memory/memory.md

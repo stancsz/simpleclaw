@@ -6,6 +6,13 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_DELEGATION_SCOPE = "worker:opencode";
 const DEFAULT_RETRY_BUDGET = 1;
 
+/**
+ * opencode-worker.ts
+ * 
+ * Sub-agent implementation for OpenCode.
+ * This is a prime example of SimpleClaw's Meta-Orchestration model:
+ * The core orchestrator delegates "heavy lifting" (coding, CLI work) to this sub-agent engine.
+ */
 export interface OpenCodeDelegationTask {
   objective: string;
   scope?: string[];

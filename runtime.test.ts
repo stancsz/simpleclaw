@@ -599,3 +599,86 @@ describe("screen capture plugin", () => {
     }
   });
 });
+
+describe("GitHub plugin", () => {
+  test("plugin is properly registered as extension", async () => {
+    // Import the plugin using ES module syntax
+    const { plugin } = await import("./src/plugins/github.ts");
+    
+    expect(plugin.name).toBe("github");
+    expect(plugin.type).toBe("skill");
+    expect(typeof plugin.execute).toBe("function");
+  });
+
+  test("plugin validates required parameters", async () => {
+    const { plugin } = await import("./src/plugins/github.ts");
+    
+    // Test missing query parameter for search_repos
+    const result = await plugin.execute({ action: "search_repos" });
+    expect(result).toContain("ERROR: 'query' parameter is required");
+  });
+
+  test("plugin returns error for unknown action", async () => {
+    const { plugin } = await import("./src/plugins/github.ts");
+    
+    const result = await plugin.execute({ action: "unknown_action" });
+    expect(result).toContain("ERROR: Unknown GitHub action");
+    expect(result).toContain("Available actions");
+  });
+});
+
+describe("Google Drive plugin", () => {
+  test("plugin is properly registered as extension", async () => {
+    // Import the plugin using ES module syntax
+    const { plugin } = await import("./src/plugins/gdrive.ts");
+    
+    expect(plugin.name).toBe("gdrive");
+    expect(plugin.type).toBe("skill");
+    expect(typeof plugin.execute).toBe("function");
+  });
+
+  test("plugin validates required parameters", async () => {
+    const { plugin } = await import("./src/plugins/gdrive.ts");
+    
+    // Test missing parameters for create_file
+    const result = await plugin.execute({ action: "create_file" });
+    // The plugin first checks for CLI tools, so we expect that message
+    expect(result).toContain("Google Drive CLI tools not installed");
+  });
+
+  test("plugin returns error for unknown action", async () => {
+    const { plugin } = await import("./src/plugins/gdrive.ts");
+    
+    const result = await plugin.execute({ action: "unknown_action" });
+    // The plugin first checks for CLI tools, so we expect that message
+    expect(result).toContain("Google Drive CLI tools not installed");
+  });
+});
+
+describe("Linear plugin", () => {
+  test("plugin is properly registered as extension", async () => {
+    // Import the plugin using ES module syntax
+    const { plugin } = await import("./src/plugins/linear.ts");
+    
+    expect(plugin.name).toBe("linear");
+    expect(plugin.type).toBe("skill");
+    expect(typeof plugin.execute).toBe("function");
+  });
+
+  test("plugin validates required parameters", async () => {
+    const { plugin } = await import("./src/plugins/linear.ts");
+    
+    // Test missing parameters for create_issue
+    const result = await plugin.execute({ action: "create_issue" });
+    // The plugin first checks for setup, so we expect that message
+    expect(result).toContain("Linear integration requires setup");
+  });
+
+  test("plugin returns error for unknown action", async () => {
+    const { plugin } = await import("./src/plugins/linear.ts");
+    
+    const result = await plugin.execute({ action: "unknown_action" });
+    // The plugin first checks for setup, so we expect that message
+    expect(result).toContain("Linear integration requires setup");
+  });
+});

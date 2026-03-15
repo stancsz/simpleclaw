@@ -19,8 +19,12 @@ export async function loadPlugins() {
         const pluginBaseName = file.replace(/\.(ts|js)$/, "");
         const envVarName = `ENABLE_${pluginBaseName.toUpperCase()}`;
         
-        if (process.env[envVarName] !== "true") {
-          console.log(`Skipping plugin ${file} (Disabled via ${envVarName})`);
+        // Default to true for core plugins, false for optional ones
+        const isCorePlugin = ["browser", "screencap", "github", "gdrive", "linear"].includes(pluginBaseName.toLowerCase());
+        const isEnabled = process.env[envVarName] === "true" || (isCorePlugin && process.env[envVarName] !== "false");
+        
+        if (!isEnabled) {
+          console.log(`Skipping plugin ${file} (Disabled via ${envVarName} or default)`);
           continue;
         }
 

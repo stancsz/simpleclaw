@@ -1,3 +1,11 @@
+/**
+ * agent.ts
+ * 
+ * SimpleClaw Meta-Orchestrator Core.
+ * This file implements the main reasoning loop for the orchestrator.
+ * It is responsible for parsing intent, coordinating visibility of sub-agents, 
+ * and delegating tasks to workers (muscle) rather than performing heavy lifting themselves.
+ */
 import { loadSkillsContext } from "./skills.ts";
 import { loadLongTermMemory } from "./memory.ts";
 import {

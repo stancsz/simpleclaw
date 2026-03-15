@@ -4,8 +4,28 @@ import type { Extension } from "../core/extensions.ts";
 export const plugin: Extension = {
   name: "browser",
   type: "skill",
-  execute: async (args: { action: string; url?: string; selector?: string; text?: string }) => {
-    const { action, url, selector, text } = args;
+  execute: async (args: { action: string; url?: string; selector?: string; text?: string; path?: string }) => {
+    const { action, url, selector, text, path } = args;
+    
+    // Validate required parameters before attempting execution
+    switch (action) {
+      case "navigate":
+        if (!url) return "ERROR: 'url' parameter is required for navigate action";
+        break;
+      case "click":
+        if (!selector) return "ERROR: 'selector' parameter is required for click action";
+        break;
+      case "type":
+        if (!selector) return "ERROR: 'selector' parameter is required for type action";
+        if (!text) return "ERROR: 'text' parameter is required for type action";
+        break;
+      case "screenshot":
+        if (!path) return "ERROR: 'path' parameter is required for screenshot action";
+        break;
+      case "extract":
+        if (!selector) return "ERROR: 'selector' parameter is required for extract action";
+        break;
+    }
     
     // Fallback simple fetch for basic navigation if browser is blocked
     const simpleFetch = async (targetUrl: string) => {
@@ -56,13 +76,16 @@ export const plugin: Extension = {
           command += `snapshot`;
           break;
         case "screenshot":
-          command += `screenshot`;
+          command += `screenshot "${path}"`;
           break;
         case "wait":
           command += `snapshot`; 
           break;
+        case "extract":
+          command += `extract "${selector}"`;
+          break;
         default:
-          return `Unknown browser action: ${action}`;
+          return `ERROR: Unknown browser action: ${action}\nAvailable actions: navigate, click, type, snapshot, screenshot, wait, extract`;
       }
 
       const userAgents = [

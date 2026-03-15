@@ -21,6 +21,7 @@
     "start:server": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=server",
     "start:hybrid": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=hybrid",
     "test": "bun test",
+    "test:plugins": "./scripts/test-plugins.sh",
     "electron:dev": "NODE_ENV=development electron .",
     "electron:build": "npm run build:server && electron-builder",
     "build:server": "cd server && npm run build",

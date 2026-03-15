@@ -380,28 +380,67 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
     extensionCapabilities.push({
       name: extension.name,
       description: `Execute ${extension.name} skill`,
-      inputSchema: {
-        type: "object",
-        properties: {
-          action: { type: "string" },
-          // Add other properties dynamically based on extension type
-          ...(extension.name === "browser" ? {
-            url: { type: "string" },
-            selector: { type: "string" },
-            text: { type: "string" },
-          } : {}),
-          ...(extension.name === "screencap" ? {
-            format: { type: "string", enum: ["png", "jpeg", "jpg"] },
-            filename: { type: "string" },
-            display: { type: "number" },
-            screen: { type: "number" },
-          } : {}),
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string" },
+            // Add other properties dynamically based on extension type
+            ...(extension.name === "browser" ? {
+              url: { type: "string" },
+              selector: { type: "string" },
+              text: { type: "string" },
+            } : {}),
+            ...(extension.name === "screencap" ? {
+              format: { type: "string", enum: ["png", "jpeg", "jpg"] },
+              filename: { type: "string" },
+              display: { type: "number" },
+              screen: { type: "number" },
+            } : {}),
+            ...(extension.name === "github" ? {
+              owner: { type: "string" },
+              repo: { type: "string" },
+              path: { type: "string" },
+              title: { type: "string" },
+              body: { type: "string" },
+              head: { type: "string" },
+              base: { type: "string" },
+              pull_number: { type: "string" },
+              issue_number: { type: "string" },
+              query: { type: "string" },
+              content: { type: "string" },
+              branch: { type: "string" },
+              state: { type: "string" },
+              labels: { type: "string" },
+            } : {}),
+            ...(extension.name === "gdrive" ? {
+              query: { type: "string" },
+              file_id: { type: "string" },
+              folder_id: { type: "string" },
+              name: { type: "string" },
+              content: { type: "string" },
+              mime_type: { type: "string" },
+              parent_id: { type: "string" },
+            } : {}),
+            ...(extension.name === "linear" ? {
+              query: { type: "string" },
+              issue_id: { type: "string" },
+              title: { type: "string" },
+              description: { type: "string" },
+              team_id: { type: "string" },
+              state: { type: "string" },
+              label: { type: "string" },
+              assignee_id: { type: "string" },
+              project_id: { type: "string" },
+            } : {}),
+          },
+          required: ["action"],
         },
-        required: ["action"],
-      },
       category: "extension",
       runtimeModes: extension.runtimeModes ?? [mode],
-      approvalClass: extension.name === "browser" ? "network" : "default",
+      approvalClass: extension.name === "browser" ? "network" : 
+                    extension.name === "github" ? "network" :
+                    extension.name === "gdrive" ? "network" :
+                    extension.name === "linear" ? "network" : "default",
       handler: async (args) => ({
         status: "completed",
         content: JSON.stringify(await extension.execute(args)),
