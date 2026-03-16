@@ -55,13 +55,21 @@ async function main() {
         // Get diff against the PR's target base
         const diff = execSync(`git diff origin/${pr.baseRefName}...HEAD`, { encoding: "utf-8" });
 
+        // Read test results if they exist
+        let testResults = "No test results available.";
+        const testResultsPath = path.resolve(process.cwd(), "test_results.log");
+        if (fs.existsSync(testResultsPath)) {
+            testResults = fs.readFileSync(testResultsPath, "utf-8");
+            console.log(chalk.cyan(`📝 Including test results (size: ${testResults.length} bytes)...`));
+        }
+
         if (!diff.trim()) {
             console.log(chalk.yellow(`⚠️ PR #${pr.number} has no diff against development. Skipping...`));
             continue;
         }
 
         const systemPrompt = `You are the "Principal Integrity Officer" for SimpleClaw.
-Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
+Your job is to review Pull Requests and decide whether to MERGE, CLOSE, or FIX them.
 
 ### DECISION CRITERIA:
 1. **Meaningful Work**: Does this PR actually advance the mission described in CLAUDE.md?
@@ -70,6 +78,15 @@ Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
 4. **Verification**: Is there evidence of testing in the code or a validation log in the PR?
 5. **CLAUDE.md Update**: Did Jules (the sub-agent) update CLAUDE.md correctly?
 6. **STRICT ISOLATION**: REJECT any PR that modifies files in the '.github' directory. This directory is reserved for human orchestration rules.
+
+### HUMAN-LIKE BEHAVIOR:
+- **Proactive & Independent**: Like a senior engineer, don't just be a passive gatekeeper. If you see small issues that prevent merging (lint, missing imports, typos, small bugs), use the 'fix' decision to provide corrections. 
+- **Mission First**: Your primary goal is to advance the mission. If a PR is 90% there and helpful, FIX it and MERGE it. Only CLOSE if it's fundamentally broken, harmful, or out of scope.
+
+### DECISION TYPES:
+- **merge**: PR is high quality and ready to go.
+- **close**: PR is fundamentally flawed, off-mission, or violates security rules.
+- **fix**: PR is 90% there but has small errors (lint, small logic bugs, typos, missing imports). Choose this to automatically apply fixes and merge.
 
 ### PROJECT CONTEXT:
 - **CLAUDE.md (Mission/Workplace)**:
@@ -81,13 +98,24 @@ ${specMd}
 ### PR DIFF:
 ${diff}
 
+### TEST RESULTS:
+${testResults}
+
 ### OUTPUT FORMAT (JSON ONLY):
 {
   "thought": "Deep reasoning for the decision (internal).",
-  "decision": "merge" | "close",
-  "summary": "A 1-sentence punchy summary of the impact (e.g., 'Implemented KMS encryption for worker secrets').",
-  "comment": "Final public review comment for the PR, explaining the decision clearly."
-}`;
+  "decision": "merge" | "close" | "fix",
+  "summary": "A 1-sentence punchy summary of the impact.",
+  "comment": "Final public review comment for the PR.",
+  "fixes": [
+    {
+      "file": "relative/path/to/file",
+      "explanation": "Why this fix is needed.",
+      "original": "Exact string to be replaced. Must be unique in the file.",
+      "replacement": "New string to insert."
+    }
+  ]
+} (If decision is not 'fix', leave 'fixes' as an empty array [])`;
 
         console.log(chalk.cyan(`🧠 Reviewing PR #${pr.number}...`));
         const reviewResponse = await llm.generate(systemPrompt, `Should we merge PR #${pr.number}?`);
@@ -102,10 +130,45 @@ ${diff}
             continue;
         }
 
-        console.log(chalk.white("Decision:"), review.decision === "merge" ? chalk.green("MERGE") : chalk.red("CLOSE"));
+        console.log(chalk.white("Decision:"), 
+            review.decision === "merge" ? chalk.green("MERGE") : 
+            review.decision === "fix" ? chalk.blue("FIX & MERGE") : chalk.red("CLOSE"));
         console.log(chalk.gray("Rationale:"), review.thought);
 
-        if (review.decision === "merge") {
+        if (review.decision === "merge" || review.decision === "fix") {
+            if (review.decision === "fix" && review.fixes && review.fixes.length > 0) {
+                console.log(chalk.blue(`🛠️  Applying ${review.fixes.length} fixes...`));
+                for (const fix of review.fixes) {
+                    try {
+                        const filePath = path.resolve(process.cwd(), fix.file);
+                        if (!fs.existsSync(filePath)) {
+                            console.warn(chalk.yellow(`⚠️ File not found: ${fix.file}`));
+                            continue;
+                        }
+                        let content = fs.readFileSync(filePath, "utf-8");
+                        if (!content.includes(fix.original)) {
+                            console.warn(chalk.yellow(`⚠️ Could not find original text in ${fix.file}. Skipping this fix.`));
+                            continue;
+                        }
+                        content = content.replace(fix.original, fix.replacement);
+                        fs.writeFileSync(filePath, content);
+                        console.log(chalk.gray(`  - Fixed: ${fix.file} (${fix.explanation})`));
+                    } catch (e: any) {
+                        console.error(chalk.red(`❌ Failed to apply fix to ${fix.file}: ${e.message}`));
+                    }
+                }
+
+                // Commit the fixes
+                try {
+                    execSync('git add .');
+                    execSync(`git commit -m "fix: Applied automated improvements during code review"`);
+                    console.log(chalk.cyan(`Pushing fixes to ${pr.headRefName}...`));
+                    execSync(`git push origin HEAD:${pr.headRefName}`);
+                } catch (e: any) {
+                    console.warn(chalk.yellow(`⚠️ Failed to push fixes: ${e.message}`));
+                }
+            }
+
             // Post the LLM-generated review comment as an approval log
             console.log(chalk.cyan("💬 Posting review comment..."));
             try {
