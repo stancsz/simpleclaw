@@ -144,6 +144,25 @@ export class DBClient {
     }
     return "";
   }
+
+  setPlatformUser(userId: string, supabaseUrl: string, encryptedServiceRole: string) {
+    if (this.isSupabase) return;
+    if (this.db) {
+        this.db.run(
+            `INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role) VALUES (?, ?, ?)
+             ON CONFLICT(user_id) DO UPDATE SET supabase_url = excluded.supabase_url, encrypted_service_role = excluded.encrypted_service_role`,
+            [userId, supabaseUrl, encryptedServiceRole]
+        );
+    }
+  }
+
+  getPlatformUser(userId: string): any {
+    if (this.isSupabase) return null;
+    if (this.db) {
+        return this.db.query(`SELECT * FROM platform_users WHERE user_id = ?`).get(userId);
+    }
+    return null;
+  }
 }
 
 export const getDbClient = () => {

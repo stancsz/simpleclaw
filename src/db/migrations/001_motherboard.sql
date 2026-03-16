@@ -70,3 +70,10 @@ CREATE TABLE IF NOT EXISTS skill_refs (
     is_active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS platform_users (
+    user_id TEXT PRIMARY KEY,
+    supabase_url TEXT NOT NULL,
+    encrypted_service_role TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
