@@ -1,4 +1,4 @@
-import * as self from './orchestrator';
+
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
@@ -98,7 +98,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     try {
         // Parse the intent into a swarm manifest using LLM
-        const manifest = await self.parseIntentToManifest(prompt, availableSkills);
+        const manifest = await parseIntentToManifest(prompt, availableSkills);
 
         // Validate the manifest
         if (!validateManifest(manifest, availableSkills)) {
