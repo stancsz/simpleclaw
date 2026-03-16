@@ -2,7 +2,7 @@
 import type { SwarmManifest, Task } from "./types.ts";
 import { DBClient } from "../db/client.ts";
 import { executeWorkerTask, type WorkerResult } from "../workers/template.ts";
-import { randomUUID } from "node:crypto";
+
 import {
   runAgentLoop,
   type AgentEvent,
@@ -379,7 +379,7 @@ export async function executeSwarmManifest(
       return result;
     } catch (error) {
        deferredResolvers.get(task.id)?.reject(error);
-       throw error;
+       // Error is already captured by deferred promise, no need to re-throw
     }
   };
 
