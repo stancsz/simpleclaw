@@ -93,18 +93,18 @@ ${diff}
         console.log(chalk.white("Decision:"), review.decision === "merge" ? chalk.green("MERGE") : chalk.red("CLOSE"));
         console.log(chalk.gray("Rationale:"), review.thought);
 
-        // 1. Post the LLM-generated review comment first
-        console.log(chalk.cyan("💬 Posting review comment..."));
-        try {
-            const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
-            fs.writeFileSync(commentFile, review.comment);
-            execSync(`gh pr comment ${pr.number} -F "${commentFile}"`);
-            fs.unlinkSync(commentFile);
-        } catch (e) {
-            console.warn(chalk.yellow("⚠️ Failed to post comment, proceeding anyway."));
-        }
-
         if (review.decision === "merge") {
+            // Post the LLM-generated review comment as an approval log
+            console.log(chalk.cyan("💬 Posting review comment..."));
+            try {
+                const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
+                fs.writeFileSync(commentFile, review.comment);
+                execSync(`gh pr comment ${pr.number} -F "${commentFile}"`);
+                fs.unlinkSync(commentFile);
+            } catch (e) {
+                console.warn(chalk.yellow("⚠️ Failed to post comment."));
+            }
+
             // Update CLAUDE.md with a merge note if requested
             console.log(chalk.cyan("Merging PR (Squash Mode)..."));
             execSync(`gh pr merge ${pr.number} --squash --delete-branch`);
@@ -132,7 +132,10 @@ ${diff}
             console.log(chalk.green("✅ PR Merged and CLAUDE.md updated."));
         } else {
             console.log(chalk.cyan("Closing PR..."));
-            execSync(`gh pr close ${pr.number} --comment "Closing based on review: ${review.comment}"`);
+            const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
+            fs.writeFileSync(commentFile, review.comment);
+            execSync(`gh pr close ${pr.number} -F "${commentFile}"`);
+            fs.unlinkSync(commentFile);
         }
 
         // Clean up and back to development
