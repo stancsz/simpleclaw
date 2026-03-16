@@ -90,12 +90,12 @@ async function main() {
         }
         
         console.log(chalk.cyan(`🔍 Fetching mission parameters from ${pr.baseRefName}...`));
-        execSync(`git fetch origin ${pr.baseRefName}`);
-        const claudeMd = execSync(`git show origin/${pr.baseRefName}:CLAUDE.md`, { encoding: "utf-8" });
-        const specMd = execSync(`git show origin/${pr.baseRefName}:SPEC.md`, { encoding: "utf-8" });
+        execSafe(`git fetch origin ${pr.baseRefName}`);
+        const claudeMd = execSafe(`git show origin/${pr.baseRefName}:CLAUDE.md`) || "Error reading CLAUDE.md";
+        const specMd = execSafe(`git show origin/${pr.baseRefName}:SPEC.md`) || "Error reading SPEC.md";
         
         // Get diff against the PR's target base
-        const diff = execSync(`git diff origin/${pr.baseRefName}...HEAD`, { encoding: "utf-8" });
+        const diff = execSafe(`git diff origin/${pr.baseRefName}...HEAD`) || "";
 
         // Read test results if they exist
         let testResults = "No test results available.";
@@ -124,6 +124,7 @@ Your job is to review Pull Requests and decide whether to MERGE, CLOSE, or FIX t
 ### HUMAN-LIKE BEHAVIOR:
 - **Proactive & Independent**: Like a senior engineer, don't just be a passive gatekeeper. If you see small issues that prevent merging (lint, missing imports, typos, small bugs), use the 'fix' decision to provide corrections. 
 - **Mission First**: Your primary goal is to advance the mission. If a PR is 90% there and helpful, FIX it and MERGE it. Only CLOSE if it's fundamentally broken, harmful, or out of scope.
+- **Delegate to Agents**: If a PR has complex failures that you cannot fix automatically (via the 'fix' decision), explicitly mention in your comment that the user can use their local sub-agents (e.g., \`opencode\`, \`jules\`) to resolve the issues (e.g., "Recommend using \`opencode\` to fix this logic bug").
 
 ### DECISION TYPES:
 - **merge**: PR is high quality and ready to go.
