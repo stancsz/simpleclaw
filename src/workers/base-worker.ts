@@ -1,6 +1,7 @@
 import * as ff from '@google-cloud/functions-framework';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DBClient } from '../db/client';
 
 /**
  * Worker Template for Phase 0
@@ -44,6 +45,21 @@ async function mockLoadSkill(skillName: string): Promise<string> {
 // Write to Mock Sovereign Motherboard
 async function mockWriteToMotherboard(session_id: string, task: string, result: any) {
     console.log(`[Worker] Writing results to Sovereign Motherboard for session: ${session_id}`);
+
+    // Phase 0: If local SQLite DB is available, use it
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('sqlite://')) {
+        const dbClient = new DBClient(process.env.DATABASE_URL);
+        const id = crypto.randomUUID();
+        // Here we just write directly to simulate DBClient task completion function
+        // (Assuming a simple direct query for simplicity if DBClient doesn't have it yet)
+        if (dbClient['db']) {
+            dbClient['db'].run(
+                `INSERT INTO task_results (id, session_id, skill_ref, status, output) VALUES (?, ?, ?, ?, ?)`,
+                [id, session_id, task, 'success', JSON.stringify(result)]
+            );
+            return;
+        }
+    }
 
     let db: any[] = [];
     if (fs.existsSync(MOCK_SUPABASE_FILE)) {

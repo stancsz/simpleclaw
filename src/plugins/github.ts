@@ -27,13 +27,6 @@ export const plugin: Extension = {
     const { action, owner, repo, path, title, body, head, base, pull_number, issue_number, query, content, branch, state, labels } = args;
     
     try {
-      // Check if GitHub CLI is installed
-      try {
-        execSync("gh --version", { stdio: 'ignore' });
-      } catch (error) {
-        return "ERROR: GitHub CLI (gh) is not installed. Please install it from https://cli.github.com/";
-      }
-
       let command = "gh";
       let output = "";
 
@@ -112,6 +105,13 @@ export const plugin: Extension = {
         
         default:
           return `ERROR: Unknown GitHub action: ${action}. Available actions: search_repos, search_issues, search_code, get_file_contents, create_file, list_pull_requests, get_pull_request, create_pull_request, list_issues, create_issue, get_repo_info, clone_repo, check_auth`;
+      }
+
+      // Check if GitHub CLI is installed only if we have a valid action
+      try {
+        execSync("gh --version", { stdio: 'ignore' });
+      } catch (error) {
+        return "ERROR: GitHub CLI (gh) is not installed. Please install it from https://cli.github.com/";
       }
 
       console.log(`🐙 GitHub Skill: Executing "${command}"`);
