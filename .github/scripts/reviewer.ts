@@ -125,23 +125,37 @@ ${diff}
             execSync(`git checkout ${pr.baseRefName}`);
             execSync(`git pull origin ${pr.baseRefName}`);
             
-            // Note: If we want to add a note to CLAUDE.md on development AFTER merge:
+            // Update CLAUDE.md with a merge note
             const claudeMdPath = path.resolve(process.cwd(), "CLAUDE.md");
-            const updatedClaudeMd = fs.readFileSync(claudeMdPath, "utf-8");
             const date = new Date().toISOString().split('T')[0];
             const timestamp = new Date().toISOString().split('T')[1].substring(0, 5);
             // Use the LLM-generated summary for a better history log
             const note = `\n- [${date} ${timestamp}] Cycle Merged: ${review.summary} (#${pr.number})`;
-            
-            // Find the AGENT WORKSPACE section
-            const newContent = updatedClaudeMd.replace("## AGENT WORKSPACE (MODIFIABLE BY AGENT)", `## AGENT WORKSPACE (MODIFIABLE BY AGENT)${note}`);
-            fs.writeFileSync(claudeMdPath, newContent);
-            
-            execSync('git add CLAUDE.md');
-            execSync(`git commit -m "docs: Note merge of PR #${pr.number} in CLAUDE.md"`);
-            execSync(`git push origin ${pr.baseRefName}`);
-            
-            console.log(chalk.green("✅ PR Merged and CLAUDE.md updated."));
+
+            try {
+                // Find the AGENT WORKSPACE section - support both # and ## headers
+                const headerRegex = /^(#+)\s*AGENT WORKSPACE \(MODIFIABLE BY AGENT\)/m;
+                let newContent = fs.readFileSync(claudeMdPath, "utf-8");
+                
+                if (headerRegex.test(newContent)) {
+                    newContent = newContent.replace(headerRegex, (match) => `${match}${note}`);
+                    fs.writeFileSync(claudeMdPath, newContent);
+                    
+                    const diffCheck = execSync('git diff CLAUDE.md', { encoding: 'utf-8' });
+                    if (diffCheck.trim()) {
+                        execSync('git add CLAUDE.md');
+                        execSync(`git commit -m "docs: Note merge of PR #${pr.number} in CLAUDE.md"`);
+                        console.log(chalk.cyan(`Pushing CLAUDE.md update to ${pr.baseRefName}...`));
+                        execSync(`git push origin ${pr.baseRefName}`);
+                        console.log(chalk.green("✅ PR Merged and CLAUDE.md updated."));
+                    }
+                } else {
+                    console.warn(chalk.yellow("⚠️ Could not find AGENT WORKSPACE section in CLAUDE.md. Skipping history update."));
+                }
+            } catch (pushError: any) {
+                console.warn(chalk.red(`⚠️ Failed to update CLAUDE.md (likely branch protection on ${pr.baseRefName}):`), pushError.message);
+                console.log(chalk.yellow("Proceeding as the PR was already merged successfully."));
+            }
         } else {
             console.log(chalk.cyan("Closing PR..."));
             const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
