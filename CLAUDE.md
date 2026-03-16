@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-16 18:56] Cycle #24 ✅ Implemented real LLM intent parsing for orchestrator
 - [2026-03-16 18:30] Cycle #23 ✅ Implemented Move 3: Worker Dispatch & Execution Loop. Added `executeSwarmManifest` DAG scheduler in `src/core/dispatcher.ts`, created `src/workers/template.ts` with `executeWorkerTask` (idempotency, JIT skill loading, credential fetch, result logging), extended DBClient with `logTaskResult`, and added comprehensive unit tests in `src/workers/worker.test.ts`.
 - [2026-03-16 17:58] Cycle #22 ✅ Implemented KMS Credential Flow for Move 6: Created `src/security/kms.ts` wrapper (AES-256-GCM local/GCP selector), `src/security/onboarding.ts` implementation, local `platform_users` table in `src/db/migrations/001_motherboard.sql` + DBClient interactions, and `src/security/kms.test.ts` for comprehensive encryption/decryption validation and Worker lifecycle simulation.
 - [2026-03-16] Cycle #21 ✅ Implemented Move 2: Sovereign Motherboard SQL Schema & Local DB via `bun:sqlite` with full table migrations (`001_motherboard.sql`), a `DBClient` wrapper, modified `orchestrator.ts` to checkpoint user sessions, and comprehensive local database tests in `db.test.ts`.
@@ -56,7 +57,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - Core work: Build the Orchestrator Cloud Function, Worker dispatch layer, KMS credential encryption flow, and Sovereign Motherboard SQL schema
 
 ## BACKLOG (Swarm Architecture)
-- [x] Real LLM Intent Parsing
+- [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
