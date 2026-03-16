@@ -44,21 +44,49 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [2026-03-15] Cycle #17 ✅ Fixed cross-platform compatibility in plugin test runner - now works seamlessly on Windows Git Bash
 
 ## CURRENT TASK
-**Mission pivot: SimpleClaw is now a swarm orchestrator (see SWARM_SPEC.md)**
+**Enterprise-Ready Core Loop — Local tests must pass before merge.**
 
-- Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
-- `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Build the Orchestrator Cloud Function, Worker dispatch layer, KMS credential encryption flow, and Sovereign Motherboard SQL schema
+> Principle: Use local equivalents (SQLite for Supabase, file-based KMS for Cloud KMS, in-process workers for Cloud Functions). No mock stubs — real local tests.
 
-## BACKLOG (Swarm Architecture)
-- [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
-- [ ] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
-- [ ] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
-- [ ] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project
-- [ ] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
-- [ ] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
-- [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
-- [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- Architecture: `SWARM_SPEC.md` (v1.1) · Engineering: `SPEC.md`
+- Focus: Ship Moves 1–6 below. Every move requires passing `bun test` locally.
+
+## BACKLOG — High-Leverage Moves (Priority Order)
+
+### Move 1: Real LLM Intent Parsing ⬅️ START HERE
+- [ ] Replace `mockParseIntentToManifest()` in `orchestrator.ts` with real LLM call (OpenAI SDK)
+- [ ] Structured output → typed `SwarmManifest` · Validate DAG (acyclic, skills exist)
+- [ ] BYOK: `DEEPSEEK_API_KEY` / `OPENAI_API_KEY` from env
+- [ ] **Tests** (`src/core/orchestrator.test.ts`): valid prompt → valid manifest, missing key → graceful error, cyclic DAG → rejected
+
+### Move 2: Motherboard SQL Schema + Local DB
+- [ ] Extract SQL from SWARM_SPEC §9.2 → `src/db/schema.sql` + migration runner
+- [ ] `src/db/client.ts` — thin DB wrapper (SQLite local / Supabase prod)
+- [ ] Wire orchestrator to checkpoint sessions to `orchestrator_sessions`
+- [ ] **Tests** (`src/db/db.test.ts`): migration applies, session CRUD, idempotency guard, audit log writes — all on **SQLite** (`bun:sqlite`)
+
+### Move 3: Worker Dispatch + Execution Loop
+- [ ] `src/workers/template.ts` — Worker lifecycle: Boot → Skill → Credential → Execute → Write → Terminate
+- [ ] Wire `dispatcher.ts` to map DAG steps → Worker invocations
+- [ ] `transaction_log` idempotency check before WRITE ops
+- [ ] **Tests** (`src/workers/worker.test.ts`): ordered DAG execution, parallel workers, idempotent writes, failure handling — all **in-process** (no Cloud Functions)
+
+### Move 4: Realign Terraform to Serverless
+- [ ] Replace e2-micro VM with `google_cloudfunctions2_function` + KMS key ring + IAM
+- [ ] **Tests**: `terraform validate` passes, `terraform plan` with dummy project → no errors
+
+### Move 5: End-to-End Integration Test
+- [ ] `tests/e2e/intent-to-result.test.ts` — full loop: Intent → Parse → Approve → Workers → Results
+- [ ] Local SQLite + mocked LLM + in-process workers · <10s, no network calls
+- [ ] Add to CI: run on every PR
+
+### Move 6: KMS Credential Flow
+- [ ] `src/security/kms.ts` — encrypt/decrypt (local: Node.js `crypto` AES-256-GCM, prod: GCP KMS via `KMS_PROVIDER` env flag)
+- [ ] `src/security/onboarding.ts` — accept key, encrypt, store ciphertext
+- [ ] **Tests** (`src/security/kms.test.ts`): roundtrip, tampered ciphertext fails, worker lifecycle memory safety
+
+### Quick Wins
+- [ ] Fix `package-lock.json` sync · Add `bun test` to CI · Add `GET /health` endpoint · Pin Node version
 
 ## DISCOVERY LOG
 - The project is currently Bun-centric for the core engine.
