@@ -81,7 +81,13 @@ async function main() {
 
         // Checkout PR to examine it
         console.log(chalk.cyan(`Checking out PR #${pr.number}...`));
-        execSync(`gh pr checkout ${pr.number}`);
+        execSafe("git reset --hard HEAD"); // Clear any changes from npm/bun install steps
+        const checkoutResult = execSafe(`gh pr checkout ${pr.number}`);
+        
+        if (checkoutResult === null) {
+            console.error(chalk.red(`❌ Failed to checkout PR #${pr.number}. Skipping...`));
+            continue;
+        }
         
         console.log(chalk.cyan(`🔍 Fetching mission parameters from ${pr.baseRefName}...`));
         execSync(`git fetch origin ${pr.baseRefName}`);
