@@ -5,7 +5,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock the LLM call before importing orchestrator
-import * as llmModule from "../../src/core/llm";
 import { SwarmManifest } from "../../src/core/types";
 
 const mockManifest: SwarmManifest = {
