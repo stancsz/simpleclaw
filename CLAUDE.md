@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-16 19:15] Cycle #25 ✅ Implemented Phase 0 Minimal UI: Created `server/src/app/page.tsx` dashboard, `PlanDisplay` and `ExecutionMonitor` components.
 - [2026-03-16 18:56] Cycle #24 ✅ Implemented real LLM intent parsing for orchestrator
 - [2026-03-16 18:30] Cycle #23 ✅ Implemented Move 3: Worker Dispatch & Execution Loop. Added `executeSwarmManifest` DAG scheduler in `src/core/dispatcher.ts`, created `src/workers/template.ts` with `executeWorkerTask` (idempotency, JIT skill loading, credential fetch, result logging), extended DBClient with `logTaskResult`, and added comprehensive unit tests in `src/workers/worker.test.ts`.
 - [2026-03-16 17:58] Cycle #22 ✅ Implemented KMS Credential Flow for Move 6: Created `src/security/kms.ts` wrapper (AES-256-GCM local/GCP selector), `src/security/onboarding.ts` implementation, local `platform_users` table in `src/db/migrations/001_motherboard.sql` + DBClient interactions, and `src/security/kms.test.ts` for comprehensive encryption/decryption validation and Worker lifecycle simulation.
@@ -63,7 +64,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
 - [ ] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
-- [ ] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
+- [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [ ] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
