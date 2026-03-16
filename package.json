@@ -11,7 +11,9 @@
     "@types/node": "^25.4.0",
     "@types/screenshot-desktop": "^1.15.0",
     "electron": "^35.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "chalk": "^5.3.0",
+    "tsx": "^4.19.1"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -27,21 +29,16 @@
     "build:server": "cd server && npm run build",
     "package:win": "electron-builder --win",
     "package:mac": "electron-builder --mac",
-    "package:linux": "electron-builder --linux",
-    "build:worker": "bun build ./src/workers/base-worker.ts --outfile ./dist/workers/index.js --target=node",
-    "gcp-build": "bun build ./src/workers/base-worker.ts --outfile ./dist/workers/index.js --target=node",
-    "start:worker": "npx @google-cloud/functions-framework --target=workerHandler --signature-type=http --source=./dist/workers",
-    "setup:db": "bun run src/db/setup.ts"
+    "package:linux": "electron-builder --linux"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^5.0.2",
     "agent-browser": "^0.17.1",
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
-    "openai": "^6.29.0",
+    "openai": "^6.27.0",
     "screenshot-desktop": "^1.15.3",
-    "yaml": "^2.8.2",
-    "zod": "^4.3.6"
+    "yaml": "^2.8.2"
   },
   "build": {
     "appId": "com.simpleclaw.app",

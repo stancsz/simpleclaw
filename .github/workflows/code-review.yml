@@ -1,6 +1,9 @@
 name: Smart Code Review
 
 on:
+  pull_request:
+    branches: [ development ]
+    types: [ opened, synchronize, reopened ]
   schedule:
     - cron: "0 * * * *" # Runs every hour at minute 0
   workflow_dispatch: # Allows manual trigger
@@ -21,16 +24,23 @@ jobs:
           fetch-depth: 0
           ref: development
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "22"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install Dependencies
         run: |
-          npm install -g tsx chalk openai dotenv
-          if [ -f package.json ]; then npm ci || npm install; fi
+          if [ -f package.json ]; then bun install --frozen-lockfile || npm ci || npm install; fi
+
+      - name: Run Tests
+        continue-on-error: true
+        run: |
+          if [ -f package.json ]; then
+            bun test > test_results.log 2>&1 || true
+          else
+            echo "No package.json found, skipping tests." > test_results.log
+          fi
 
       - name: Run Code Review
         env:
