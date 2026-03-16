@@ -94,7 +94,7 @@ export class DBClient {
     if (this.db) {
         this.db.run(
             `INSERT INTO transaction_log (idempotency_key, status, result) VALUES (?, ?, ?)
-             ON CONFLICT(idempotency_key) DO UPDATE SET status = excluded.status, result = excluded.result, created_at = CURRENT_TIMESTAMP`,
+             ON CONFLICT(idempotency_key) DO UPDATE SET status = excluded.status, result = excluded.result`,
             [key, status, JSON.stringify(result)]
         );
     }
