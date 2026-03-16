@@ -104,6 +104,7 @@ export class JulesClient {
                 source: sourceName,
                 githubRepoContext: {
                     startingBranch: branch,
+                    targetBranch: branch,
                 },
             },
             automationMode: "AUTO_CREATE_PR",
