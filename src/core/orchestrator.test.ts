@@ -39,15 +39,20 @@ describe("Orchestrator Cloud Function", () => {
         expect(statusCode).toBe(200);
         expect(responseBody).toBeDefined();
         expect(responseBody.status).toBe('success');
-        expect(responseBody.plan).toBeDefined();
-        expect(responseBody.plan.intent_parsed).toBe("every night Get shopify orders and post to slack");
-        expect(responseBody.plan.schedule).toBe("0 2 * * *");
-        expect(responseBody.plan.skills_required).toContain('shopify-order-sync');
-        expect(responseBody.plan.skills_required).toContain('slack-digest-poster');
-        expect(responseBody.plan.credentials_required).toContain('shopify_api_key');
-        expect(responseBody.plan.credentials_required).toContain('slack_bot_token');
-        expect(responseBody.plan.steps).toBeDefined();
-        expect(responseBody.plan.steps.length).toBe(2);
+        expect(responseBody.pda).toBeDefined();
+        expect(responseBody.pda.status).toBe('waiting_approval');
+        expect(responseBody.pda.read_operations).toBe(2);
+        expect(responseBody.pda.write_operations).toBe(1);
+        expect(responseBody.pda.plan.intent_parsed).toBe("every night Get shopify orders and post to slack");
+        expect(responseBody.pda.plan.schedule).toBe("0 2 * * *");
+        expect(responseBody.pda.plan.skills_required).toContain('shopify-order-sync');
+        expect(responseBody.pda.plan.skills_required).toContain('slack-digest-poster');
+        expect(responseBody.pda.plan.credentials_required).toContain('shopify_api_key');
+        expect(responseBody.pda.plan.credentials_required).toContain('slack_bot_token');
+        expect(responseBody.pda.plan.steps).toBeDefined();
+        expect(responseBody.pda.plan.steps.length).toBe(3);
+        expect(responseBody.pda.plan.steps[2].depends_on).toContain('step_1');
+        expect(responseBody.pda.plan.steps[2].depends_on).toContain('step_2');
         expect(responseBody.yaml).toBeDefined();
         expect(responseBody.yaml).toContain('intent_parsed: every night Get shopify orders and post to slack');
         expect(responseBody.yaml).toContain('action_type: READ');
@@ -85,9 +90,11 @@ describe("Orchestrator Cloud Function", () => {
         orchestratorHandler(req, res);
 
         expect(statusCode).toBe(200);
-        expect(responseBody.plan.skills_required).toContain('gmail-drafter');
-        expect(responseBody.plan.credentials_required).toContain('google_oauth_token');
-        expect(responseBody.plan.steps.length).toBe(1);
+        expect(responseBody.pda.plan.skills_required).toContain('gmail-drafter');
+        expect(responseBody.pda.plan.credentials_required).toContain('google_oauth_token');
+        expect(responseBody.pda.plan.steps.length).toBe(3);
+        expect(responseBody.pda.read_operations).toBe(2);
+        expect(responseBody.pda.write_operations).toBe(1);
     });
 
     test("handles valid POST request with generic intent", () => {
@@ -121,10 +128,13 @@ describe("Orchestrator Cloud Function", () => {
         orchestratorHandler(req, res);
 
         expect(statusCode).toBe(200);
-        expect(responseBody.plan.skills_required).toContain('generic-web-search');
-        expect(responseBody.plan.credentials_required).toHaveLength(0);
-        expect(responseBody.plan.steps.length).toBe(1);
-        expect(responseBody.plan.steps[0].action_type).toBe('READ');
+        expect(responseBody.pda.plan.skills_required).toContain('generic-web-search');
+        expect(responseBody.pda.plan.credentials_required).toHaveLength(0);
+        expect(responseBody.pda.plan.steps.length).toBe(3);
+        expect(responseBody.pda.plan.steps[0].action_type).toBe('READ');
+        expect(responseBody.pda.plan.steps[2].action_type).toBe('WRITE');
+        expect(responseBody.pda.read_operations).toBe(2);
+        expect(responseBody.pda.write_operations).toBe(1);
     });
 
     test("rejects non-POST methods", () => {
