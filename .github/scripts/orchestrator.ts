@@ -97,6 +97,7 @@ Delegated work MUST be meaningful and advance the project towards the "Beautiful
 
         if (result.success) {
             console.log(chalk.green.bold("✅ Success:"), result.message);
+            process.exit(0); // Exit immediately after delegation
         } else {
             console.error(chalk.red("❌ Jules delegation failed:"), result.message);
             process.exit(1);
