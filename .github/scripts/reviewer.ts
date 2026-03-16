@@ -171,7 +171,6 @@ ${testResults}
             review.decision === "fix" ? chalk.blue("FIX & MERGE") : chalk.red("CLOSE"));
         console.log(chalk.gray("Rationale:"), review.thought);
 
-<<<<<<< Updated upstream
         if (review.decision === "merge" || review.decision === "fix") {
             if (review.decision === "fix" && review.fixes && review.fixes.length > 0) {
                 console.log(chalk.blue(`🛠️  Applying ${review.fixes.length} fixes...`));
@@ -204,15 +203,14 @@ ${testResults}
                 } catch (e: any) {
                     console.warn(chalk.yellow(`⚠️ Failed to push fixes: ${e.message}`));
                 }
-=======
-        if (review.decision === "merge") {
+            }
+
             // Re-verify mergeability before final move
             const finalCheck = getPRMergeability(pr.number);
             if (finalCheck !== "MERGEABLE") {
                 console.warn(chalk.red(`🚫 PR #${pr.number} is no longer mergeable (Status: ${finalCheck}). Skipping merge.`));
                 execSync(`git checkout ${pr.baseRefName}`);
                 continue;
->>>>>>> Stashed changes
             }
 
             // Post the LLM-generated review comment as an approval log
