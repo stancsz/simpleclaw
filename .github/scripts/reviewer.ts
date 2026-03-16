@@ -8,11 +8,17 @@ import chalk from "chalk";
 async function main() {
     console.log(chalk.blue.bold("🔍 SimpleClaw Smart Code Review & Merge: Initializing..."));
 
+    // 0. Setup Git Identity
+    console.log(chalk.cyan("Setting up git identity..."));
+    execSync('git config --global user.name "simpleclaw"');
+    execSync('git config --global user.email "simpleclaw@users.noreply.github.com"');
+
     // 1. Fetch Open PRs
     console.log(chalk.cyan("Fetching open PRs..."));
     let prsJson = "";
     try {
-        prsJson = execSync("gh pr list --json number,title,author,headRefName,mergeable --state open", { encoding: "utf-8" });
+        // Fetch all open PRs
+        prsJson = execSync("gh pr list --json number,title,author,headRefName,mergeable,baseRefName --state open", { encoding: "utf-8" });
     } catch (e) {
         console.error(chalk.red("❌ Failed to fetch PRs. Make sure gh CLI is installed and authenticated."));
         process.exit(1);
@@ -41,13 +47,18 @@ async function main() {
         console.log(chalk.cyan(`Checking out PR #${pr.number}...`));
         execSync(`gh pr checkout ${pr.number}`);
         
-        console.log(chalk.cyan("🔍 Fetching mission parameters (CLAUDE.md & SPEC.md) from development..."));
-        execSync("git fetch origin development");
-        const claudeMd = execSync("git show origin/development:CLAUDE.md", { encoding: "utf-8" });
-        const specMd = execSync("git show origin/development:SPEC.md", { encoding: "utf-8" });
+        console.log(chalk.cyan(`🔍 Fetching mission parameters from ${pr.baseRefName}...`));
+        execSync(`git fetch origin ${pr.baseRefName}`);
+        const claudeMd = execSync(`git show origin/${pr.baseRefName}:CLAUDE.md`, { encoding: "utf-8" });
+        const specMd = execSync(`git show origin/${pr.baseRefName}:SPEC.md`, { encoding: "utf-8" });
         
-        // Get diff against development
-        const diff = execSync("git diff origin/development...HEAD", { encoding: "utf-8" });
+        // Get diff against the PR's target base
+        const diff = execSync(`git diff origin/${pr.baseRefName}...HEAD`, { encoding: "utf-8" });
+
+        if (!diff.trim()) {
+            console.log(chalk.yellow(`⚠️ PR #${pr.number} has no diff against development. Skipping...`));
+            continue;
+        }
 
         const systemPrompt = `You are the "Principal Integrity Officer" for SimpleClaw.
 Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
@@ -58,6 +69,7 @@ Your job is to review Pull Requests and decide whether to MERGE or CLOSE them.
 3. **No Technical Debt**: Reject PRs with 'TODO', 'FIXME', or obvious placeholders/stubs.
 4. **Verification**: Is there evidence of testing in the code or a validation log in the PR?
 5. **CLAUDE.md Update**: Did Jules (the sub-agent) update CLAUDE.md correctly?
+6. **STRICT ISOLATION**: REJECT any PR that modifies files in the '.github' directory. This directory is reserved for human orchestration rules.
 
 ### PROJECT CONTEXT:
 - **CLAUDE.md (Mission/Workplace)**:
@@ -93,25 +105,25 @@ ${diff}
         console.log(chalk.white("Decision:"), review.decision === "merge" ? chalk.green("MERGE") : chalk.red("CLOSE"));
         console.log(chalk.gray("Rationale:"), review.thought);
 
-        // 1. Post the LLM-generated review comment first
-        console.log(chalk.cyan("💬 Posting review comment..."));
-        try {
-            const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
-            fs.writeFileSync(commentFile, review.comment);
-            execSync(`gh pr comment ${pr.number} -F "${commentFile}"`);
-            fs.unlinkSync(commentFile);
-        } catch (e) {
-            console.warn(chalk.yellow("⚠️ Failed to post comment, proceeding anyway."));
-        }
-
         if (review.decision === "merge") {
+            // Post the LLM-generated review comment as an approval log
+            console.log(chalk.cyan("💬 Posting review comment..."));
+            try {
+                const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
+                fs.writeFileSync(commentFile, review.comment);
+                execSync(`gh pr comment ${pr.number} -F "${commentFile}"`);
+                fs.unlinkSync(commentFile);
+            } catch (e) {
+                console.warn(chalk.yellow("⚠️ Failed to post comment."));
+            }
+
             // Update CLAUDE.md with a merge note if requested
             console.log(chalk.cyan("Merging PR (Squash Mode)..."));
             execSync(`gh pr merge ${pr.number} --squash --delete-branch`);
             
-            // Go back to development
-            execSync("git checkout development");
-            execSync("git pull origin development");
+            // Go back to the base branch
+            execSync(`git checkout ${pr.baseRefName}`);
+            execSync(`git pull origin ${pr.baseRefName}`);
             
             // Note: If we want to add a note to CLAUDE.md on development AFTER merge:
             const claudeMdPath = path.resolve(process.cwd(), "CLAUDE.md");
@@ -127,16 +139,22 @@ ${diff}
             
             execSync('git add CLAUDE.md');
             execSync(`git commit -m "docs: Note merge of PR #${pr.number} in CLAUDE.md"`);
-            execSync('git push origin development');
+            execSync(`git push origin ${pr.baseRefName}`);
             
             console.log(chalk.green("✅ PR Merged and CLAUDE.md updated."));
         } else {
             console.log(chalk.cyan("Closing PR..."));
-            execSync(`gh pr close ${pr.number} --comment "Closing based on review: ${review.comment}"`);
+            const commentFile = path.resolve(process.cwd(), "pr_comment.tmp");
+            fs.writeFileSync(commentFile, review.comment);
+            // Post comment first (which supports -F)
+            execSync(`gh pr comment ${pr.number} -F "${commentFile}"`);
+            // Then close without redundancy
+            execSync(`gh pr close ${pr.number}`);
+            fs.unlinkSync(commentFile);
         }
 
-        // Clean up and back to development
-        execSync("git checkout development");
+        // Clean up and back to original base
+        execSync(`git checkout ${pr.baseRefName}`);
     }
 }
 
