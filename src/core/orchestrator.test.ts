@@ -10,7 +10,6 @@ import './orchestrator';
 describe("Orchestrator Cloud Function (Real LLM)", () => {
     let originalOpenAIKey: string | undefined;
     let originalDeepseekKey: string | undefined;
-
     beforeAll(() => {
         originalOpenAIKey = process.env.OPENAI_API_KEY;
         originalDeepseekKey = process.env.DEEPSEEK_API_KEY;
@@ -62,6 +61,10 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         expect(responseBody.status).toBe('success');
         expect(responseBody.pda.plan.steps.length).toBeGreaterThan(0);
         expect(responseBody.pda.plan.skills_required.length).toBeGreaterThan(0);
+
+        // Verify that the typed SwarmManifest output matches the schema
+        const validationResult = llm.SwarmManifestSchema.safeParse(responseBody.pda.plan);
+        expect(validationResult.success).toBe(true);
     }, 30000); // 30s timeout for LLM call
 
     test("handles missing API key gracefully", async () => {

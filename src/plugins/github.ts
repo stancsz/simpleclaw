@@ -27,13 +27,6 @@ export const plugin: Extension = {
     const { action, owner, repo, path, title, body, head, base, pull_number, issue_number, query, content, branch, state, labels } = args;
     
     try {
-      // Check if GitHub CLI is installed
-      try {
-        execSync("gh --version", { stdio: 'ignore' });
-      } catch (error) {
-        return "ERROR: GitHub CLI (gh) is not installed. Please install it from https://cli.github.com/";
-      }
-
       let command = "gh";
       let output = "";
 
@@ -117,6 +110,13 @@ export const plugin: Extension = {
       console.log(`🐙 GitHub Skill: Executing "${command}"`);
       
       try {
+        // Check if GitHub CLI is installed before executing
+        try {
+          execSync("gh --version", { stdio: 'ignore' });
+        } catch (error) {
+          return "ERROR: GitHub CLI (gh) is not installed. Please install it from https://cli.github.com/";
+        }
+
         if (command.includes("<< 'EOF'")) {
           // Handle heredoc commands
           const { stdout, stderr } = await execAsync(command, { shell: 'bash' });
