@@ -100,6 +100,26 @@ export class DBClient {
     }
   }
 
+  logTaskResult(sessionId: string, workerId: string, skillRef: string, status: string, outputOrError: any, isError: boolean = false) {
+    if (this.isSupabase) {
+      console.warn(`Mock logTaskResult Supabase for ${workerId}`);
+      return;
+    }
+    if (this.db) {
+      if (isError) {
+        this.db.run(
+          `INSERT INTO task_results (session_id, worker_id, skill_ref, status, error) VALUES (?, ?, ?, ?, ?)`,
+          [sessionId, workerId, skillRef, status, String(outputOrError)]
+        );
+      } else {
+        this.db.run(
+          `INSERT INTO task_results (session_id, worker_id, skill_ref, status, output) VALUES (?, ?, ?, ?, ?)`,
+          [sessionId, workerId, skillRef, status, JSON.stringify(outputOrError)]
+        );
+      }
+    }
+  }
+
   writeAuditLog(sessionId: string, event: string, metadata: any) {
     if (this.isSupabase) return;
     if (this.db) {

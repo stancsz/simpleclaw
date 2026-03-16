@@ -1,3 +1,7 @@
+
+import type { SwarmManifest, Task } from "./types.ts";
+import { DBClient } from "../db/client.ts";
+import { executeWorkerTask, type WorkerResult } from "../workers/template.ts";
 import { randomUUID } from "node:crypto";
 import {
   runAgentLoop,
@@ -320,4 +324,75 @@ export function createAgentDispatcher(dependencies: AgentDispatcherDependencies 
     },
     hasConflictingTask,
   };
+}
+
+
+export async function executeSwarmManifest(
+  manifest: SwarmManifest,
+  sessionId: string,
+  db: DBClient
+): Promise<Record<string, WorkerResult>> {
+  const tasks = manifest.steps;
+  const executionPromises = new Map<string, Promise<WorkerResult>>();
+  const results: Record<string, WorkerResult> = {};
+
+  db.writeAuditLog(sessionId, "swarm_execution_started", { manifest_version: manifest.version });
+
+  // 1. Setup deferred promises for all tasks to handle out-of-order execution graph
+  const deferredResolvers = new Map<string, { resolve: (val: WorkerResult) => void, reject: (err: any) => void }>();
+
+  for (const task of tasks) {
+    const promise = new Promise<WorkerResult>((resolve, reject) => {
+      deferredResolvers.set(task.id, { resolve, reject });
+    });
+    executionPromises.set(task.id, promise);
+  }
+
+  // Helper to execute a single task, waiting for its dependencies via the deferred promises
+  const runTask = async (task: Task): Promise<WorkerResult> => {
+    try {
+      if (task.depends_on && task.depends_on.length > 0) {
+        const depPromises = task.depends_on.map((depId) => {
+          const promise = executionPromises.get(depId);
+          if (!promise) {
+            throw new Error(`Dependency ${depId} for task ${task.id} not found`);
+          }
+          return promise;
+        });
+
+        const depResults = await Promise.all(depPromises);
+
+        for (const res of depResults) {
+          if (res.status === "error") {
+            db.writeAuditLog(sessionId, "worker_skipped_dependency_failed", { task_id: task.id });
+            const skipResult: WorkerResult = { status: "error", error: `Dependency failed, skipping ${task.id}` };
+            results[task.id] = skipResult;
+            deferredResolvers.get(task.id)?.resolve(skipResult);
+            return skipResult;
+          }
+        }
+      }
+
+      const result = await executeWorkerTask(task, sessionId, db);
+      results[task.id] = result;
+      deferredResolvers.get(task.id)?.resolve(result);
+      return result;
+    } catch (error) {
+       deferredResolvers.get(task.id)?.reject(error);
+       throw error;
+    }
+  };
+
+  // 2. Start all task resolutions (they will await their respective promises if needed)
+  for (const task of tasks) {
+     // intentionally not awaiting runTask here, allowing parallel graph resolution
+     runTask(task);
+  }
+
+  // Wait for all tasks to complete
+  await Promise.allSettled(Array.from(executionPromises.values()));
+
+  db.writeAuditLog(sessionId, "swarm_execution_completed", { tasks_run: tasks.length });
+
+  return results;
 }
