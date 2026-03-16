@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { PlanDiffApprove, Task } from '../../../../src/core/types';
+import type { PlanDiffApprove, Task } from '../../../src/core/types';
 
 interface PlanDisplayProps {
   pda: PlanDiffApprove;

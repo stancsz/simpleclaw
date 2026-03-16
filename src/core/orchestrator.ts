@@ -3,6 +3,7 @@ import * as yaml from 'yaml';
 import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
+import { executeSwarmManifest } from './dispatcher';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -83,7 +84,18 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     if (session_id && action === 'approve') {
         try {
             dbClient.updateSessionStatus(session_id, 'approved');
-            res.status(200).json({ status: 'success', message: 'Session approved.' });
+
+            // If we have a manifest provided, execute it immediately
+            // In a real production system, this might be queued via Pub/Sub
+            if (body.manifest) {
+                // We do not await this, we fire and forget to respond quickly
+                // Note: since GCF might terminate, we really shouldn't fire and forget,
+                // but for our Phase 0 local testing, we'll await it or let it run in background.
+                // We'll await it so we don't lose the execution context.
+                await executeSwarmManifest(body.manifest, session_id, dbClient);
+            }
+
+            res.status(200).json({ status: 'success', message: 'Session approved and execution started.' });
             return;
         } catch (error: any) {
             console.error('Error approving session:', error);

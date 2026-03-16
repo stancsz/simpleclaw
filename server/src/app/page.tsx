@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import PlanDisplay from './components/PlanDisplay';
+import PlanDisplay from '../components/PlanDisplay';
+import IntentInput from '../components/IntentInput';
+import ApproveButton from '../components/ApproveButton';
 import ExecutionMonitor from './components/ExecutionMonitor';
 import type { PlanDiffApprove } from '../../../src/core/types';
 
@@ -83,59 +85,26 @@ export default function Home() {
   };
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
+    <div className="dashboard-container bg-neutral-950 text-white min-h-screen">
+      <div className="dashboard-header border-neutral-800">
         <h1>SimpleClaw Dashboard</h1>
         <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 0: Orchestrator Test</div>
       </div>
 
-      <main className="dashboard-main">
-        <div className="create-bot-section">
-          <h2>Natural Language Intent</h2>
-          <form onSubmit={handlePlan} className="form-container" style={{ maxWidth: '100%' }}>
-            <div className="input-group">
-              <label htmlFor="prompt" style={{ color: '#ccc', marginBottom: '0.5rem' }}>
-                What would you like the swarm to do?
-              </label>
-              <textarea
-                id="prompt"
-                className="input-field"
-                style={{ minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' }}
-                placeholder="e.g., Get latest GitHub issues and summarize them into a Google Sheet"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={status === 'planning' || status === 'executing'}
-              />
-            </div>
-            <div className="button-group">
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={!prompt.trim() || status === 'planning' || status === 'executing'}
-              >
-                {status === 'planning' ? 'Planning...' : 'Generate Plan'}
-              </button>
-            </div>
-          </form>
-        </div>
+      <main className="dashboard-main w-full max-w-4xl mx-auto p-4">
+        <IntentInput
+          prompt={prompt}
+          setPrompt={setPrompt}
+          status={status}
+          onSubmit={handlePlan}
+        />
 
         <ExecutionMonitor status={status} errorMessage={errorMessage} />
 
         {pda && status !== 'error' && (
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-8">
             <PlanDisplay pda={pda} />
-
-            {status === 'waiting_approval' && (
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={handleApprove}
-                  className="btn-primary"
-                  style={{ backgroundColor: '#16a34a', padding: '1rem 2rem', fontSize: '1.1rem' }}
-                >
-                  Approve & Execute Plan
-                </button>
-              </div>
-            )}
+            <ApproveButton status={status} onApprove={handleApprove} />
           </div>
         )}
       </main>
