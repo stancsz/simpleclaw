@@ -18,7 +18,7 @@ export const SwarmManifestSchema = z.object({
     intent_parsed: z.string().describe("The user intent parsed and normalized"),
     skills_required: z.array(z.string()).describe("Unique list of all skills required across all tasks"),
     credentials_required: z.array(z.string()).describe("Unique list of all credentials required across all tasks"),
-    schedule: z.string().optional().describe("Cron schedule string if intent describes recurring action, omitted otherwise"),
+    schedule: z.string().nullable().optional().describe("Cron schedule string if intent describes recurring action, omitted otherwise"),
     steps: z.array(TaskSchema).describe("DAG of execution steps")
 });
 
@@ -32,6 +32,7 @@ export async function parseIntentToManifest(intent: string, availableSkills: str
 
     let client: OpenAI;
     let model: string;
+    let isDeepseek = false;
 
     if (deepseekApiKey) {
         client = new OpenAI({
@@ -39,6 +40,7 @@ export async function parseIntentToManifest(intent: string, availableSkills: str
             baseURL: "https://api.deepseek.com"
         });
         model = "deepseek-chat";
+        isDeepseek = true;
     } else {
         client = new OpenAI({
             apiKey: openaiApiKey!
@@ -51,18 +53,36 @@ You must use the following available skills: ${availableSkills.join(', ')}. If a
 Ensure dependencies form a valid Directed Acyclic Graph.
 Determine if any credentials will be needed (e.g. shopify_api_key, slack_bot_token, google_oauth_token).`;
 
-    const completion = await client.beta.chat.completions.parse({
-        model: model,
-        messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: intent },
-        ],
-        response_format: zodResponseFormat(SwarmManifestSchema, "swarm_manifest"),
-    });
+    let completion;
 
-    if (!completion.choices[0].message.parsed) {
-        throw new Error("Failed to parse intent into manifest.");
+    if (isDeepseek) {
+        // Deepseek might not fully support beta.chat.completions.parse, so let's fallback to regular JSON mode
+        const res = await client.chat.completions.create({
+            model: model,
+            messages: [
+                { role: "system", content: systemPrompt + "\nRespond in JSON format matching the SwarmManifest schema exactly." },
+                { role: "user", content: intent },
+            ],
+            response_format: { type: "json_object" },
+        });
+
+        const rawJson = res.choices[0].message.content;
+        if (!rawJson) throw new Error("Failed to parse intent into manifest.");
+        return JSON.parse(rawJson) as SwarmManifest;
+    } else {
+        completion = await client.chat.completions.parse({
+            model: model,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: intent },
+            ],
+            response_format: zodResponseFormat(SwarmManifestSchema, "swarm_manifest"),
+        });
+
+        if (!completion.choices[0].message.parsed) {
+            throw new Error("Failed to parse intent into manifest.");
+        }
+
+        return completion.choices[0].message.parsed as SwarmManifest;
     }
-
-    return completion.choices[0].message.parsed as SwarmManifest;
 }

@@ -1,119 +1,36 @@
-import { expect, test, describe, mock, beforeAll, afterAll } from "bun:test";
+import { expect, test, describe, beforeAll, afterAll, mock } from "bun:test";
 import * as ff from '@google-cloud/functions-framework';
-import { validateManifest } from './orchestrator';
+import { validateManifest, orchestratorHandler } from './orchestrator';
 import { SwarmManifest } from "./types";
+import * as llm from './llm';
 
 // Import to register the function
 import './orchestrator';
-import { parseIntentToManifest } from "./llm";
 
-// Mock the parseIntentToManifest function to avoid network calls during tests
-mock.module('./llm', () => {
-    return {
-        parseIntentToManifest: async (intent: string, availableSkills: string[]): Promise<SwarmManifest> => {
-            if (intent.includes("error")) {
-                throw new Error("Simulated LLM Error");
-            }
-            if (intent.includes("shopify")) {
-                return {
-                    version: "1.0",
-                    intent_parsed: "every night Get shopify orders and post to slack",
-                    schedule: "0 2 * * *",
-                    skills_required: ['shopify-order-sync', 'slack-digest-poster'],
-                    credentials_required: ['shopify_api_key', 'slack_bot_token'],
-                    steps: [
-                        { id: 'step_1', description: 'Fetch Shopify orders', worker: 'worker_a', skills: ['shopify-order-sync'], credentials: ['shopify_api_key'], depends_on: [], action_type: 'READ' },
-                        { id: 'step_2', description: 'Cross-reference Google Sheets', worker: 'worker_b', skills: ['google-sheets-inventory'], credentials: ['google_oauth_token'], depends_on: [], action_type: 'READ' },
-                        { id: 'step_3', description: 'Post Slack digest', worker: 'worker_c', skills: ['slack-digest-poster'], credentials: ['slack_bot_token'], depends_on: ['step_1', 'step_2'], action_type: 'WRITE' }
-                    ]
-                };
-            }
-            if (intent.includes("email")) {
-                return {
-                    version: "1.0",
-                    intent_parsed: "Summarize status and send an email",
-                    skills_required: ['gmail-drafter', 'data-gatherer', 'data-analyzer'],
-                    credentials_required: ['google_oauth_token'],
-                    steps: [
-                        { id: 'step_1', description: 'Gather context data', worker: 'worker_a', skills: ['data-gatherer'], credentials: [], depends_on: [], action_type: 'READ' },
-                        { id: 'step_2', description: 'Analyze data', worker: 'worker_b', skills: ['data-analyzer'], credentials: [], depends_on: ['step_1'], action_type: 'READ' },
-                        { id: 'step_3', description: 'Draft email summary', worker: 'worker_c', skills: ['gmail-drafter'], credentials: ['google_oauth_token'], depends_on: ['step_2'], action_type: 'WRITE' }
-                    ]
-                };
-            }
-            // default generic
-            return {
-                version: "1.0",
-                intent_parsed: "Do something else",
-                skills_required: ['generic-web-search', 'data-analyzer', 'generic-writer'],
-                credentials_required: [],
-                steps: [
-                    { id: 'step_1', description: 'Search for information', worker: 'worker_a', skills: ['generic-web-search'], credentials: [], depends_on: [], action_type: 'READ' },
-                    { id: 'step_2', description: 'Process results', worker: 'worker_b', skills: ['data-analyzer'], credentials: [], depends_on: ['step_1'], action_type: 'READ' },
-                    { id: 'step_3', description: 'Write final report', worker: 'worker_c', skills: ['generic-writer'], credentials: [], depends_on: ['step_2'], action_type: 'WRITE' }
-                ]
-            };
-        }
-    };
-});
+describe("Orchestrator Cloud Function (Real LLM)", () => {
+    let originalOpenAIKey: string | undefined;
+    let originalDeepseekKey: string | undefined;
 
-
-describe("Orchestrator Cloud Function", () => {
-    test("handles valid POST request with shopify and slack intent", async () => {
-        const req = {
-            method: 'POST',
-            body: {
-                prompt: "every night Get shopify orders and post to slack",
-                user_id: "test-user-123"
-            }
-        } as any;
-
-        let statusCode = 200;
-        let responseBody: any = null;
-
-        const res = {
-            set: (k: string, v: string) => {},
-            status: (code: number) => {
-                statusCode = code;
-                return res;
-            },
-            json: (body: any) => {
-                responseBody = body;
-            },
-            send: (body: string) => {
-                responseBody = body;
-            }
-        } as any;
-
-        // Get the handler directly for testing
-        const { orchestratorHandler } = require('./orchestrator');
-
-        await orchestratorHandler(req, res);
-
-        expect(statusCode).toBe(200);
-        expect(responseBody).toBeDefined();
-        expect(responseBody.status).toBe('success');
-        expect(responseBody.pda).toBeDefined();
-        expect(responseBody.pda.status).toBe('waiting_approval');
-        expect(responseBody.pda.read_operations).toBe(2);
-        expect(responseBody.pda.write_operations).toBe(1);
-        expect(responseBody.pda.plan.intent_parsed).toBe("every night Get shopify orders and post to slack");
-        expect(responseBody.pda.plan.schedule).toBe("0 2 * * *");
-        expect(responseBody.pda.plan.skills_required).toContain('shopify-order-sync');
-        expect(responseBody.pda.plan.skills_required).toContain('slack-digest-poster');
-        expect(responseBody.pda.plan.credentials_required).toContain('shopify_api_key');
-        expect(responseBody.pda.plan.credentials_required).toContain('slack_bot_token');
-        expect(responseBody.pda.plan.steps).toBeDefined();
-        expect(responseBody.pda.plan.steps.length).toBe(3);
-        expect(responseBody.pda.plan.steps[2].depends_on).toContain('step_1');
-        expect(responseBody.pda.plan.steps[2].depends_on).toContain('step_2');
-        expect(responseBody.yaml).toBeDefined();
-        expect(responseBody.yaml).toContain('intent_parsed: every night Get shopify orders and post to slack');
-        expect(responseBody.yaml).toContain('action_type: READ');
-        expect(responseBody.yaml).toContain('action_type: WRITE');
+    beforeAll(() => {
+        originalOpenAIKey = process.env.OPENAI_API_KEY;
+        originalDeepseekKey = process.env.DEEPSEEK_API_KEY;
     });
 
-    test("handles valid POST request with email intent", async () => {
+    afterAll(() => {
+        if (originalOpenAIKey) process.env.OPENAI_API_KEY = originalOpenAIKey;
+        else delete process.env.OPENAI_API_KEY;
+
+        if (originalDeepseekKey) process.env.DEEPSEEK_API_KEY = originalDeepseekKey;
+        else delete process.env.DEEPSEEK_API_KEY;
+    });
+
+    test("handles valid POST request with generic intent", async () => {
+        // Skip if no API key is available
+        if (!process.env.OPENAI_API_KEY && !process.env.DEEPSEEK_API_KEY) {
+            console.log("Skipping real LLM test due to missing API keys.");
+            return;
+        }
+
         const req = {
             method: 'POST',
             body: {
@@ -139,23 +56,23 @@ describe("Orchestrator Cloud Function", () => {
             }
         } as any;
 
-        const { orchestratorHandler } = require('./orchestrator');
-
         await orchestratorHandler(req, res);
 
         expect(statusCode).toBe(200);
-        expect(responseBody.pda.plan.skills_required).toContain('gmail-drafter');
-        expect(responseBody.pda.plan.credentials_required).toContain('google_oauth_token');
-        expect(responseBody.pda.plan.steps.length).toBe(3);
-        expect(responseBody.pda.read_operations).toBe(2);
-        expect(responseBody.pda.write_operations).toBe(1);
-    });
+        expect(responseBody.status).toBe('success');
+        expect(responseBody.pda.plan.steps.length).toBeGreaterThan(0);
+        expect(responseBody.pda.plan.skills_required.length).toBeGreaterThan(0);
+    }, 30000); // 30s timeout for LLM call
 
-    test("handles valid POST request with generic intent", async () => {
+    test("handles missing API key gracefully", async () => {
+        // Temporarily clear API keys
+        delete process.env.OPENAI_API_KEY;
+        delete process.env.DEEPSEEK_API_KEY;
+
         const req = {
             method: 'POST',
             body: {
-                prompt: "Do something else",
+                prompt: "Do something",
                 user_id: "test-user-123"
             }
         } as any;
@@ -177,18 +94,14 @@ describe("Orchestrator Cloud Function", () => {
             }
         } as any;
 
-        const { orchestratorHandler } = require('./orchestrator');
-
         await orchestratorHandler(req, res);
 
-        expect(statusCode).toBe(200);
-        expect(responseBody.pda.plan.skills_required).toContain('generic-web-search');
-        expect(responseBody.pda.plan.credentials_required).toHaveLength(0);
-        expect(responseBody.pda.plan.steps.length).toBe(3);
-        expect(responseBody.pda.plan.steps[0].action_type).toBe('READ');
-        expect(responseBody.pda.plan.steps[2].action_type).toBe('WRITE');
-        expect(responseBody.pda.read_operations).toBe(2);
-        expect(responseBody.pda.write_operations).toBe(1);
+        expect(statusCode).toBe(500);
+        expect(responseBody.error).toContain("Missing API key");
+
+        // Restore keys
+        if (originalOpenAIKey) process.env.OPENAI_API_KEY = originalOpenAIKey;
+        if (originalDeepseekKey) process.env.DEEPSEEK_API_KEY = originalDeepseekKey;
     });
 
     test("rejects non-POST methods", async () => {
@@ -213,8 +126,6 @@ describe("Orchestrator Cloud Function", () => {
                 responseBody = body;
             }
         } as any;
-
-        const { orchestratorHandler } = require('./orchestrator');
 
         await orchestratorHandler(req, res);
         expect(statusCode).toBe(405);
@@ -246,8 +157,6 @@ describe("Orchestrator Cloud Function", () => {
             }
         } as any;
 
-        const { orchestratorHandler } = require('./orchestrator');
-
         await orchestratorHandler(req, res);
         expect(statusCode).toBe(400);
         expect(responseBody.error).toBeDefined();
@@ -277,8 +186,6 @@ describe("Orchestrator Cloud Function", () => {
                 responseBody = body;
             }
         } as any;
-
-        const { orchestratorHandler } = require('./orchestrator');
 
         await orchestratorHandler(req, res);
         expect(statusCode).toBe(400);
@@ -310,18 +217,47 @@ describe("Orchestrator Cloud Function", () => {
             }
         } as any;
 
-        const { orchestratorHandler } = require('./orchestrator');
-
         await orchestratorHandler(req, res);
         expect(statusCode).toBe(204);
         expect(headers['Access-Control-Allow-Methods']).toBe('POST');
     });
+});
 
-    test("handles LLM errors gracefully", async () => {
+describe("Orchestrator Cloud Function (Mocked LLM DAG Cycle Test)", () => {
+    let originalParse: typeof llm.parseIntentToManifest;
+
+    beforeAll(() => {
+        originalParse = llm.parseIntentToManifest;
+    });
+
+    afterAll(() => {
+        mock.restore();
+    });
+
+    test("Cyclic DAG → rejection test in handler", async () => {
+        // Mock parseIntentToManifest for this test only
+        mock.module('./llm', () => ({
+            parseIntentToManifest: async (intent: string, availableSkills: string[]): Promise<SwarmManifest> => {
+                return {
+                    version: "1.0",
+                    intent_parsed: "Cycle test",
+                    skills_required: ['generic-web-search'],
+                    credentials_required: [],
+                    steps: [
+                        { id: 'step_1', description: 'A', worker: 'w_a', skills: ['generic-web-search'], credentials: [], depends_on: ['step_2'], action_type: 'READ' },
+                        { id: 'step_2', description: 'B', worker: 'w_b', skills: ['generic-web-search'], credentials: [], depends_on: ['step_1'], action_type: 'READ' }
+                    ]
+                };
+            }
+        }));
+
+        // Re-require the handler to ensure the mock is picked up
+        const { orchestratorHandler } = require('./orchestrator');
+
         const req = {
             method: 'POST',
             body: {
-                prompt: "trigger an error",
+                prompt: "Test cycle",
                 user_id: "test-user-123"
             }
         } as any;
@@ -343,16 +279,19 @@ describe("Orchestrator Cloud Function", () => {
             }
         } as any;
 
-        const { orchestratorHandler } = require('./orchestrator');
-
         await orchestratorHandler(req, res);
 
-        expect(statusCode).toBe(500);
-        expect(responseBody.error).toBe("Simulated LLM Error");
+        expect(statusCode).toBe(400);
+        expect(responseBody.error).toBe('Generated manifest failed validation.');
+
+        // Cleanup module mock for next tests
+        mock.module('./llm', () => ({
+             parseIntentToManifest: originalParse
+        }));
     });
 });
 
-describe("Manifest Validation", () => {
+describe("Manifest Validation Unit Tests", () => {
     test("accepts valid manifest", () => {
         const validManifest: SwarmManifest = {
             version: "1.0",

@@ -53,7 +53,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - Core work: Build the Orchestrator Cloud Function, Worker dispatch layer, KMS credential encryption flow, and Sovereign Motherboard SQL schema
 
 ## BACKLOG (Swarm Architecture)
-- [✅] Real LLM Intent Parsing
+- [x] Real LLM Intent Parsing
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [ ] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys

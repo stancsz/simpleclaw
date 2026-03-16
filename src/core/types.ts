@@ -13,7 +13,7 @@ export interface SwarmManifest {
     intent_parsed: string;
     skills_required: string[];
     credentials_required: string[];
-    schedule?: string;
+    schedule?: string | null;
     steps: Task[];
 }
 
