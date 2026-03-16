@@ -135,4 +135,4 @@ export const workerHandler = async (req: ff.Request, res: ff.Response) => {
 };
 
 // Register HTTP function
-ff.http('workerTemplate', workerHandler);
+ff.http('workerHandler', workerHandler);
