@@ -30,7 +30,8 @@
     "package:linux": "electron-builder --linux",
     "build:worker": "bun build ./src/workers/base-worker.ts --outfile ./dist/workers/index.js --target=node",
     "gcp-build": "bun build ./src/workers/base-worker.ts --outfile ./dist/workers/index.js --target=node",
-    "start:worker": "npx @google-cloud/functions-framework --target=workerHandler --signature-type=http --source=./dist/workers"
+    "start:worker": "npx @google-cloud/functions-framework --target=workerHandler --signature-type=http --source=./dist/workers",
+    "setup:db": "bun run src/db/setup.ts"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^5.0.2",

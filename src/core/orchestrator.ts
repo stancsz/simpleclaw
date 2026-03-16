@@ -2,6 +2,7 @@ import * as ff from '@google-cloud/functions-framework';
 import * as yaml from 'yaml';
 import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
+import { DBClient } from '../db/client';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -69,14 +70,30 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     const body = req.body;
     const prompt = body?.prompt;
     const user_id = body?.user_id;
-
-    if (!prompt || typeof prompt !== 'string') {
-        res.status(400).json({ error: 'Missing or invalid "prompt" field in request body.' });
-        return;
-    }
+    const session_id = body?.session_id;
+    const action = body?.action;
 
     if (!user_id || typeof user_id !== 'string') {
         res.status(400).json({ error: 'Missing or invalid "user_id" field in request body.' });
+        return;
+    }
+
+    const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
+
+    if (session_id && action === 'approve') {
+        try {
+            dbClient.updateSessionStatus(session_id, 'approved');
+            res.status(200).json({ status: 'success', message: 'Session approved.' });
+            return;
+        } catch (error: any) {
+            console.error('Error approving session:', error);
+            res.status(500).json({ error: error.message || 'Internal server error while approving session.' });
+            return;
+        }
+    }
+
+    if (!prompt || typeof prompt !== 'string') {
+        res.status(400).json({ error: 'Missing or invalid "prompt" field in request body.' });
         return;
     }
 
@@ -113,9 +130,13 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             status: 'waiting_approval'
         };
 
+        const context = { prompt, availableSkills };
+        const newSessionId = dbClient.createSession(user_id, context, manifest);
+
         // Return both the structured JSON and the YAML format
         res.status(200).json({
             status: 'success',
+            session_id: newSessionId,
             pda,
             yaml: yaml.stringify(manifest)
         });
