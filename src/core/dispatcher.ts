@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { SwarmManifest, Task } from "./types.ts";
 import { DBClient } from "../db/client.ts";
 import { executeWorkerTask, type WorkerResult } from "../workers/template.ts";
+import { executeGithubWorkerTask } from "../workers/github.worker.ts";
 
 import {
   runAgentLoop,
@@ -374,7 +375,13 @@ export async function executeSwarmManifest(
         }
       }
 
-      const result = await executeWorkerTask(task, sessionId, db);
+      let result: WorkerResult;
+      if (task.worker === "github") {
+        result = await executeGithubWorkerTask(task, sessionId, db);
+      } else {
+        result = await executeWorkerTask(task, sessionId, db);
+      }
+
       results[task.id] = result;
       deferredResolvers.get(task.id)?.resolve(result);
       return result;

@@ -168,6 +168,73 @@ describe("Worker Dispatch & Execution Loop", () => {
     expect(duration).toBeLessThan(120);
   });
 
+  it("should successfully execute a github worker task", async () => {
+    // Mock the KMS Provider and fetch
+    // Since getKMSProvider is used inside the worker, we can set KMS_PROVIDER to local for the test
+    process.env.KMS_PROVIDER = "local";
+
+    // Create a mock credential in the database manually
+    const kmsProvider = require("../security/kms.ts").getKMSProvider();
+    const testSecret = "ghp_mocktoken123456";
+    const encryptedSecret = await kmsProvider.encrypt(testSecret);
+
+    // We can just use the db mock to bypass actual DB write for setup if it's easier,
+    // or we can mock simulateReadSecret on the DB client instance
+    const originalSimulateReadSecret = db.simulateReadSecret.bind(db);
+    db.simulateReadSecret = (credId: string) => {
+      if (credId === "github_token") return encryptedSecret;
+      return originalSimulateReadSecret(credId);
+    };
+
+    // We also need to mock global.fetch to intercept the GitHub API call
+    const originalFetch = global.fetch;
+    global.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (url === "https://api.github.com/user" || url.toString().includes("api.github.com")) {
+        // Verify the Auth header is present
+        const headers: any = init?.headers || {};
+        if (headers["Authorization"] === `Bearer ${testSecret}`) {
+          return new Response(JSON.stringify({ login: "mockuser", id: 123 }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ message: "Bad credentials" }), { status: 401 });
+      }
+      return originalFetch(url, init);
+    };
+
+    try {
+      const task: Task = {
+        id: "gh-task-1",
+        description: "List my GitHub profile",
+        worker: "github",
+        skills: ["github"],
+        credentials: ["github_token"],
+        depends_on: [],
+        action_type: "READ",
+      };
+
+      const result = await executeSwarmManifest({
+        version: "1.0",
+        intent_parsed: "Test github worker",
+        skills_required: ["github"],
+        credentials_required: ["github_token"],
+        steps: [task]
+      }, "session-gh", db);
+
+      expect(result["gh-task-1"].status).toBe("success");
+      expect(result["gh-task-1"].output.api_response.login).toBe("mockuser");
+
+      // Verify DB logging
+      const dbClientAny = db as any;
+      const resultsLogs = dbClientAny.db.query("SELECT * FROM task_results WHERE session_id = 'session-gh'").all();
+      expect(resultsLogs.length).toBe(1);
+      const parsedOutput = JSON.parse(resultsLogs[0].output);
+      expect(parsedOutput.api_response.login).toBe("mockuser");
+
+    } finally {
+      db.simulateReadSecret = originalSimulateReadSecret;
+      global.fetch = originalFetch;
+    }
+  });
+
   it("should skip dependent tasks if parent fails", async () => {
     // We will simulate a failure by creating a bad task or mocking the DB to throw.
     // Let's create a task that depends on a task which will be mocked to fail.
