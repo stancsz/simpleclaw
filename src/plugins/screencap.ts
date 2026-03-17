@@ -1,7 +1,7 @@
 import screenshotDesktop from "screenshot-desktop";
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Extension } from "../core/extensions;
+import type { Extension } from "../core/extensions";
 
 const { listDisplays } = screenshotDesktop;
 

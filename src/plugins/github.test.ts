@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import { plugin } from "./github;
-import { testPluginStructure } from "../test/plugin-test-utils;
+import { plugin } from "./github";
+import { testPluginStructure } from "../test/plugin-test-utils";
 
 describe("GitHub Plugin", () => {
   test("plugin has correct structure", () => {

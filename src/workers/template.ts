@@ -1,7 +1,7 @@
-import { DBClient } from "../db/client;
-import type { Task } from "../core/types;
+import { DBClient } from "../db/client";
+import type { Task } from "../core/types";
 import * as fs from "fs";
-import { getKMSProvider } from "../security/kms;
+import { getKMSProvider } from "../security/kms";
 
 export interface WorkerResult {
   status: "success" | "error" | "skipped";

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
-import { DBClient } from "../db/client;
-import { executeSwarmManifest } from "./dispatcher;
-import type { SwarmManifest } from "./types;
+import { DBClient } from "../db/client";
+import { executeSwarmManifest } from "./dispatcher";
+import type { SwarmManifest } from "./types";
 import * as fs from "fs";
-import { getKMSProvider } from "../security/kms;
+import { getKMSProvider } from "../security/kms";
 
 // Mock the openAI call to avoid hitting the actual API
-import * as llm from "./llm;
-mock.module("./llm, () => ({
+import * as llm from "./llm";
+mock.module("./llm", () => ({
   parseIntentToManifest: mock(async (prompt: string, availableSkills: string[]): Promise<SwarmManifest> => {
     return {
       version: "1.0",

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { DBClient } from "../db/client;
-import { executeWorkerTask } from "./template;
-import { executeSwarmManifest } from "../core/dispatcher;
-import type { SwarmManifest, Task } from "../core/types;
+import { DBClient } from "../db/client";
+import { executeWorkerTask } from "./template";
+import { executeSwarmManifest } from "../core/dispatcher";
+import type { SwarmManifest, Task } from "../core/types";
 import * as fs from "fs";
 
 describe("Worker Dispatch & Execution Loop", () => {
@@ -174,7 +174,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     process.env.KMS_PROVIDER = "local";
 
     // Create a mock credential in the database manually
-    const kmsProvider = require("../security/kms).getKMSProvider();
+    const kmsProvider = require("../security/kms").getKMSProvider();
     const testSecret = "ghp_mocktoken123456";
     const encryptedSecret = await kmsProvider.encrypt(testSecret);
 

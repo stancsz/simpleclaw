@@ -54,10 +54,11 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/execute', {
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'approve',
           session_id: sessionId,
           manifest: pda.plan, // Passing manifest as requested
           user_id: 'test-user', // Matching minimal auth

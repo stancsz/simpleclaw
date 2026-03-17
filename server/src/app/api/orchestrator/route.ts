@@ -29,9 +29,8 @@ export async function POST(req: NextRequest) {
             }
         } as Response;
 
-        // Call the orchestrator handler synchronously-ish for now
-        // The current orchestratorHandler implementation is synchronous
-        orchestratorHandler(mockReq, mockRes);
+        // Call the orchestrator handler
+        await orchestratorHandler(mockReq, mockRes);
 
         return Response.json(responseBody, { status: statusCode });
     } catch (error) {

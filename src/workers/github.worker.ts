@@ -1,8 +1,8 @@
 
-import { DBClient } from "../db/client;
-import type { Task } from "../core/types;
-import type { WorkerResult } from "./template;
-import { getKMSProvider } from "../security/kms;
+import { DBClient } from "../db/client";
+import type { Task } from "../core/types";
+import type { WorkerResult } from "./template";
+import { getKMSProvider } from "../security/kms";
 
 export async function executeGithubWorkerTask(
   task: Task,

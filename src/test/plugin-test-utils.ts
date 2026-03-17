@@ -1,5 +1,5 @@
 import { mock, expect } from "bun:test";
-import type { Extension } from "../core/extensions;
+import type { Extension } from "../core/extensions";
 
 /**
  * Test utilities for plugin testing

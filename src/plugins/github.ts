@@ -1,6 +1,6 @@
 import { execSync, exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { Extension } from "../core/extensions;
+import type { Extension } from "../core/extensions";
 
 const execAsync = promisify(exec);
 

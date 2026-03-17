@@ -3,6 +3,7 @@ import * as yaml from 'yaml';
 import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
+import { executeSwarmManifest } from './dispatcher';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -82,12 +83,22 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     if (session_id && action === 'approve') {
         try {
+            const manifest = body?.manifest;
+            if (!manifest) {
+                res.status(400).json({ error: 'Missing manifest for approval.' });
+                return;
+            }
+
             dbClient.updateSessionStatus(session_id, 'approved');
-            res.status(200).json({ status: 'success', message: 'Session approved.' });
+
+            // Execute the plan
+            const results = await executeSwarmManifest(manifest, session_id, dbClient);
+
+            res.status(200).json({ status: 'success', message: 'Session approved.', results });
             return;
         } catch (error: any) {
-            console.error('Error approving session:', error);
-            res.status(500).json({ error: error.message || 'Internal server error while approving session.' });
+            console.error('Error approving and executing session:', error);
+            res.status(500).json({ error: error.message || 'Internal server error while executing session.' });
             return;
         }
     }
@@ -107,7 +118,8 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         'data-gatherer',
         'data-analyzer',
         'generic-web-search',
-        'generic-writer'
+        'generic-writer',
+        'mock-skill'
     ];
 
     try {

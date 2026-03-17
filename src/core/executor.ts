@@ -1,13 +1,13 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { extensionRegistry } from "./extensions;
-import type { CapabilityCatalog, CapabilityExecutionContext, CapabilityResult } from "./capabilities;
+import { extensionRegistry } from "./extensions";
+import type { CapabilityCatalog, CapabilityExecutionContext, CapabilityResult } from "./capabilities";
 import {
   canExecuteCapability,
   getStructuredCapabilityDenial,
   getStructuredCapabilityDisabled,
   getStructuredCapabilityUnknown,
-} from "./policy;
+} from "./policy";
 
 const legacyBridge = {
   dispatch: (toolName: string, args: any) => {

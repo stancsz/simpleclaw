@@ -1,6 +1,6 @@
-import type { RuntimeMode } from "./extensions;
-import type { AgentDispatcher, RuntimeDispatchEvent } from "./dispatcher;
-import type { AgentTaskKind } from "./policy;
+import type { RuntimeMode } from "./extensions";
+import type { AgentDispatcher, RuntimeDispatchEvent } from "./dispatcher";
+import type { AgentTaskKind } from "./policy";
 
 export type CapabilityCategory = "native" | "extension" | "worker" | "meta";
 export type CapabilityApprovalClass = "default" | "memory" | "network" | "delegate" | "restricted";

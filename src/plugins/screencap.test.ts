@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import { plugin } from "./screencap;
-import { testPluginStructure } from "../test/plugin-test-utils;
+import { plugin } from "./screencap";
+import { testPluginStructure } from "../test/plugin-test-utils";
 
 describe("Screen Capture Plugin", () => {
   test("plugin has correct structure", () => {

@@ -9,15 +9,15 @@ import {
   createAgentDispatcher,
   type AgentDispatcher,
   type AgentDispatchSubmitInput,
-} from "./dispatcher;
-import { getDefaultHeartbeatIntervalMs, startHeartbeatScheduler, stopHeartbeatScheduler } from "./heartbeat;
+} from "./dispatcher";
+import { getDefaultHeartbeatIntervalMs, startHeartbeatScheduler, stopHeartbeatScheduler } from "./heartbeat";
 import {
   capabilityToToolDefinition,
   createCapabilityCatalog,
   type CapabilityCatalog,
   type CapabilityDefinition,
   type RuntimeCapabilityContext,
-} from "./capabilities;
+} from "./capabilities";
 import { createCapabilityExecutor } from "./executor;
 import { loadLongTermMemory, loadSoul, updateMemory } from "./memory;
 import { loadSkillsContext } from "./skills;

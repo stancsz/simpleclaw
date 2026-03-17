@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import type { Extension } from "../core/extensions;
+import type { Extension } from "../core/extensions";
 
 export const plugin: Extension = {
   name: "browser",
