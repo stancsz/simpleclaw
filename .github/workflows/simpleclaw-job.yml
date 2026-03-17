@@ -108,12 +108,10 @@ jobs:
           "
           rm env_vars.json
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: simpleclaw/package-lock.json
+          bun-version: latest
 
       - name: Prepare Workspace
         run: |
@@ -151,13 +149,12 @@ jobs:
       - name: Install Dependencies
         run: |
           cd simpleclaw
-          npm install -g tsx
-          npm install
+          bun install
           
           # Also install target repo deps if they exist and are needed
           cd ../$WORKING_DIR
           if [ -f package.json ]; then 
-            npm install || echo "Warning: Failed to install target repo dependencies. Continuing..."
+            bun install || echo "Warning: Failed to install target repo dependencies. Continuing..."
           fi
 
       - name: Run Standalone Agent
@@ -172,4 +169,4 @@ jobs:
         run: |
           cd $WORKING_DIR
           echo "Executing Agent in CWD: $(pwd)"
-          tsx $SIMPLECLAW_HOME/.github/scripts/simpleclaw-job.ts
+          bun run $SIMPLECLAW_HOME/.github/scripts/simpleclaw-job.ts
