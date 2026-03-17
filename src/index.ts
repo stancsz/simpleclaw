@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
-import { startRuntime, resolveRuntimeMode, type RuntimeStartOptions } from "./core/runtime.ts";
+import { startRuntime, resolveRuntimeMode, type RuntimeStartOptions } from "./core/runtime;
 
 export async function startClaw(config: RuntimeStartOptions = {}) {
   return await startRuntime(config);
 }
 
-if (import.meta.main || process.argv[1]?.endsWith("index.ts")) {
+if (import.meta.main || process.argv[1]?.endsWith("index)) {
   const mode = resolveRuntimeMode();
   const runtime = await startClaw({ mode });
   runtime.cli?.start(runtime.startupProfile);

@@ -116,7 +116,7 @@ export default function Home() {
           </form>
         </div>
 
-        <ExecutionMonitor status={status} errorMessage={errorMessage} />
+        <ExecutionMonitor status={status} errorMessage={errorMessage} sessionId={sessionId} />
 
         {pda && status !== 'error' && (
           <div style={{ marginTop: '2rem' }}>

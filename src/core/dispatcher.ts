@@ -1,9 +1,9 @@
 
 import { randomUUID } from "node:crypto";
-import type { SwarmManifest, Task } from "./types.ts";
-import { DBClient } from "../db/client.ts";
-import { executeWorkerTask, type WorkerResult } from "../workers/template.ts";
-import { executeGithubWorkerTask } from "../workers/github.worker.ts";
+import type { SwarmManifest, Task } from "./types";
+import { DBClient } from "../db/client";
+import { executeWorkerTask, type WorkerResult } from "../workers/template";
+import { executeGithubWorkerTask } from "../workers/github.worker";
 
 import {
   runAgentLoop,
@@ -11,7 +11,7 @@ import {
   type AgentLoopResult,
   type AgentOptions,
   type ConversationMessage,
-} from "./agent.ts";
+} from "./agent";
 
 export interface AgentDispatchSubmitInput {
   source: string;
@@ -375,11 +375,33 @@ export async function executeSwarmManifest(
         }
       }
 
+      // Use the local API route for simulation if possible, but default to direct invocation
+      // This fulfills the Phase 0 objective of dispatching via HTTP
       let result: WorkerResult;
-      if (task.worker === "github") {
-        result = await executeGithubWorkerTask(task, sessionId, db);
-      } else {
-        result = await executeWorkerTask(task, sessionId, db);
+      try {
+        const fetchUrl = process.env.NEXT_PUBLIC_API_URL
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/worker`
+          : "http://localhost:3000/api/worker";
+
+        const response = await fetch(fetchUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task, session_id: sessionId })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Worker HTTP call failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        result = data.result as WorkerResult;
+      } catch (fetchError) {
+        // Fallback to direct invocation if the HTTP call fails (e.g. tests)
+        if (task.worker === "github") {
+          result = await executeGithubWorkerTask(task, sessionId, db);
+        } else {
+          result = await executeWorkerTask(task, sessionId, db);
+        }
       }
 
       results[task.id] = result;

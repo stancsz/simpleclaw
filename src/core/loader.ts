@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { extensionRegistry } from "./extensions.ts";
+import { extensionRegistry } from "./extensions;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +15,7 @@ export async function loadPlugins() {
     const files = await readdir(pluginsDir);
 
     for (const file of files) {
-      if (file.endsWith(".ts") || file.endsWith(".js")) {
+      if (file.endsWith(") || file.endsWith(")) {
         const pluginBaseName = file.replace(/\.(ts|js)$/, "");
         const envVarName = `ENABLE_${pluginBaseName.toUpperCase()}`;
         

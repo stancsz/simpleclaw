@@ -1,7 +1,7 @@
-import { Client, GatewayIntentBits, Message } from "discord.js";
-import { aiIpiSanitizer } from "../security/triple_lock.ts";
-import type { Extension } from "../core/extensions.ts";
-import { createAgentDispatcher, type RuntimeDispatchEvent } from "../core/dispatcher.ts";
+import { Client, GatewayIntentBits, Message } from "discord;
+import { aiIpiSanitizer } from "../security/triple_lock;
+import type { Extension } from "../core/extensions;
+import { createAgentDispatcher, type RuntimeDispatchEvent } from "../core/dispatcher;
 import "dotenv/config";
 
 const client = new Client({

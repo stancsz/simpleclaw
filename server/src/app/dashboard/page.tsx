@@ -28,7 +28,7 @@ export default async function DashboardPage() {
           <h2>Your Bots</h2>
           {bots && bots.length > 0 ? (
             <ul className="bots-list">
-              {bots.map((bot) => (
+              {bots.map((bot: any) => (
                 <li key={bot.id} className="bot-item">
                   <div className="bot-info">
                     <strong>{bot.name || 'Unnamed Bot'}</strong> - {bot.platform}

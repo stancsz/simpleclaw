@@ -1,29 +1,29 @@
 import { performance } from "node:perf_hooks";
 import { createServer, type Server } from "node:http";
 import os from "node:os";
-import { extensionRegistry, type Extension, type RuntimeMode } from "./extensions.ts";
-import { loadPlugins } from "./loader.ts";
-import { enforceSecurityLocks } from "../security/triple_lock.ts";
-import { createCliTransport, type CliTransport } from "../../cli/index.ts";
+import { extensionRegistry, type Extension, type RuntimeMode } from "./extensions;
+import { loadPlugins } from "./loader;
+import { enforceSecurityLocks } from "../security/triple_lock;
+import { createCliTransport, type CliTransport } from "../../cli/index;
 import {
   createAgentDispatcher,
   type AgentDispatcher,
   type AgentDispatchSubmitInput,
-} from "./dispatcher.ts";
-import { getDefaultHeartbeatIntervalMs, startHeartbeatScheduler, stopHeartbeatScheduler } from "./heartbeat.ts";
+} from "./dispatcher;
+import { getDefaultHeartbeatIntervalMs, startHeartbeatScheduler, stopHeartbeatScheduler } from "./heartbeat;
 import {
   capabilityToToolDefinition,
   createCapabilityCatalog,
   type CapabilityCatalog,
   type CapabilityDefinition,
   type RuntimeCapabilityContext,
-} from "./capabilities.ts";
-import { createCapabilityExecutor } from "./executor.ts";
-import { loadLongTermMemory, loadSoul, updateMemory } from "./memory.ts";
-import { loadSkillsContext } from "./skills.ts";
-import { getCapabilityAuditLog, getVisibleCapabilities, resolveAgentTaskKind } from "./policy.ts";
-import { delegateToOpenCode } from "./opencode-worker.ts";
-import { runAgentLoop, type AgentEvent, type AgentLoopResult, type AgentOptions, type ConversationMessage } from "./agent.ts";
+} from "./capabilities;
+import { createCapabilityExecutor } from "./executor;
+import { loadLongTermMemory, loadSoul, updateMemory } from "./memory;
+import { loadSkillsContext } from "./skills;
+import { getCapabilityAuditLog, getVisibleCapabilities, resolveAgentTaskKind } from "./policy;
+import { delegateToOpenCode } from "./opencode-worker;
+import { runAgentLoop, type AgentEvent, type AgentLoopResult, type AgentOptions, type ConversationMessage } from "./agent;
 
 const DEFAULT_PORT = 3018;
 const DEFAULT_HEARTBEAT_SCOPE = "heartbeat:global";
@@ -288,7 +288,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor.ts");
+        const { executeNativeTool } = await import("./executor);
         return { status: "completed", content: String(await executeNativeTool("read", args)) };
       },
     },
@@ -307,7 +307,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor.ts");
+        const { executeNativeTool } = await import("./executor);
         return { status: "completed", content: String(await executeNativeTool("write", args)) };
       },
     },
@@ -325,7 +325,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor.ts");
+        const { executeNativeTool } = await import("./executor);
         return { status: "completed", content: String(await executeNativeTool("shell", args)) };
       },
     },

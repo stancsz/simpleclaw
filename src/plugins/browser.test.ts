@@ -1,6 +1,6 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
-import { plugin } from "./browser.ts";
-import { testPluginStructure } from "../test/plugin-test-utils.ts";
+import { plugin } from "./browser;
+import { testPluginStructure } from "../test/plugin-test-utils;
 
 describe("Browser Plugin", () => {
   let originalFetch: any;
