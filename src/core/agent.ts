@@ -115,6 +115,9 @@ export async function getOpenAIClient(): Promise<OpenAIClient> {
       if (model.includes("deepseek") && process.env.DEEPSEEK_API_KEY) {
         apiKey = process.env.DEEPSEEK_API_KEY;
         baseURL = "https://api.deepseek.com";
+        console.log("LLM Provider: DeepSeek (via DEEPSEEK_API_KEY)");
+      } else {
+        console.log(`LLM Provider: OpenAI-compatible (Base: ${baseURL}, Key set: ${!!apiKey})`);
       }
 
       return new OpenAI({
