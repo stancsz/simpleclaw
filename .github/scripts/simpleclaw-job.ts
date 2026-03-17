@@ -1,10 +1,21 @@
 import "dotenv/config";
 import chalk from "chalk";
+import { execSync } from "node:child_process";
 import { startRuntime } from "../../src/core/runtime.ts";
 import type { RuntimeDispatchEvent } from "../../src/core/dispatcher.ts";
 
 async function main() {
     console.log(chalk.blue.bold("SimpleClaw Job: Initializing..."));
+
+    // Configure Git Identity
+    try {
+        console.log(chalk.cyan("Setting up git identity..."));
+        execSync('git config --global user.name "SimpleClaw"');
+        execSync('git config --global user.email "simpleclaw@users.noreply.github.com"');
+        console.log(chalk.green("Git identity configured as 'SimpleClaw'."));
+    } catch (e) {
+        console.warn(chalk.yellow("Warning: Failed to configure git identity. Background commits might fail."));
+    }
 
     const objective = process.env.OBJECTIVE;
     if (!objective) {
