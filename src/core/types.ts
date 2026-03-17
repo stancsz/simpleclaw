@@ -28,6 +28,7 @@ export interface PlanDiffApprove {
     write_operations: number;
     read_operations: number;
     status: 'waiting_approval' | 'approved' | 'rejected';
+    sessionId: string;
 }
 
 export interface SkillReference {

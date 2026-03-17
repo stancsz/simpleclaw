@@ -136,15 +136,16 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         const write_operations = manifest.steps.filter(s => s.action_type === 'WRITE').length;
         const read_operations = manifest.steps.filter(s => s.action_type === 'READ').length;
 
+        const context = { prompt, availableSkills };
+        const newSessionId = dbClient.createSession(user_id, context, manifest);
+
         const pda: PlanDiffApprove = {
             plan: manifest,
             write_operations,
             read_operations,
-            status: 'waiting_approval'
+            status: 'waiting_approval',
+            sessionId: newSessionId
         };
-
-        const context = { prompt, availableSkills };
-        const newSessionId = dbClient.createSession(user_id, context, manifest);
 
         // Return both the structured JSON and the YAML format
         res.status(200).json({

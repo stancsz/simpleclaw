@@ -11,6 +11,7 @@ export default function Home() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'planning' | 'waiting_approval' | 'executing' | 'completed' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [taskResults, setTaskResults] = useState<any[]>([]);
 
   const handlePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,14 +55,11 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/orchestrator', {
+      const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'approve',
-          session_id: sessionId,
-          manifest: pda.plan, // Passing manifest as requested
-          user_id: 'test-user', // Matching minimal auth
+          sessionId: sessionId
         }),
       });
 
@@ -72,6 +70,7 @@ export default function Home() {
       }
 
       setStatus('completed');
+      setTaskResults(data.results || []);
       console.log('Execution results:', data.results);
     } catch (err: any) {
       console.error(err);
@@ -117,7 +116,7 @@ export default function Home() {
           </form>
         </div>
 
-        <ExecutionMonitor status={status} errorMessage={errorMessage} sessionId={sessionId} />
+        <ExecutionMonitor status={status} errorMessage={errorMessage} taskResults={taskResults} />
 
         {pda && status !== 'error' && (
           <div style={{ marginTop: '2rem' }}>

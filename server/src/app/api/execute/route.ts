@@ -5,19 +5,34 @@ import { getDbClient } from "../../../../../src/db/client";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { session_id, manifest, user_id } = body;
+        // UI passes sessionId as per the updated instruction
+        const { sessionId } = body;
 
-        if (!session_id || !manifest) {
-            return Response.json({ error: "Missing session_id or manifest" }, { status: 400 });
+        if (!sessionId) {
+            return Response.json({ error: "Missing sessionId" }, { status: 400 });
         }
 
         const db = getDbClient();
-        db.updateSessionStatus(session_id, "approved");
+        const session = db.getSession(sessionId);
+
+        if (!session) {
+            return Response.json({ error: "Session not found" }, { status: 404 });
+        }
+
+        const manifest = session.manifest;
+        if (!manifest) {
+            return Response.json({ error: "Manifest not found in session" }, { status: 400 });
+        }
+
+        db.updateSessionStatus(sessionId, "approved");
 
         // Execute the plan
-        const results = await executeSwarmManifest(manifest, session_id, db);
+        const results = await executeSwarmManifest(manifest, sessionId, db);
 
-        return Response.json({ status: "success", results }, { status: 200 });
+        // Convert the record to an array of results for the frontend
+        const taskResults = Object.values(results);
+
+        return Response.json({ status: "success", results: taskResults }, { status: 200 });
     } catch (error) {
         console.error("Error in execute API route:", error);
         return Response.json({ error: "Internal server error" }, { status: 500 });

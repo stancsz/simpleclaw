@@ -5,38 +5,11 @@ import React, { useEffect, useState } from 'react';
 interface ExecutionMonitorProps {
   status: 'idle' | 'planning' | 'waiting_approval' | 'executing' | 'completed' | 'error';
   errorMessage?: string;
-  sessionId?: string | null;
+  taskResults?: any[];
 }
 
-export default function ExecutionMonitor({ status, errorMessage, sessionId }: ExecutionMonitorProps) {
+export default function ExecutionMonitor({ status, errorMessage, taskResults }: ExecutionMonitorProps) {
   const [dots, setDots] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-
-  useEffect(() => {
-    let pollInterval: any;
-
-    if (status === 'executing' && sessionId) {
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/status?session_id=${sessionId}`);
-          if (res.ok) {
-            const data = await res.json();
-            setResults(data.results);
-          }
-        } catch (e) {
-          console.error("Failed to fetch status:", e);
-        }
-      }, 1000);
-    } else if (status === 'completed' && sessionId) {
-       // Fetch one last time to ensure we have final results
-       fetch(`/api/status?session_id=${sessionId}`)
-        .then(res => res.ok ? res.json() : { results: [] })
-        .then(data => setResults(data.results))
-        .catch(console.error);
-    }
-
-    return () => clearInterval(pollInterval);
-  }, [status, sessionId]);
 
   useEffect(() => {
     if (status === 'planning' || status === 'executing') {
@@ -120,11 +93,11 @@ export default function ExecutionMonitor({ status, errorMessage, sessionId }: Ex
         {display.text}
       </div>
 
-      {results && results.length > 0 && (
+      {taskResults && taskResults.length > 0 && (
         <div style={{ marginTop: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>Worker Results</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {results.map((result, idx) => (
+            {taskResults.map((result, idx) => (
               <div key={idx} style={{
                 padding: '0.75rem',
                 backgroundColor: 'var(--input-bg)',
