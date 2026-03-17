@@ -30,16 +30,18 @@ export async function POST(req: NextRequest) {
 
         db.updateSessionStatus(sessionId, "approved");
 
-        // Execute the plan
-        const results = await executeSwarmManifest(manifest, sessionId, db);
+        // Execute the plan asynchronously
+        executeSwarmManifest(manifest, sessionId, db)
+            .then((results) => {
+                db.updateSessionStatus(sessionId!, "completed");
+            })
+            .catch((error: any) => {
+                console.error("Error in async executeSwarmManifest:", error);
+                db.updateSessionStatus(sessionId!, "error");
+                db.writeAuditLog(sessionId!, "swarm_execution_failed", { error: error.message || String(error) });
+            });
 
-        // Convert the record to an array of results for the frontend
-        const taskResults = Object.values(results);
-
-        // Update session status to completed
-        db.updateSessionStatus(sessionId, "completed");
-
-        return Response.json({ status: "success", results: taskResults }, { status: 200 });
+        return Response.json({ status: "success", executionId: sessionId }, { status: 200 });
     } catch (error: any) {
         console.error("Error in execute API route:", error);
 

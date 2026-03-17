@@ -7,9 +7,10 @@ interface ExecutionMonitorProps {
   errorMessage?: string;
   taskResults?: any[];
   sessionId?: string | null;
+  onComplete?: (finalStatus: 'completed' | 'error', finalResults: any[], finalError?: string) => void;
 }
 
-export default function ExecutionMonitor({ status, errorMessage, taskResults, sessionId }: ExecutionMonitorProps) {
+export default function ExecutionMonitor({ status, errorMessage, taskResults, sessionId, onComplete }: ExecutionMonitorProps) {
   const [dots, setDots] = useState('');
   const [polledResults, setPolledResults] = useState<any[]>([]);
 
@@ -36,6 +37,13 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
           if (data.results) {
             setPolledResults(data.results);
           }
+          if (status === 'executing') {
+             if (data.sessionStatus === 'completed') {
+                 onComplete?.('completed', data.results);
+             } else if (data.sessionStatus === 'error') {
+                 onComplete?.('error', data.results, 'Execution failed. Check results for details.');
+             }
+          }
         }
       } catch (err) {
         console.error("Failed to fetch task results", err);
@@ -51,7 +59,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [status, sessionId]);
+  }, [status, sessionId, onComplete]);
 
   if (status === 'idle') return null;
 

@@ -49,6 +49,16 @@ export default function Home() {
     }
   };
 
+  const handleExecutionComplete = (finalStatus: 'completed' | 'error', finalResults: any[], finalError?: string) => {
+    setStatus(finalStatus);
+    if (finalResults && finalResults.length > 0) {
+      setTaskResults(finalResults);
+    }
+    if (finalError) {
+      setErrorMessage(finalError);
+    }
+  };
+
   const handleApprove = async () => {
     if (!sessionId || !pda) return;
 
@@ -71,9 +81,10 @@ export default function Home() {
         throw new Error(data.error || 'Failed to execute plan');
       }
 
-      setStatus('completed');
-      setTaskResults(data.results || []);
-      console.log('Execution results:', data.results);
+      // We do not immediately set to 'completed' here. We leave it in 'executing'
+      // state, and the ExecutionMonitor will poll until sessionStatus is 'completed'
+      // or 'error', which will trigger handleExecutionComplete via callback.
+      console.log('Execution started with ID:', data.executionId);
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err.message || 'An unexpected error occurred during execution.');
@@ -123,7 +134,13 @@ export default function Home() {
           </form>
         </div>
 
-        <ExecutionMonitor status={status} errorMessage={errorMessage} taskResults={taskResults} sessionId={sessionId} />
+        <ExecutionMonitor
+          status={status}
+          errorMessage={errorMessage}
+          taskResults={taskResults}
+          sessionId={sessionId}
+          onComplete={handleExecutionComplete}
+        />
 
         {pda && status !== 'error' && (
           <div style={{ marginTop: '2rem' }}>
