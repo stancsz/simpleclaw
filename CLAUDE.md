@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #35 ✅ Implemented final Phase 0 Worker Dispatch + Execution Loop UI integrations: Moved API route to `/api/orchestrator/execute` to handle manifest execution logic with error catching and updated session status saving. Upgraded Minimal UI component (`server/src/app/page.tsx`) to wire its `fetch` command to this route. Enhanced `ExecutionMonitor` to handle displaying tasks continuously by ensuring its poll-loop works well under "error" conditions. Local unittests passing.
 - [2026-03-18] Cycle #34 ✅ Implemented Phase 1 BYOK UI: Key management screen with Supabase Vault integration. Added API routes to fetch, add, and delete AI keys. Updated local mock dbClient schema to correctly isolate users.
 - [2026-03-18] Cycle #33 ✅ Connected the Phase 0 Minimal UI to the execution engine. Updated `/api/execute` endpoint to correctly handle missing DB sessions by taking the manifest from the UI, created `/api/results` polling endpoint, and enhanced `ExecutionMonitor` to display task output while the `executeSwarmManifest` finishes executing.
 - [2026-03-18] Cycle #32 ✅ Implemented execution API and UI integration: Added sessionId to PlanDiffApprove, created /api/execute endpoint, connected UI approve flow, and updated ExecutionMonitor to display task results.

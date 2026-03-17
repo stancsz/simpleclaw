@@ -56,7 +56,7 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/execute', {
+      const response = await fetch('/api/orchestrator/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
