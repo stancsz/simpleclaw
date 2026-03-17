@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import PlanDisplay from './components/PlanDisplay';
 import ExecutionMonitor from './components/ExecutionMonitor';
 import type { PlanDiffApprove } from '../../../src/core/types';
+import Link from 'next/link';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -84,7 +85,12 @@ export default function Home() {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>SimpleClaw Dashboard</h1>
-        <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 0: Orchestrator Test</div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link href="/settings/keys" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
+            Manage Keys
+          </Link>
+          <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 0: Orchestrator Test</div>
+        </div>
       </div>
 
       <main className="dashboard-main">

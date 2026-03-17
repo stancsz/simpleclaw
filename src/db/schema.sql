@@ -1,6 +1,7 @@
 -- Secrets vault (managed by Supabase pgsodium)
 CREATE TABLE vault.user_secrets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
     name TEXT NOT NULL,            -- e.g., 'openai_key', 'shopify_token'
     secret TEXT NOT NULL,          -- Encrypted by pgsodium automatically
     provider TEXT,                 -- 'openai' | 'gemini' | 'deepseek' | 'shopify' | ...

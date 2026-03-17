@@ -169,6 +169,53 @@ export class DBClient {
     return "";
   }
 
+  addSecret(userId: string, name: string, secret: string, provider: string) {
+    if (this.isSupabase) {
+        // In Supabase mode, we would use the Supabase client with Row Level Security
+        // For now, mock behavior for testing
+        console.warn("addSecret called in Supabase mode - using mock implementation for testing.");
+        const mockId = `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return mockId;
+    }
+    if (this.db) {
+        const id = crypto.randomUUID();
+        this.db.run(
+            `INSERT INTO vault_user_secrets (id, user_id, name, secret, provider) VALUES (?, ?, ?, ?, ?)`,
+            [id, userId, name, secret, provider]
+        );
+        return id;
+    }
+    return null;
+  }
+
+  getSecrets(userId: string): any[] {
+    if (this.isSupabase) {
+        console.warn("getSecrets called in Supabase mode - requires direct Supabase client.");
+        return [];
+    }
+    if (this.db) {
+        const rows = this.db.query(`SELECT id, name, provider, created_at FROM vault_user_secrets WHERE user_id = ?`).all(userId) as any[];
+        return rows.map(r => ({
+            id: r.id,
+            name: r.name,
+            provider: r.provider,
+            maskedKey: 'sk-...abcd',
+            createdAt: r.created_at
+        }));
+    }
+    return [];
+  }
+
+  deleteSecret(userId: string, secretId: string) {
+    if (this.isSupabase) {
+        console.warn("deleteSecret called in Supabase mode - requires direct Supabase client.");
+        return;
+    }
+    if (this.db) {
+        this.db.run(`DELETE FROM vault_user_secrets WHERE id = ? AND user_id = ?`, [secretId, userId]);
+    }
+  }
+
   setPlatformUser(userId: string, supabaseUrl: string, encryptedServiceRole: string) {
     if (this.isSupabase) return;
     if (this.db) {

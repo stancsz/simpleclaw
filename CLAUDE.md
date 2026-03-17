@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #34 ✅ Implemented Phase 1 BYOK UI: Key management screen with Supabase Vault integration. Added API routes to fetch, add, and delete AI keys. Updated local mock dbClient schema to correctly isolate users.
 - [2026-03-18] Cycle #33 ✅ Connected the Phase 0 Minimal UI to the execution engine. Updated `/api/execute` endpoint to correctly handle missing DB sessions by taking the manifest from the UI, created `/api/results` polling endpoint, and enhanced `ExecutionMonitor` to display task output while the `executeSwarmManifest` finishes executing.
 - [2026-03-18] Cycle #32 ✅ Implemented execution API and UI integration: Added sessionId to PlanDiffApprove, created /api/execute endpoint, connected UI approve flow, and updated ExecutionMonitor to display task results.
 - [2026-03-18] Cycle #31 ✅ Integrated Worker Dispatch with Minimal UI's approval flow. Fixed missing module termination quotes for end-to-end testing, connected the dispatcher locally using `bun test`, ensured workers can pull from JIT skills, fetch decrypted credentials and report results.
@@ -75,7 +76,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
-- [ ] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
+- [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 

@@ -3,6 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS vault_user_secrets (
     id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     secret TEXT NOT NULL,
     provider TEXT,

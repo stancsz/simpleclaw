@@ -42,3 +42,13 @@ export interface CredentialReference {
     name: string;
     type: string;
 }
+
+export type AIKeyProvider = 'openai' | 'gemini' | 'anthropic' | 'deepseek' | 'github' | 'custom';
+
+export interface AIKey {
+    id: string;
+    name: string;
+    provider: AIKeyProvider | string;
+    maskedKey: string;
+    createdAt: string;
+}
