@@ -3,7 +3,7 @@ import type {
   CapabilityDefinition,
   CapabilityExecutionStatus,
   RuntimeCapabilityContext,
-} from "./capabilities.ts";
+} from "./capabilities;
 
 export type AgentTaskKind = "interactive" | "autonomous";
 

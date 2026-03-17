@@ -6,21 +6,21 @@
  * It is responsible for parsing intent, coordinating visibility of sub-agents, 
  * and delegating tasks to workers (muscle) rather than performing heavy lifting themselves.
  */
-import { loadSkillsContext } from "./skills.ts";
-import { loadLongTermMemory, loadSoul } from "./memory.ts";
+import { loadSkillsContext } from "./skills";
+import { loadLongTermMemory, loadSoul } from "./memory";
 import {
   buildSystemPrompt,
   resolveAgentTaskKind,
   shouldEnableBootstrapProtocol,
   shouldPreferDirectResponse,
-} from "./policy.ts";
-import type { CapabilityExecutionOutcome } from "./executor.ts";
+} from "./policy";
+import type { CapabilityExecutionOutcome } from "./executor";
 import type {
   CapabilityCatalog,
   CapabilityExecutionContext,
   CapabilityToolDefinition,
   RuntimeCapabilityContext,
-} from "./capabilities.ts";
+} from "./capabilities";
 
 export interface HeartbeatAgentOutcome {
   status: "noop" | "invoked";

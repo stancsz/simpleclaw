@@ -1,7 +1,9 @@
-import { Database } from 'bun:sqlite';
+// Use dynamic import or fallback type since we can't use bun:sqlite in Next.js edge/node runtime directly
+// Use dynamic import or fallback type since we can't use bun:sqlite in Next.js edge/node runtime directly
+// import { Database } from 'bun:sqlite';
 
 export class DBClient {
-  private db: Database | null = null;
+  private db: any | null = null;
   private isSupabase = false;
 
   constructor(databaseUrl: string = process.env.DATABASE_URL || 'sqlite://local.db') {
@@ -12,7 +14,21 @@ export class DBClient {
       console.warn("Supabase connection mode active, but only partial mocked interface is available.");
     } else {
       const dbPath = databaseUrl.replace('sqlite://', '');
-      this.db = new Database(dbPath, { create: true });
+      try {
+        if (typeof process !== "undefined" && process.versions && process.versions.bun) {
+           const { Database } = require('bun' + ':sqlite');
+           this.db = new Database(dbPath, { create: true });
+        } else {
+           console.warn("Running outside of bun, DBClient is mostly a stub.");
+           this.db = {
+               run: () => {},
+               query: () => ({ get: () => null, all: () => [] }),
+               transaction: (cb: any) => cb
+           };
+        }
+      } catch (e) {
+         console.warn("bun:sqlite not available. DBClient operates as a stub.");
+      }
     }
   }
 
@@ -61,6 +77,14 @@ export class DBClient {
         );
         this.writeAuditLog(sessionId, 'plan_approved', { status });
      }
+  }
+
+  getTaskResults(sessionId: string): any[] {
+    if (this.isSupabase) return [];
+    if (this.db) {
+        return this.db.query(`SELECT * FROM task_results WHERE session_id = ? ORDER BY created_at ASC`).all(sessionId) as any[];
+    }
+    return [];
   }
 
   getSession(sessionId: string): any {
