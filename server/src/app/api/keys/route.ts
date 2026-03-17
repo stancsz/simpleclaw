@@ -1,72 +1,114 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getDbClient } from "../../../../../src/db/client";
 import { getKMSProvider } from "../../../../../src/security/kms";
 
-// TODO: Replace with real auth once authentication is implemented
-// For now, use session from cookie or default to test-user
-const getUserId = (req: NextRequest): string => {
-  // This is a placeholder - will be replaced with real auth
-  return 'test-user';
-};
+const MOCK_USER_ID = 'test-user'; // Minimal auth for Phase 0 / Phase 1 local development
 
 export async function GET(req: NextRequest) {
     try {
-        const userId = getUserId(req);
         const dbClient = getDbClient();
-        const keys = dbClient.getSecrets(userId);
+        const kmsProvider = getKMSProvider();
 
-        return NextResponse.json({ keys });
-    } catch (error) {
+        // 1. Fetch user's platform record to verify they exist
+        const platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
+        if (!platformUser) {
+            // For local testing, if the platform user doesn't exist, we just return empty
+            // (or we could auto-create one for dev purposes, but returning empty list is safer)
+            return Response.json({ keys: [] }, { status: 200 });
+        }
+
+        // 2. Fetch encrypted secrets from db
+        const rawSecrets = dbClient.getSecrets(MOCK_USER_ID);
+
+        // 3. Decrypt secrets to create dynamic masks
+        const keys = await Promise.all(rawSecrets.map(async (secretObj) => {
+            try {
+                // In a real system we'd decrypt the service_role and connect to Supabase
+                // Here we use the local KMS to directly decrypt the simulated pgsodium column
+                const decryptedKey = await kmsProvider.decrypt(secretObj.secret);
+
+                // Create mask showing only last 4 chars
+                const maskLength = Math.max(0, decryptedKey.length - 4);
+                const maskedKey = maskLength > 0
+                    ? `sk-...${decryptedKey.substring(decryptedKey.length - 4)}`
+                    : 'sk-...';
+
+                return {
+                    id: secretObj.id,
+                    name: secretObj.name,
+                    provider: secretObj.provider,
+                    maskedKey: maskedKey,
+                    createdAt: secretObj.createdAt
+                };
+            } catch (err) {
+                console.error(`Failed to decrypt secret ${secretObj.id}:`, err);
+                return {
+                    id: secretObj.id,
+                    name: secretObj.name,
+                    provider: secretObj.provider,
+                    maskedKey: 'sk-...error',
+                    createdAt: secretObj.createdAt
+                };
+            }
+        }));
+
+        return Response.json({ keys }, { status: 200 });
+    } catch (error: any) {
         console.error("Error fetching keys:", error);
-        return NextResponse.json({ error: "Failed to fetch keys" }, { status: 500 });
+        return Response.json({ error: "Failed to fetch keys" }, { status: 500 });
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { provider, secret, name } = body;
+        const { provider, key, name } = body;
 
-        if (!provider || !secret) {
-            return NextResponse.json({ error: "Provider and secret are required" }, { status: 400 });
+        if (!provider || !key) {
+            return Response.json({ error: "Provider and key are required" }, { status: 400 });
         }
 
-        const kmsProvider = getKMSProvider();
-        const encryptedSecret = await kmsProvider.encrypt(secret);
-
-        const keyName = name || `${provider}_key`;
-
-        const userId = getUserId(req);
         const dbClient = getDbClient();
-        const id = dbClient.addSecret(userId, keyName, encryptedSecret, provider);
+        const kmsProvider = getKMSProvider();
 
-        if (!id) {
-            throw new Error("Failed to add secret to DB");
+        // Ensure user exists in platform_users
+        let platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
+        if (!platformUser) {
+            // Auto-onboard for local dev if missing
+            const mockServiceRole = await kmsProvider.encrypt('mock-service-role-key');
+            dbClient.setPlatformUser(MOCK_USER_ID, 'http://localhost:54321', mockServiceRole);
         }
 
-        return NextResponse.json({ success: true, id });
-    } catch (error) {
+        // Encrypt the API key (simulating pgsodium via our KMS)
+        const encryptedKey = await kmsProvider.encrypt(key);
+
+        const secretName = name || `${provider}-key`;
+
+        // Store the encrypted key in the vault
+        const secretId = dbClient.addSecret(MOCK_USER_ID, secretName, encryptedKey, provider);
+
+        return Response.json({ id: secretId, success: true }, { status: 201 });
+    } catch (error: any) {
         console.error("Error adding key:", error);
-        return NextResponse.json({ error: "Failed to add key" }, { status: 500 });
+        return Response.json({ error: "Failed to add key" }, { status: 500 });
     }
 }
 
 export async function DELETE(req: NextRequest) {
     try {
         const url = new URL(req.url);
-        const id = url.searchParams.get("id");
+        const secretId = url.searchParams.get("id");
 
-        if (!id) {
-            return NextResponse.json({ error: "Key ID is required" }, { status: 400 });
+        if (!secretId) {
+            return Response.json({ error: "Secret ID is required" }, { status: 400 });
         }
 
-        const userId = getUserId(req);
         const dbClient = getDbClient();
-        dbClient.deleteSecret(userId, id);
+        dbClient.deleteSecret(MOCK_USER_ID, secretId);
 
-        return NextResponse.json({ success: true });
-    } catch (error) {
+        return Response.json({ success: true }, { status: 200 });
+    } catch (error: any) {
         console.error("Error deleting key:", error);
-        return NextResponse.json({ error: "Failed to delete key" }, { status: 500 });
+        return Response.json({ error: "Failed to delete key" }, { status: 500 });
     }
 }

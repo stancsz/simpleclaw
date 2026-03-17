@@ -194,12 +194,13 @@ export class DBClient {
         return [];
     }
     if (this.db) {
-        const rows = this.db.query(`SELECT id, name, provider, created_at FROM vault_user_secrets WHERE user_id = ?`).all(userId) as any[];
+        const rows = this.db.query(`SELECT id, name, secret, provider, created_at FROM vault_user_secrets WHERE user_id = ?`).all(userId) as any[];
         return rows.map(r => ({
             id: r.id,
             name: r.name,
+            secret: r.secret,
             provider: r.provider,
-            maskedKey: 'sk-...abcd',
+            maskedKey: 'sk-...abcd', // This will be dynamically overridden by the route using the decrypted secret
             createdAt: r.created_at
         }));
     }
