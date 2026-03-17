@@ -169,4 +169,8 @@ jobs:
         run: |
           cd $WORKING_DIR
           echo "Executing Agent in CWD: $(pwd)"
-          bun run $SIMPLECLAW_HOME/.github/scripts/simpleclaw-job.ts
+          echo "Runtime Check:"
+          bun --version
+          node --version
+          which bun
+          bun $SIMPLECLAW_HOME/.github/scripts/simpleclaw-job.ts
