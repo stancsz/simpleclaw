@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #40 ✅ Refactored worker template to implement the delegation model as specified in SWARM_SPEC.md §8.2. Created `src/core/engine.ts` with a mock `executeEngine` function, and updated `src/workers/template.ts` to delegate execution to this engine instead of executing logic directly. Verified via `bun test src/workers/worker.test.ts`. This lays the foundation for integrating real sub-agents like `opencode`.
 - [2026-03-18] Cycle #39 ✅ Integrated UI with orchestrator backend for full execution flow. Modified `server/src/app/page.tsx` to handle the approval flow, created the `/api/orchestrator/execute` API endpoint to handle the dispatch using `executeSwarmManifest`, and implemented real-time updates in `ExecutionMonitor`.
 - [2026-03-18] Cycle #38 ✅ Implemented Phase 1 BYOK UI. Created the Next.js /keys page for managing AI provider keys. Added API routes for GET, POST, and DELETE operations, utilizing the `getKMSProvider()` for simulating pgsodium encryption of secrets stored in `vault.user_secrets`. Updated `src/db/client.ts` to expose the secret for decryption and masking. Added comprehensive tests in `src/security/keys.test.ts` and successfully verified the frontend UI using Playwright.
 - [2026-03-18] Cycle #37 ✅ Completed the final steps of Move 3: Worker Dispatch + Execution Loop. Modified `server/src/app/api/orchestrator/execute/route.ts` to dispatch `executeSwarmManifest` asynchronously, returning an immediate `executionId`. Updated `/api/results/route.ts` to return `sessionStatus` from the DB. Updated the Next.js `page.tsx` UI to cleanly hand off execution to the `ExecutionMonitor` which polls and updates the state to `completed` or `error` dynamically. Handled all UI verifications using Playwright and marked the backlog task complete.
@@ -77,7 +78,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
-- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features. (Aligned with delegation model §8.2)
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
