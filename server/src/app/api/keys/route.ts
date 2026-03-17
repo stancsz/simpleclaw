@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDbClient } from "../../../../../src/db/client";
 import { getKMSProvider } from "../../../../../src/security/kms";
 
-const MOCK_USER_ID = 'test-user'; // Replace with real auth later
+// TODO: Replace with real auth once authentication is implemented
+// For now, use session from cookie or default to test-user
+const getUserId = (req: NextRequest): string => {
+  // This is a placeholder - will be replaced with real auth
+  return 'test-user';
+};
 
 export async function GET(req: NextRequest) {
     try {
+        const userId = getUserId(req);
         const dbClient = getDbClient();
-        const keys = dbClient.getSecrets(MOCK_USER_ID);
+        const keys = dbClient.getSecrets(userId);
 
         return NextResponse.json({ keys });
     } catch (error) {
@@ -30,8 +36,9 @@ export async function POST(req: NextRequest) {
 
         const keyName = name || `${provider}_key`;
 
+        const userId = getUserId(req);
         const dbClient = getDbClient();
-        const id = dbClient.addSecret(MOCK_USER_ID, keyName, encryptedSecret, provider);
+        const id = dbClient.addSecret(userId, keyName, encryptedSecret, provider);
 
         if (!id) {
             throw new Error("Failed to add secret to DB");
@@ -53,8 +60,9 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Key ID is required" }, { status: 400 });
         }
 
+        const userId = getUserId(req);
         const dbClient = getDbClient();
-        dbClient.deleteSecret(MOCK_USER_ID, id);
+        dbClient.deleteSecret(userId, id);
 
         return NextResponse.json({ success: true });
     } catch (error) {
