@@ -1,5 +1,7 @@
 import { DBClient } from "../db/client.ts";
 import type { Task } from "../core/types.ts";
+import * as fs from "fs";
+import { getKMSProvider } from "../security/kms.ts";
 
 export interface WorkerResult {
   status: "success" | "error" | "skipped";
@@ -24,22 +26,44 @@ export async function executeWorkerTask(
   }
 
   try {
-    // 3. Load JIT Skill (Mock)
-    db.writeAuditLog(sessionId, "worker_loading_skill", { task_id: task.id, skills: task.skills });
+    // 3. Load JIT Skill
+    let skillContent = "";
+    if (task.skills && task.skills.length > 0) {
+      try {
+        skillContent = fs.readFileSync(`src/workers/skills/${task.skills[0]}.md`, "utf-8");
+      } catch (err: any) {
+        skillContent = "Skill file not found or failed to load.";
+      }
+    }
+    db.writeAuditLog(sessionId, "worker_loading_skill", { task_id: task.id, skills: task.skills, loaded_content_preview: skillContent.substring(0, 50) });
 
-    // 4. Fetch credential (Mock)
+    // 4. Fetch credential
+    const kmsProvider = getKMSProvider();
+    let authHeader = "";
     for (const cred of task.credentials) {
-      db.simulateReadSecret(cred);
+      const encryptedSecret = db.simulateReadSecret(cred);
+      if (encryptedSecret && encryptedSecret !== "MOCK_SUPABASE_SECRET") {
+         const decryptedSecret = await kmsProvider.decrypt(encryptedSecret);
+         authHeader = `Bearer ${decryptedSecret}`;
+         db.writeAuditLog(sessionId, "worker_decrypted_credential", { task_id: task.id, cred_id: cred, decrypted_value: decryptedSecret });
+      }
     }
 
-    // 5. Execute (Mock task)
+    // 5. Execute (Mock task or real test-api logic)
     // Simulating execution delay
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const mockOutput = {
+    let mockOutput: any = {
       message: `Executed task ${task.id}: ${task.description}`,
       skills_used: task.skills,
     };
+
+    if (task.skills && task.skills[0] === "test-api") {
+      const res = await fetch("https://jsonplaceholder.typicode.com/posts/1", {
+          headers: authHeader ? { Authorization: authHeader } : undefined
+      });
+      mockOutput.api_response = await res.json();
+    }
 
     // 6. Write result to DB and terminate
     if (task.action_type === "WRITE") {
