@@ -37,7 +37,8 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         const { DBClient } = require("../db/client");
         const fs = require("fs");
         const testDb = new DBClient(process.env.DATABASE_URL);
-        const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+        const path = require('path');
+        const schema = fs.readFileSync(path.join(__dirname, "../../db/migrations/001_motherboard.sql"), "utf-8");
         testDb.applyMigration(schema);
 
         const req = {
@@ -458,7 +459,8 @@ describe("Orchestrator Cloud Function (Execution Flow)", () => {
 
         // Cleanup
         try {
-            fs.unlinkSync("local_test_db_orchestrator_execute.sqlite");
+            const dbPath = process.env.DATABASE_URL?.replace("sqlite://", "") || "local_test_db_orchestrator_execute.sqlite";
+            if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
         } catch(e) {}
 
         if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
