@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (!isServer) {
         config.resolve.fallback = {
@@ -12,9 +13,6 @@ const nextConfig: NextConfig = {
     // Ignore bun:sqlite module
     config.externals = [...(config.externals || []), 'bun:sqlite', 'bun' + ':sqlite'];
     return config;
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 

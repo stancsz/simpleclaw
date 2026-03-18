@@ -155,7 +155,7 @@ export class DBClient {
     }
   }
 
-  simulateReadSecret(secretId: string): string {
+  simulateReadSecret(secretId: string): string | null {
     if (this.isSupabase) return "MOCK_SUPABASE_SECRET";
 
     if (this.db) {
@@ -166,7 +166,7 @@ export class DBClient {
 
         return row ? row.secret : null;
     }
-    return "";
+    return null;
   }
 
   addSecret(userId: string, name: string, secret: string, provider: string) {

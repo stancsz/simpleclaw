@@ -8,10 +8,10 @@ const getUserId = (req: NextRequest): string => {
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const id = (await params).id;
 
         if (!id) {
             return NextResponse.json({ error: "Key ID is required" }, { status: 400 });

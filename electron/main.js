@@ -16,6 +16,13 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0f172a',
+      symbolColor: '#f1f5f9',
+      height: 36
+    },
+    trafficLightPosition: { x: 16, y: 16 },
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

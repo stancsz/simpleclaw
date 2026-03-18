@@ -18,6 +18,7 @@ body {
   line-height: 1.5;
 }
 
+
 h1, h2, h3 {
   margin-top: 0;
 }
@@ -37,6 +38,11 @@ h1, h2, h3 {
   margin: 0 auto;
 }
 
+/* Ensure interactive elements aren't draggable */
+a, button, input, textarea, select, .no-drag {
+  -webkit-app-region: no-drag;
+}
+
 .dashboard-header {
   width: 100%;
   display: flex;
@@ -45,6 +51,8 @@ h1, h2, h3 {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1rem;
   margin-bottom: 2rem;
+  -webkit-app-region: drag;
+  padding-top: 1.5rem; /* Add padding for traffic lights in macOS */
 }
 
 .dashboard-main {
