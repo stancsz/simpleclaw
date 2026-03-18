@@ -38,7 +38,7 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         const fs = require("fs");
         const testDb = new DBClient(process.env.DATABASE_URL);
         const path = require('path');
-        const schema = fs.readFileSync(path.join(__dirname, "../../db/migrations/001_motherboard.sql"), "utf-8");
+        const schema = fs.readFileSync(path.join(__dirname, "../db/migrations/001_motherboard.sql"), "utf-8");
         testDb.applyMigration(schema);
 
         const req = {
