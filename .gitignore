@@ -78,6 +78,7 @@ terraform.rc
 !/setup.sh
 !/.github/
 !/scripts/
+!/examples/
 
 # memory (keep local unless explicitly shared)
 .agents/memory/
