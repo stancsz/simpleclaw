@@ -64,9 +64,10 @@ export default function Home() {
 
     setStatus('executing');
     setErrorMessage('');
+    setTaskResults([]);
 
     try {
-      const response = await fetch('/api/orchestrator/execute', {
+      const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,10 +82,11 @@ export default function Home() {
         throw new Error(data.error || 'Failed to execute plan');
       }
 
-      // We do not immediately set to 'completed' here. We leave it in 'executing'
-      // state, and the ExecutionMonitor will poll until sessionStatus is 'completed'
-      // or 'error', which will trigger handleExecutionComplete via callback.
-      console.log('Execution started with ID:', data.executionId);
+      // Synchronously set to completed and populate task results
+      setStatus('completed');
+      if (data.results) {
+        setTaskResults(Object.values(data.results));
+      }
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err.message || 'An unexpected error occurred during execution.');

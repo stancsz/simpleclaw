@@ -112,7 +112,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
 
   const display = getStatusDisplay();
 
-  const combinedResults = polledResults.length > 0 ? polledResults : (taskResults || []);
+  const combinedResults = taskResults && taskResults.length > 0 ? taskResults : polledResults;
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
@@ -124,14 +124,21 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
           backgroundColor: display.bg,
           color: display.color,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: 'bold',
           fontSize: '1.1rem',
           minHeight: '60px',
+          textAlign: 'center',
         }}
       >
-        {display.text}
+        <span>{display.text}</span>
+        {status === 'error' && errorMessage && errorMessage !== display.text && (
+          <span style={{ fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 'normal' }}>
+            {errorMessage}
+          </span>
+        )}
       </div>
 
       {combinedResults && combinedResults.length > 0 && (

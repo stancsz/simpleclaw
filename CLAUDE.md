@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-16] Cycle #26 ✅ Connected UI approval to execution engine: created /api/execute endpoint and integrated with PlanDisplay/ExecutionMonitor
 - [2026-03-18] Cycle #40 ✅ Refactored worker template to implement the delegation model as specified in SWARM_SPEC.md §8.2. Created `src/core/engine.ts` with a mock `executeEngine` function, and updated `src/workers/template.ts` to delegate execution to this engine instead of executing logic directly. Verified via `bun test src/workers/worker.test.ts`. This lays the foundation for integrating real sub-agents like `opencode`.
 - [2026-03-18] Cycle #39 ✅ Integrated UI with orchestrator backend for full execution flow. Modified `server/src/app/page.tsx` to handle the approval flow, created the `/api/orchestrator/execute` API endpoint to handle the dispatch using `executeSwarmManifest`, and implemented real-time updates in `ExecutionMonitor`.
 - [2026-03-18] Cycle #38 ✅ Implemented Phase 1 BYOK UI. Created the Next.js /keys page for managing AI provider keys. Added API routes for GET, POST, and DELETE operations, utilizing the `getKMSProvider()` for simulating pgsodium encryption of secrets stored in `vault.user_secrets`. Updated `src/db/client.ts` to expose the secret for decryption and masking. Added comprehensive tests in `src/security/keys.test.ts` and successfully verified the frontend UI using Playwright.
