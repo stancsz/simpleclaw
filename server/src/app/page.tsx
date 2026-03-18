@@ -66,12 +66,14 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/execute', {
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'execute',
           session_id: sessionId,
           manifest: pda.plan,
+          user_id: 'test-user',
         }),
       });
 

@@ -81,28 +81,35 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
 
-    if (session_id && action === 'approve') {
+    if (session_id && (action === 'approve' || action === 'execute')) {
         try {
             const manifest = body?.manifest;
             if (!manifest) {
-                res.status(400).json({ error: 'Missing manifest for approval.' });
+                res.status(400).json({ error: 'Missing manifest for approval/execution.' });
                 return;
             }
 
             dbClient.updateSessionStatus(session_id, 'approved');
 
-            // Execute the plan
-            const results = await executeSwarmManifest(manifest, session_id, dbClient);
+            // Execute the plan asynchronously so the UI can poll for results
+            executeSwarmManifest(manifest, session_id, dbClient)
+                .then(() => dbClient.updateSessionStatus(session_id, 'completed'))
+                .catch((error: any) => {
+                    console.error('Error executing swarm manifest:', error);
+                    dbClient.updateSessionStatus(session_id, 'error');
+                    dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: error.message || String(error) });
+                });
 
-            res.status(200).json({ status: 'success', message: 'Session approved.', results });
+            res.status(200).json({ status: 'dispatched', message: 'Session approved and execution started.', executionId: session_id, workers: manifest.steps.map((s: any) => s.worker) });
             return;
         } catch (error: any) {
-            console.error('Error approving and executing session:', error);
-            res.status(500).json({ error: error.message || 'Internal server error while executing session.' });
+            console.error('Error dispatching execution:', error);
+            res.status(500).json({ error: error.message || 'Internal server error while starting execution.' });
             return;
         }
     }
 
+    // Default to 'plan' action if prompt is provided
     if (!prompt || typeof prompt !== 'string') {
         res.status(400).json({ error: 'Missing or invalid "prompt" field in request body.' });
         return;

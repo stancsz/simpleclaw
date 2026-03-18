@@ -301,25 +301,25 @@ describe("Worker Dispatch & Execution Loop", () => {
 
   });
 
-  it("should handle approval payload via the orchestrator route interface", async () => {
+  it("should handle execute payload via the orchestrator route interface", async () => {
     // 1. Setup Motherboard
     const kmsProvider = require("../security/kms").getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
-      VALUES ('user_approval_test', 'https://mock.supabase.co', '${encryptedServiceRole}');
+      VALUES ('user_execute_test', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
     // 2. Create manifest requiring mock-skill
     const manifest: SwarmManifest = {
       version: "1.0",
-      intent_parsed: "Execute approval flow",
+      intent_parsed: "Execute approve->execute flow",
       skills_required: ["mock-skill"],
       credentials_required: [],
       steps: [
         {
-          id: "approval-test",
-          description: "Execute with approval",
+          id: "execute-test",
+          description: "Execute with execute action",
           worker: "worker-mock",
           skills: ["mock-skill"],
           credentials: [],
@@ -329,73 +329,92 @@ describe("Worker Dispatch & Execution Loop", () => {
       ],
     };
 
-    const sessionId = db.createSession("user_approval_test", { prompt: "test approval" }, manifest);
+    const sessionId = db.createSession("user_execute_test", { prompt: "test execute" }, manifest);
 
     // Ensure session status starts off right
     db.updateSessionStatus(sessionId, "waiting_approval");
 
-    // 3. Import the route handler (from Next.js API route context)
-    // We create a mocked NextRequest and handle it directly since Next Server routes can't easily be spawned in unit tests without a server
-
-    // Mock the DB client retrieval instead of reassigning readonly export
-    const dbClientMod = require("../../src/db/client");
-
-    // In our test, POST handler uses getDbClient(). Since `require` might return a frozen module in ESM/Bun context,
-    // we bypass it by testing the internal execution behavior and directly supplying `db` if possible.
-    // However, since we can't easily overwrite exports in this environment, we'll recreate the logic of POST here
-    // to verify the asynchronous dispatch and return payload logic is correctly simulating what `POST` does.
-
-    // To correctly test the route which imports getDbClient() (which opens a NEW empty memory db on `sqlite://local.db` fallback),
-    // we should use the same DB environment variable.
-    const originalDbUrl = process.env.DATABASE_URL;
-    process.env.DATABASE_URL = "sqlite://:memory:";
-
-    // BUT memory DBs aren't shared across instances in Bun easily.
-    // Let's just create a test that directly validates `executeSwarmManifest` handles the approval workflow since the API route is literally just a wrapper mapping action 'approve' to executeSwarmManifest.
-    // We already have `orchestration-flow.test.ts` mapping the e2e logic!
-    // To satisfy the specific request without complex ESM mocking of NextJS APIs, we'll validate the response of a simulated API mock.
-
-    const mockPostHandler = async (req: any) => {
-        const body = await req.json();
-        if (body.action === 'approve') {
-            const sid = body.session_id || body.sessionId;
-            let m = body.manifest;
-            if (!sid) return { status: 400, json: async () => ({ error: "Missing sessionId" }) };
-
-            db.updateSessionStatus(sid, "approved");
-
-            // Execute the plan asynchronously
-            executeSwarmManifest(m, sid, db)
-                .then(() => db.updateSessionStatus(sid, "completed"))
-                .catch((e) => db.updateSessionStatus(sid, "error"));
-            return { status: 200, json: async () => ({ status: "success", executionId: sid }) };
-        }
-        return { status: 400, json: async () => ({}) };
-    };
+    // 3. We create a simulated Cloud Function request to the actual `orchestratorHandler`
+    const { orchestratorHandler } = require("../core/orchestrator");
 
     const reqObj = {
-      action: "approve",
-      sessionId: sessionId,
-      manifest: manifest
+      action: "execute",
+      session_id: sessionId,
+      manifest: manifest,
+      user_id: "user_execute_test"
     };
 
-    const mockNextRequest = {
-      json: async () => reqObj
+    const mockReq = {
+      method: "POST",
+      body: reqObj
     } as any;
 
-    const res = await mockPostHandler(mockNextRequest);
-    const data = await res.json();
+    let statusCode = 200;
+    let responseBody: any = null;
 
-    expect(res.status).toBe(200);
-    expect(data.status).toBe("success");
-    expect(data.executionId).toBe(sessionId);
+    const mockRes = {
+      set: (k: string, v: string) => {},
+      status: (code: number) => {
+        statusCode = code;
+        return mockRes;
+      },
+      json: (data: any) => {
+        responseBody = data;
+      },
+      send: (data: string) => {
+        responseBody = data;
+      }
+    } as any;
+
+    // Use a custom mocked DBClient module or inject the db instance directly into `executeSwarmManifest` via mock,
+    // but the simplest is just injecting it if possible. Since orchestratorHandler uses new DBClient,
+    // we can use a memory fallback or rely on the async behavior.
+
+    // Instead of overriding the internal DBClient which is hard without a mock library setup,
+    // we'll use `bun test` mock capabilities.
+    const originalDbUrl = process.env.DATABASE_URL;
+
+    // Create a physical mock DB for the orchestrator to pick up
+    // since it news up DBClient with DATABASE_URL
+    const fs = require('fs');
+    process.env.DATABASE_URL = "sqlite://local_test_db.sqlite";
+
+    // Create the physical DB and apply migrations
+    const testDb = new DBClient(process.env.DATABASE_URL);
+    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    testDb.applyMigration(schema);
+
+    // Populate the session we expect
+    testDb.createSession("user_execute_test", { prompt: "test execute" }, manifest);
+
+    // We must manually grab the session ID since orchestrator handler will query it
+    // But since the DB is recreated, our original sessionId from `db` might not be in testDb.
+    // Let's grab the actual new session ID.
+    const testDbAny = testDb as any;
+    const sessionRow = testDbAny.db.query("SELECT id FROM orchestrator_sessions LIMIT 1").get();
+    const actualSessionId = sessionRow.id;
+
+    // Update the request object
+    mockReq.body.session_id = actualSessionId;
+
+    // Run the actual handler
+    await orchestratorHandler(mockReq, mockRes);
+
+    expect(statusCode).toBe(200);
+    expect(responseBody.status).toBe("dispatched");
+    expect(responseBody.executionId).toBe(actualSessionId);
 
     // Wait for the async worker dispatch to resolve
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // Verify state transition inside our test DB instance
-    const session = db.getSession(sessionId);
+    // Verify state transition inside our physical test DB instance
+    const session = testDb.getSession(actualSessionId);
     expect(session.status).toBe("completed");
+
+    // Clean up
+    try {
+        fs.unlinkSync("local_test_db.sqlite");
+    } catch(e) {}
 
     // Restore DB env
     if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;

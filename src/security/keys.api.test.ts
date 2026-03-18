@@ -1,12 +1,20 @@
 import { describe, it, expect, beforeEach, afterAll, mock } from 'bun:test';
-// import { NextRequest } from 'next/server';
 import { GET, POST, DELETE } from '../../server/src/app/api/keys/route';
 import { getDbClient } from '../db/client';
 import { getKMSProvider } from './kms';
 
 describe('BYOK API Routes', () => {
     const MOCK_USER_ID = 'test-user';
+
+    // Use an isolated local DB specifically for these tests to avoid table missing errors
+    const fs = require('fs');
+    const originalDbUrl = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = "sqlite://local_test_db_keys.sqlite";
+
     const dbClient = getDbClient();
+    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    dbClient.applyMigration(schema);
+
     const kmsProvider = getKMSProvider();
 
     let keyId = '';
@@ -25,6 +33,12 @@ describe('BYOK API Routes', () => {
 
     afterAll(() => {
         delete process.env.KMS_PROVIDER;
+        try {
+            fs.unlinkSync("local_test_db_keys.sqlite");
+        } catch(e) {}
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
     });
 
     it('should POST a new key successfully', async () => {

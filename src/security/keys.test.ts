@@ -4,7 +4,15 @@ import { getKMSProvider } from './kms';
 
 describe('BYOK API Flow (Local DB Simulation)', () => {
     const MOCK_USER_ID = 'test-user';
+
+    const fs = require('fs');
+    const originalDbUrl = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = "sqlite://local_test_db_keys_flow.sqlite";
+
     const dbClient = getDbClient();
+    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    dbClient.applyMigration(schema);
+
     const kmsProvider = getKMSProvider();
 
     beforeEach(async () => {
@@ -23,6 +31,12 @@ describe('BYOK API Flow (Local DB Simulation)', () => {
 
     afterAll(() => {
         delete process.env.KMS_PROVIDER;
+        try {
+            fs.unlinkSync("local_test_db_keys_flow.sqlite");
+        } catch(e) {}
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
     });
 
     it('should add an encrypted key and retrieve it masked', async () => {

@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #50 ✅ Connected the UI approval button to actual worker execution, completing the end-to-end Plan-Diff-Approve → Execute flow for Phase 0. Handled the frontend `handleApprove` to dispatch `action: 'execute'` to `/api/orchestrator` directly and made GCF orchestrator execute the DAG without blocking the HTTP response, enabling live UI polling.
 - [2026-03-18] Cycle #49 ✅ Implemented the Phase 1 BYOK UI for key management per user request. Refactored the key management UI to `server/src/app/settings/page.tsx` utilizing a combined `KeyManager.tsx` component. Handled frontend and backend API testing.
 - [2026-03-18] Cycle #48 ✅ Refactored the BYOK UI for key management to `server/src/app/settings/keys/page.tsx`, splitting it into `KeyManagementForm.tsx` and `KeyList.tsx` as requested. Also cleaned up duplicate/old directories.
 - [2026-03-18] Cycle #46 ✅ Implemented the BYOK UI for key management per user request. Renamed `/app/key-management` to `/app/keys`, updated `page.tsx` links, and verified `KeyManagement.tsx` component and API routes are correct. Marked the Phase 1 BYOK UI task as complete.

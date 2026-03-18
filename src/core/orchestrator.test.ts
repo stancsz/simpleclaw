@@ -31,6 +31,15 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
             return;
         }
 
+        // Ensure local DB is set up since orchestrator handler news up DBClient
+        const originalDbUrl = process.env.DATABASE_URL;
+        process.env.DATABASE_URL = "sqlite://local_test_db_orchestrator.sqlite";
+        const { DBClient } = require("../db/client");
+        const fs = require("fs");
+        const testDb = new DBClient(process.env.DATABASE_URL);
+        const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+        testDb.applyMigration(schema);
+
         const req = {
             method: 'POST',
             body: {
@@ -62,6 +71,13 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         expect(responseBody.status).toBe('success');
         expect(responseBody.pda.plan.steps.length).toBeGreaterThan(0);
         expect(responseBody.pda.plan.skills_required.length).toBeGreaterThan(0);
+
+        try {
+             fs.unlinkSync("local_test_db_orchestrator.sqlite");
+        } catch(e) {}
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
     }, 30000); // 30s timeout for LLM call
 
     test("handles missing API key gracefully", async () => {
