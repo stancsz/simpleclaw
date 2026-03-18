@@ -110,10 +110,12 @@ describe("Comprehensive Orchestration Flow Integration Test", () => {
   });
 
   it("should successfully execute a multi-worker DAG with dependencies", async () => {
+    const kmsProvider = getKMSProvider();
+    const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role");
     // 1. Setup Motherboard
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
-      VALUES ('user_flow_2', 'https://mock.supabase.co', 'mock_service_role');
+      VALUES ('user_flow_2', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
     const manifest: SwarmManifest = {
@@ -232,9 +234,11 @@ describe("Comprehensive Orchestration Flow Integration Test", () => {
   });
 
   it("should enforce idempotency for WRITE tasks", async () => {
+    const kmsProvider = getKMSProvider();
+    const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role");
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
-      VALUES ('user_flow_4', 'https://mock.supabase.co', 'mock_service_role');
+      VALUES ('user_flow_4', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
     const manifest: SwarmManifest = {

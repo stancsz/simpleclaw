@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #52 ✅ Finalized Worker Dispatch + Execution Loop integration with UI and end-to-end testing
 - [2026-03-18] Cycle #51 ✅ Refactored Phase 1 BYOK UI components. Split `KeyManager.tsx` into `KeyForm.tsx` and `KeyList.tsx` for better modularity. Removed `/settings` and migrated the main page back to `/keys`. Ensured API flows remained stable via `bun test` and verified Next.js builds successfully.
 - [2026-03-18] Cycle #50 ✅ Connected the UI approval button to actual worker execution, completing the end-to-end Plan-Diff-Approve → Execute flow for Phase 0. Handled the frontend `handleApprove` to dispatch `action: 'execute'` to `/api/orchestrator` directly and made GCF orchestrator execute the DAG without blocking the HTTP response, enabling live UI polling.
 - [2026-03-18] Cycle #49 ✅ Implemented the Phase 1 BYOK UI for key management per user request. Refactored the key management UI to `server/src/app/settings/page.tsx` utilizing a combined `KeyManager.tsx` component. Handled frontend and backend API testing.
@@ -90,6 +91,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
+- [x] **Phase 0 — Worker Dispatch + Execution Loop**
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features. (Aligned with delegation model §8.2)
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)

@@ -202,4 +202,109 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     const auditLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE session_id = ? AND event = 'worker_decrypted_credential'").all(sessionId);
     expect(auditLogs.length).toBe(0); // It shouldn't have decrypted anything because it was missing
   });
+  it("should simulate full lifecycle via orchestrator handler (Intent -> Approve -> Execute)", async () => {
+    // We will test the HTTP layer by passing mock Req and Res objects to orchestratorHandler
+    const { orchestratorHandler } = require("./orchestrator");
+    const kmsProvider = getKMSProvider();
+    const encryptedServiceRole = await kmsProvider.encrypt("super_secret_supabase_key");
+    const encryptedGithubToken = await kmsProvider.encrypt("ghp_test_token_123");
+
+    // Insert user into platform
+    db.applyMigration(`
+      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      VALUES ('user_e2e_456', 'https://mock.supabase.co', '${encryptedServiceRole}');
+    `);
+
+    // Insert credential into user's vault
+    db.applyMigration(`
+      INSERT INTO vault_user_secrets (id, user_id, name, secret, provider)
+      VALUES ('github_token', 'user_e2e_456', 'GitHub PAT', '${encryptedGithubToken}', 'github');
+    `);
+
+    // Override the DB URL for the orchestrator to use the same in-memory DB connection logic (or test DB)
+    // Actually, orchestratorHandler creates its own DBClient. For the test, we need it to use our db.
+    // We will mock the DBClient constructor to return our instance.
+    mock.module("../db/client", () => ({
+      DBClient: mock(() => db),
+    }));
+
+    try {
+      // Step 1: Intent Parsing (POST /api/orchestrator without action)
+      let planResCode = 0;
+      let planResBody: any = null;
+      const planReq = {
+        method: "POST",
+        body: {
+          prompt: "Fetch the latest GitHub issues from the simpleclaw repository",
+          user_id: "user_e2e_456",
+        },
+      } as any;
+      const planRes = {
+        set: () => {},
+        status: (code: number) => { planResCode = code; return planRes; },
+        json: (data: any) => { planResBody = data; },
+        send: (data: string) => { planResBody = data; },
+      } as any;
+
+      await orchestratorHandler(planReq, planRes);
+
+      expect(planResCode).toBe(200);
+      expect(planResBody.status).toBe("success");
+      expect(planResBody.session_id).toBeDefined();
+      expect(planResBody.pda).toBeDefined();
+      expect(planResBody.pda.plan.skills_required).toContain("github-fetch-issues");
+      const sessionId = planResBody.session_id;
+
+      // Step 2: Plan Approval (POST /api/orchestrator with action: 'approve')
+      let executeResCode = 0;
+      let executeResBody: any = null;
+      const executeReq = {
+        method: "POST",
+        body: {
+          action: "approve",
+          session_id: sessionId,
+          user_id: "user_e2e_456",
+          manifest: planResBody.pda.plan,
+        },
+      } as any;
+      const executeRes = {
+        set: () => {},
+        status: (code: number) => { executeResCode = code; return executeRes; },
+        json: (data: any) => { executeResBody = data; },
+        send: (data: string) => { executeResBody = data; },
+      } as any;
+
+      // executeSwarmManifest inside orchestratorHandler is async and not awaited (returns immediately).
+      // We need to await it to finish so we can check results. Let's wait a bit.
+      await orchestratorHandler(executeReq, executeRes);
+
+      expect(executeResCode).toBe(200);
+      expect(executeResBody.status).toBe("dispatched");
+      expect(executeResBody.executionId).toBe(sessionId);
+
+      // Wait for execution to finish by polling the session status (up to 1s)
+      const dbClientAny = db as any;
+      let session;
+      for (let i = 0; i < 100; i++) {
+        session = dbClientAny.db.query("SELECT * FROM orchestrator_sessions WHERE id = ?").get(sessionId);
+        if (session.status === "completed" || session.status === "error") break;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      // Step 3: Result Logging Check
+      expect(session.status).toBe("completed");
+
+      const taskLogs = dbClientAny.db.query("SELECT * FROM task_results WHERE session_id = ?").all(sessionId);
+      expect(taskLogs.length).toBe(1);
+      expect(taskLogs[0].status).toBe("success");
+      expect(taskLogs[0].skill_ref).toBe("github-fetch-issues");
+
+      const auditLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE session_id = ? ORDER BY created_at ASC").all(sessionId);
+      const auditEvents = auditLogs.map((log: any) => log.event);
+      // Check the ones actually logged:
+      expect(auditEvents).toContain("swarm_execution_started");
+      expect(auditEvents).toContain("swarm_execution_completed");
+    } finally {
+      mock.restore();
+    }
+  });
 });
