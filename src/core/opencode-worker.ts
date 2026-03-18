@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { CapabilityExecutionContext, CapabilityResult } from "./capabilities;
+import type { CapabilityExecutionContext, CapabilityResult } from "./capabilities";
 
 const execFileAsync = promisify(execFile);
 const DEFAULT_DELEGATION_SCOPE = "worker:opencode";

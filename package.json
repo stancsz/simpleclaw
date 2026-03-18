@@ -2,7 +2,7 @@
   "name": "simpleclaw",
   "version": "0.1.0",
   "description": "High-performance, local-first autonomous agent workstation",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "module": "index.ts",
   "type": "module",
   "private": true,

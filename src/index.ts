@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
-import { startRuntime, resolveRuntimeMode, type RuntimeStartOptions } from "./core/runtime;
+import { startRuntime, resolveRuntimeMode, type RuntimeStartOptions } from "./core/runtime";
 
 export async function startClaw(config: RuntimeStartOptions = {}) {
   return await startRuntime(config);

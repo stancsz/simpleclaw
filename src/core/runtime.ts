@@ -18,12 +18,12 @@ import {
   type CapabilityDefinition,
   type RuntimeCapabilityContext,
 } from "./capabilities";
-import { createCapabilityExecutor } from "./executor;
-import { loadLongTermMemory, loadSoul, updateMemory } from "./memory;
-import { loadSkillsContext } from "./skills;
-import { getCapabilityAuditLog, getVisibleCapabilities, resolveAgentTaskKind } from "./policy;
-import { delegateToOpenCode } from "./opencode-worker;
-import { runAgentLoop, type AgentEvent, type AgentLoopResult, type AgentOptions, type ConversationMessage } from "./agent;
+import { createCapabilityExecutor } from "./executor";
+import { loadLongTermMemory, loadSoul, updateMemory } from "./memory";
+import { loadSkillsContext } from "./skills";
+import { getCapabilityAuditLog, getVisibleCapabilities, resolveAgentTaskKind } from "./policy";
+import { delegateToOpenCode } from "./opencode-worker";
+import { runAgentLoop, type AgentEvent, type AgentLoopResult, type AgentOptions, type ConversationMessage } from "./agent";
 
 const DEFAULT_PORT = 3018;
 const DEFAULT_HEARTBEAT_SCOPE = "heartbeat:global";
@@ -288,7 +288,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor);
+        const { executeNativeTool } = await import("./executor");
         return { status: "completed", content: String(await executeNativeTool("read", args)) };
       },
     },
@@ -307,7 +307,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor);
+        const { executeNativeTool } = await import("./executor");
         return { status: "completed", content: String(await executeNativeTool("write", args)) };
       },
     },
@@ -325,7 +325,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       runtimeModes: ["cli", "hybrid", "server"],
       approvalClass: "default",
       handler: async (args) => {
-        const { executeNativeTool } = await import("./executor);
+        const { executeNativeTool } = await import("./executor");
         return { status: "completed", content: String(await executeNativeTool("shell", args)) };
       },
     },

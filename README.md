@@ -9,12 +9,19 @@ SimpleClaw is an ultra-lean "claw" agent designed to deliver **Claude Code-level
 > [!IMPORTANT]
 > **Quick Start:** One-command installation:
 > ```bash
+> # macOS/Linux/Git Bash
 > curl -fsSL https://raw.githubusercontent.com/stancsz/simpleclaw/main/setup.sh | bash
+> ```
+> ```powershell
+> # Windows PowerShell
+> (irm https://raw.githubusercontent.com/stancsz/simpleclaw/main/setup.sh) | bash
 > ```
 > Or download and run:
 > ```bash
 > ./setup.sh
 > ```
+>
+> **Windows Developers:** If you're building the Electron app, ensure **Developer Mode** is enabled in Windows settings to allow symbolic links.
 
 > [!TIP]
 > **⚡ 121 Lines of Pure Power.** The core engine in `src/core` is so lean, it fits in just 121 lines of dense, optimized code.

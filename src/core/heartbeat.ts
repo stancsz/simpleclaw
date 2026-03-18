@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AgentDispatcher, AgentDispatchSubmitInput, RuntimeDispatchEvent } from "./dispatcher;
-import type { AgentOptions } from "./agent;
-import { loadLongTermMemory } from "./memory;
+import type { AgentDispatcher, AgentDispatchSubmitInput, RuntimeDispatchEvent } from "./dispatcher";
+import type { AgentOptions } from "./agent";
+import { loadLongTermMemory } from "./memory";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

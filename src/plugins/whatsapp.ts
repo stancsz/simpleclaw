@@ -1,6 +1,6 @@
-import { executeNativeTool } from "../core/executor;
-import { aiIpiSanitizer } from "../security/triple_lock;
-import type { Extension } from "../core/extensions;
+import { executeNativeTool } from "../core/executor";
+import { aiIpiSanitizer } from "../security/triple_lock";
+import type { Extension } from "../core/extensions";
 
 export const plugin: Extension = {
   name: "whatsapp",
