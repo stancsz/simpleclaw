@@ -1,0 +1,43 @@
+version: "1.0"
+intent_parsed: "Every night at 2am, pull all unfulfilled Shopify orders from the last 24 hours, check inventory in Google Sheets, and send me a Slack summary."
+skills_required:
+  - "shopify-order-sync"
+  - "google-sheets-read"
+  - "slack-poster"
+credentials_required:
+  - "shopify_api_key"
+  - "google_oauth_token"
+  - "slack_bot_token"
+schedule: "0 2 * * *"
+steps:
+  - id: "step-1"
+    description: "Fetch Shopify orders from the last 24 hours"
+    worker: "worker-shopify"
+    skills:
+      - "shopify-order-sync"
+    credentials:
+      - "shopify_api_key"
+    depends_on: []
+    action_type: "READ"
+
+  - id: "step-2"
+    description: "Cross-reference Google Sheets for inventory levels"
+    worker: "worker-sheets"
+    skills:
+      - "google-sheets-read"
+    credentials:
+      - "google_oauth_token"
+    depends_on:
+      - "step-1"
+    action_type: "READ"
+
+  - id: "step-3"
+    description: "Post Slack digest summarizing the findings"
+    worker: "worker-slack"
+    skills:
+      - "slack-poster"
+    credentials:
+      - "slack_bot_token"
+    depends_on:
+      - "step-2"
+    action_type: "WRITE"
