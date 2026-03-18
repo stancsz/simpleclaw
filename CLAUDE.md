@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #45 ✅ Verified Phase 0 end-to-end integration. Ensured the UI approve button correctly invokes the `api/execute` endpoint for swarm dispatch and checked off the `Phase 0 — End-to-End Integration` task in the backlog.
 - [2026-03-16 19:30] Cycle #26 ✅ Connected UI approval to worker dispatch - users can now approve plans and trigger execution. Updated page.tsx and ExecutionMonitor.tsx to send approvals to /api/execute and poll /api/results.
 - [2026-03-18] Cycle #44 ✅ Implemented approval flow for worker dispatch. Refactored the orchestrator API route to natively intercept approval payloads and directly invoke `executeSwarmManifest` asynchronously to allow non-blocking UI polling. Modified the frontend dashboard UI's `handleApprove` to issue POST requests to `/api/orchestrator` instead of the obsolete `execute` sub-route, and removed the redundant `execute` subdirectory to clean up the backend.
 - [2026-03-18] Cycle #43 ✅ Implemented BYOK UI for AI key management. Migrated the key management UI to `server/src/app/key-management/page.tsx` and refactored the logic into `server/src/components/KeyManagement.tsx`. Ensured existing API routes in `server/src/app/api/keys/route.ts` integrate with Supabase Vault securely using KMS flow pgsodium encryption simulation. Updated dashboard links and CLAUDE.md backlog.
@@ -86,6 +87,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features. (Aligned with delegation model §8.2)
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
+- [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI (Refactor):** Key management screen storing keys in Supabase Vault migrated to `server/src/app/key-management` using `KeyManagement.tsx` component.

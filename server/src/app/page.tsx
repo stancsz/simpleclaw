@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import PlanDisplay from './components/PlanDisplay';
-import ExecutionMonitor from './components/ExecutionMonitor';
+import PlanDisplay from '../components/PlanDisplay';
+import ExecutionMonitor from '../components/ExecutionMonitor';
 import type { PlanDiffApprove } from '../../../src/core/types';
 import Link from 'next/link';
 
