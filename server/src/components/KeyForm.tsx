@@ -82,13 +82,12 @@ export default function KeyForm({ onKeyAdded }: KeyFormProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                     <div className="input-group">
                         <label style={{ color: '#ccc', marginBottom: '0.5rem', display: 'block' }}>API Key</label>
-                        <input
-                            type="password"
+                        <textarea
                             className="input-field"
                             placeholder="sk-..."
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
-                            style={{ width: '100%', fontFamily: 'monospace' }}
+                            style={{ width: '100%', fontFamily: 'monospace', minHeight: '80px', resize: 'vertical' }}
                         />
                     </div>
                     <div className="input-group">
