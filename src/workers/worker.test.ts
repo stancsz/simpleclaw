@@ -19,7 +19,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     // Cleanup if necessary
   });
 
-  it("should successfully execute a single worker task", async () => {
+  it("should successfully execute a single worker task via delegation engine", async () => {
     const task: Task = {
       id: "task-1",
       description: "A simple task",
@@ -35,6 +35,8 @@ describe("Worker Dispatch & Execution Loop", () => {
     expect(result.status).toBe("success");
     expect(result.output).toBeDefined();
     expect(result.output.message).toContain("task-1");
+    expect(result.output.delegated_to).toBe("opencode-mock");
+    expect(result.output.skills_used).toEqual(["skill-1"]);
   });
 
   it("should enforce idempotency for WRITE tasks", async () => {

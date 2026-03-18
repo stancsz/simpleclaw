@@ -2,6 +2,7 @@ import { DBClient } from "../db/client";
 import type { Task } from "../core/types";
 import * as fs from "fs";
 import { getKMSProvider } from "../security/kms";
+import { executeEngine } from "../core/engine";
 
 export interface WorkerResult {
   status: "success" | "error" | "skipped";
@@ -28,9 +29,10 @@ export async function executeWorkerTask(
   try {
     // 3. Load JIT Skill
     let skillContent = "";
+    const primarySkill = task.skills && task.skills.length > 0 ? task.skills[0] : "none";
     if (task.skills && task.skills.length > 0) {
       try {
-        skillContent = fs.readFileSync(`src/workers/skills/${task.skills[0]}.md`, "utf-8");
+        skillContent = fs.readFileSync(`src/workers/skills/${primarySkill}.md`, "utf-8");
       } catch (err: any) {
         skillContent = "Skill file not found or failed to load.";
       }
@@ -40,30 +42,19 @@ export async function executeWorkerTask(
     // 4. Fetch credential
     const kmsProvider = getKMSProvider();
     let authHeader = "";
+    const decryptedCredentials: Record<string, string> = {};
     for (const cred of task.credentials) {
       const encryptedSecret = db.simulateReadSecret(cred);
       if (encryptedSecret && encryptedSecret !== "MOCK_SUPABASE_SECRET") {
          const decryptedSecret = await kmsProvider.decrypt(encryptedSecret);
          authHeader = `Bearer ${decryptedSecret}`;
+         decryptedCredentials[cred] = decryptedSecret;
          db.writeAuditLog(sessionId, "worker_decrypted_credential", { task_id: task.id, cred_id: cred, decrypted_value: decryptedSecret });
       }
     }
 
-    // 5. Execute (Mock task or real test-api logic)
-    // Simulating execution delay
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    let mockOutput: any = {
-      message: `Executed task ${task.id}: ${task.description}`,
-      skills_used: task.skills,
-    };
-
-    if (task.skills && task.skills[0] === "test-api") {
-      const res = await fetch("https://jsonplaceholder.typicode.com/posts/1", {
-          headers: authHeader ? { Authorization: authHeader } : undefined
-      });
-      mockOutput.api_response = await res.json();
-    }
+    // 5. Dispatch to Engine
+    const mockOutput = await executeEngine(primarySkill, decryptedCredentials, task);
 
     // 6. Write result to DB and terminate
     if (task.action_type === "WRITE") {
