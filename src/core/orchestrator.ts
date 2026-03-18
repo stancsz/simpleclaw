@@ -111,6 +111,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     // Example available skills - in real life this comes from DB / standard library
     const availableSkills = [
         'github',
+        'github-fetch-issues',
         'shopify-order-sync',
         'google-sheets-inventory',
         'slack-digest-poster',

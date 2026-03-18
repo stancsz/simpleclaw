@@ -5,9 +5,10 @@ import type { PlanDiffApprove, Task } from '../../../../src/core/types';
 
 interface PlanDisplayProps {
   pda: PlanDiffApprove;
+  onApprove?: () => void;
 }
 
-export default function PlanDisplay({ pda }: PlanDisplayProps) {
+export default function PlanDisplay({ pda, onApprove }: PlanDisplayProps) {
   if (!pda || !pda.plan || !pda.plan.steps) {
     return null;
   }
@@ -86,6 +87,18 @@ export default function PlanDisplay({ pda }: PlanDisplayProps) {
           ))}
         </div>
       </div>
+
+      {pda.status === 'waiting_approval' && onApprove && (
+        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onApprove}
+            className="btn-primary"
+            style={{ backgroundColor: '#16a34a', padding: '1rem 2rem', fontSize: '1.1rem' }}
+          >
+            Approve & Execute Plan
+          </button>
+        </div>
+      )}
     </div>
   );
 }

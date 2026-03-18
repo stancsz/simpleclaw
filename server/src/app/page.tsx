@@ -66,14 +66,12 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/orchestrator', {
+      const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'approve',
           session_id: sessionId,
           manifest: pda.plan,
-          user_id: 'test-user', // Minimal auth for Phase 0
         }),
       });
 
@@ -146,19 +144,10 @@ export default function Home() {
 
         {pda && status !== 'error' && (
           <div style={{ marginTop: '2rem' }}>
-            <PlanDisplay pda={pda} />
-
-            {status === 'waiting_approval' && (
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={handleApprove}
-                  className="btn-primary"
-                  style={{ backgroundColor: '#16a34a', padding: '1rem 2rem', fontSize: '1.1rem' }}
-                >
-                  Approve & Execute Plan
-                </button>
-              </div>
-            )}
+            <PlanDisplay
+              pda={{ ...pda, status: status === 'waiting_approval' ? 'waiting_approval' : pda.status }}
+              onApprove={handleApprove}
+            />
           </div>
         )}
       </main>
