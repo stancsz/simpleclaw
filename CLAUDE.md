@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-18] Cycle #43 ✅ Implemented BYOK UI for AI key management. Migrated the key management UI to `server/src/app/key-management/page.tsx` and refactored the logic into `server/src/components/KeyManagement.tsx`. Ensured existing API routes in `server/src/app/api/keys/route.ts` integrate with Supabase Vault securely using KMS flow pgsodium encryption simulation. Updated dashboard links and CLAUDE.md backlog.
 - [2026-03-18] Cycle #42 ✅ Updated Phase 1 BYOK UI. Added an optional Expiry Date input field in the Key Management UI (`server/src/app/keys/page.tsx`), integrated it into the frontend API request payloads, updated the `server/src/app/api/keys/route.ts` API route handler to extract and persist `expiresAt`, and updated the `addSecret` and `getSecrets` DB client methods to query and parse the value back to the UI seamlessly.
 - [2026-03-18] Cycle #41 ✅ Completed Phase 0 Worker Dispatch + Execution Loop integration check. Verified that `executeSwarmManifest` and worker tasks correctly execute as per SWARM_SPEC.md Phase 0 requirements. Added an example DAG in `examples/swarm.example.yaml` highlighting the usecase logic, updated `.gitignore` to track it, and fixed an `openai` package missing error for core integration tests. Tests pass successfully.
 - [2026-03-18] Cycle #40 ✅ Refactored worker template to implement the delegation model as specified in SWARM_SPEC.md §8.2. Created `src/core/engine.ts` with a mock `executeEngine` function, and updated `src/workers/template.ts` to delegate execution to this engine instead of executing logic directly. Verified via `bun test src/workers/worker.test.ts`. This lays the foundation for integrating real sub-agents like `opencode`.
@@ -85,6 +86,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
+- [x] **Phase 1 — BYOK UI (Refactor):** Key management screen storing keys in Supabase Vault migrated to `server/src/app/key-management` using `KeyManagement.tsx` component.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
