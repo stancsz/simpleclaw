@@ -43,6 +43,19 @@ export async function executeWorkerTask(
     const kmsProvider = getKMSProvider();
     let authHeader = "";
     const decryptedCredentials: Record<string, string> = {};
+
+    // Fetch platform_users credentials for the user
+    const session = db.getSession(sessionId);
+    if (session && session.user_id) {
+        const platformUser = db.getPlatformUser(session.user_id);
+        if (platformUser && platformUser.encrypted_service_role) {
+            const decryptedServiceRole = await kmsProvider.decrypt(platformUser.encrypted_service_role);
+            decryptedCredentials['supabase_service_role'] = decryptedServiceRole;
+            decryptedCredentials['supabase_url'] = platformUser.supabase_url;
+            db.writeAuditLog(sessionId, "worker_decrypted_platform_credential", { task_id: task.id, user_id: session.user_id, decrypted_value: "[masked]" });
+        }
+    }
+
     for (const cred of task.credentials) {
       const encryptedSecret = db.simulateReadSecret(cred);
       if (encryptedSecret && encryptedSecret !== "MOCK_SUPABASE_SECRET") {
