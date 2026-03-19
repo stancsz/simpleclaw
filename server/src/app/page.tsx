@@ -66,14 +66,12 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/orchestrator', {
+      const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'execute',
           session_id: sessionId,
-          manifest: pda.plan,
-          user_id: 'test-user',
+          manifest: pda.plan
         }),
       });
 
@@ -148,6 +146,7 @@ export default function Home() {
           <div style={{ marginTop: '2rem' }}>
             <PlanDisplay
               pda={{ ...pda, status: status === 'waiting_approval' ? 'waiting_approval' : pda.status }}
+              sessionId={sessionId}
               onApprove={handleApprove}
             />
           </div>
