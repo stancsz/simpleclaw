@@ -5,6 +5,19 @@ import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
 
+export async function executePlan(manifest: SwarmManifest, sessionId: string, db: DBClient): Promise<any> {
+    try {
+        const results = await executeSwarmManifest(manifest, sessionId, db);
+        db.updateSessionStatus(sessionId, 'completed');
+        return results;
+    } catch (error: any) {
+        console.error('Error executing swarm manifest in executePlan:', error);
+        db.updateSessionStatus(sessionId, 'error');
+        db.writeAuditLog(sessionId, 'swarm_execution_failed', { error: error.message || String(error) });
+        throw error;
+    }
+}
+
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
 
@@ -92,13 +105,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             dbClient.updateSessionStatus(session_id, 'approved');
 
             // Execute the plan asynchronously so the UI can poll for results
-            executeSwarmManifest(manifest, session_id, dbClient)
-                .then(() => dbClient.updateSessionStatus(session_id, 'completed'))
-                .catch((error: any) => {
-                    console.error('Error executing swarm manifest:', error);
-                    dbClient.updateSessionStatus(session_id, 'error');
-                    dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: error.message || String(error) });
-                });
+            executePlan(manifest, session_id, dbClient).catch(() => {});
 
             res.status(200).json({ status: 'dispatched', message: 'Session approved and execution started.', executionId: session_id, workers: manifest.steps.map((s: any) => s.worker) });
             return;

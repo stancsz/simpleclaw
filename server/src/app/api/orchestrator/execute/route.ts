@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { executeSwarmManifest } from "../../../../../../src/core/dispatcher";
+import { executePlan } from "../../../../../../src/core/orchestrator";
 import { getDbClient } from "../../../../../../src/db/client";
 
 export async function POST(req: NextRequest) {
@@ -29,15 +29,7 @@ export async function POST(req: NextRequest) {
         db.updateSessionStatus(sessionId, "approved");
 
         // Execute the plan asynchronously to allow the UI to poll
-        executeSwarmManifest(manifest, sessionId, db)
-            .then(() => {
-                db.updateSessionStatus(sessionId, "completed");
-            })
-            .catch((error: any) => {
-                console.error("Error in async executeSwarmManifest:", error);
-                db.updateSessionStatus(sessionId, "error");
-                db.writeAuditLog(sessionId, "swarm_execution_failed", { error: error.message || String(error) });
-            });
+        executePlan(manifest, sessionId, db).catch(() => {});
 
         return Response.json({ status: "success", executionId: sessionId }, { status: 202 });
 

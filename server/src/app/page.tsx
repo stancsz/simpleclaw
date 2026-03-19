@@ -62,10 +62,12 @@ export default function Home() {
   const handleApprove = async () => {
     if (!sessionId || !pda) return;
 
+    // Transition from plan display to execution monitoring
     setStatus('executing');
     setErrorMessage('');
 
     try {
+      // Trigger swarm manifest execution via the dispatcher
       const response = await fetch('/api/orchestrator/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,9 +83,9 @@ export default function Home() {
         throw new Error(data.error || 'Failed to execute plan');
       }
 
-      // We do not immediately set to 'completed' here. We leave it in 'executing'
-      // state, and the ExecutionMonitor will poll until sessionStatus is 'completed'
-      // or 'error', which will trigger handleExecutionComplete via callback.
+      // We leave the status in 'executing' state.
+      // The ExecutionMonitor component will poll the database for real-time
+      // progress of task results. When complete, it calls handleExecutionComplete.
       console.log('Execution started with ID:', data.executionId);
     } catch (err: any) {
       console.error(err);
