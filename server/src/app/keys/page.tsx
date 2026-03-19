@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import KeyForm from '../../../components/KeyForm';
-import KeyList, { KeyRecord } from '../../../components/KeyList';
+import KeyForm from './components/KeyForm';
+import KeyList, { KeyRecord } from './components/KeyList';
 
 export default function KeysPage() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
