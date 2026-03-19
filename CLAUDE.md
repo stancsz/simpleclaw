@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-19] Cycle #61 ✅ Implemented the BYOK UI for key management in the Next.js dashboard. Created the `KeysPage` component at `/keys/page.tsx`, integrated it with `KeyManager.tsx`, and updated the dashboard navigation.
 - [2026-03-19] Cycle #60 ✅ Refactored BYOK UI to use a single `KeyManagement.tsx` component per instructions. Removed obsolete form and list components, integrated into `/settings/page.tsx`, updated database and API integrations lightly to reflect diffs, tested.
 - [2026-03-19] Cycle #59 ✅ Verified that the BYOK UI for key management is implemented, tested and working as expected. Unit tests pass and the `server` Next.js frontend builds without errors. Verified `Phase 1 — BYOK UI` backlog task was properly marked as completed.
 - [2026-03-19] Cycle #58 ✅ Implemented the BYOK UI for key management in the Next.js dashboard. Created the `SettingsPage` components, added API integration, and refactored the routing structure from `/keys` to `/settings`. Marked 'Phase 1 — BYOK UI' as completed.
@@ -110,6 +111,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI (Refactor):** Key management screen storing keys in Supabase Vault migrated to `server/src/app/settings` using `KeyManagementForm.tsx` and `KeyList.tsx` components.
+- [x] **Phase 1 — BYOK UI (Final):** Moved key management to `server/src/app/keys/page.tsx` and renamed `KeyManagement.tsx` to `KeyManager.tsx` as per the prompt instructions.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
