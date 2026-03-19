@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
                 db.writeAuditLog(sessionId, "swarm_execution_failed", { error: error.message || String(error) });
             });
 
-        return Response.json({ status: "success", executionId: sessionId }, { status: 200 });
+        return Response.json({ status: "success", executionId: sessionId }, { status: 202 });
 
     } catch (error) {
         console.error("Error in execute API route:", error);

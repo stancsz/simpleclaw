@@ -5,10 +5,11 @@ import type { PlanDiffApprove, Task } from '../../../src/core/types';
 
 interface PlanDisplayProps {
   pda: PlanDiffApprove;
+  sessionId?: string | null;
   onApprove?: () => void;
 }
 
-export default function PlanDisplay({ pda, onApprove }: PlanDisplayProps) {
+export default function PlanDisplay({ pda, sessionId, onApprove }: PlanDisplayProps) {
   if (!pda || !pda.plan || !pda.plan.steps) {
     return null;
   }
