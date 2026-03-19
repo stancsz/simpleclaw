@@ -1,3 +1,4 @@
+// Phase 1 - BYOK UI Key Deletion Route
 import { NextRequest, NextResponse } from "next/server";
 import { getDbClient } from "../../../../../../src/db/client";
 

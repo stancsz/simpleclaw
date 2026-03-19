@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import KeyManager from '../../components/KeyManager';
+import KeyManager from '../components/KeyManager';
 
 export default function KeysPage() {
     return (

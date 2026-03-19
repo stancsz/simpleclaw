@@ -1,3 +1,6 @@
+// Phase 1 - BYOK UI API Route
+// Handles CRUD operations for Bring Your Own Key management,
+// securely encrypting keys via KMS before storing in Supabase Vault.
 import { NextRequest } from "next/server";
 import { getDbClient } from "../../../../../src/db/client";
 import { getKMSProvider } from "../../../../../src/security/kms";
