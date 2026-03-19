@@ -97,6 +97,9 @@ export default function Home() {
       <div className="dashboard-header">
         <h1>SimpleClaw Dashboard</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link href="/onboarding" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
+            Onboarding
+          </Link>
           <Link href="/keys" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
             Keys (BYOK)
           </Link>

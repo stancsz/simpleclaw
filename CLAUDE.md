@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-19] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created onboarding page and API route for Supabase credential input with KMS encryption.
 - [2026-03-19] Cycle #63 ✅ Implemented Sub-Agent Delegation Engine: Created `execution-engine.ts` with OpenCode engine, modified `template.ts` to delegate tasks, fulfilling the core swarm architecture promise.
 - [2026-03-20] Cycle #62 ✅ Verified and finalized the BYOK UI for key management. Moved KeyManager.tsx to `server/src/app/components/KeyManager.tsx` to match requirements, updated the Next.js layout with navigation links to the Dashboard and Keys pages, and ensured the backend integration with Supabase Vault (via local DB mock and KMS flow) works correctly.
 - [2026-03-20] Cycle #26 ✅ Completed Plan-Diff-Approve → Execution integration: Updated orchestrator API to dispatch workers, connected UI approval button to real execution, and tested full workflow.
@@ -116,6 +117,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI (Refactor):** Key management screen storing keys in Supabase Vault migrated to `server/src/app/settings` using `KeyManagementForm.tsx` and `KeyList.tsx` components.
 - [x] **Phase 1 — BYOK UI (Final):** Moved key management to `server/src/app/keys/page.tsx` and renamed `KeyManagement.tsx` to `KeyManager.tsx` as per the prompt instructions.
+- [x] **Phase 1 — BYOK UI:** Implemented user onboarding UI for Supabase credential input with KMS encryption.
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
