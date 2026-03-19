@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import KeyForm from './components/KeyForm';
-import KeyList, { KeyRecord } from './components/KeyList';
+import KeyManagementForm from '../../components/KeyManagementForm';
+import KeyList, { KeyRecord } from '../../components/KeyList';
 
-export default function KeysPage() {
+export default function SettingsPage() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
 
     const fetchKeys = async () => {
@@ -31,13 +31,13 @@ export default function KeysPage() {
                     <Link href="/" style={{ color: '#888', textDecoration: 'none', fontSize: '1.5rem', lineHeight: '1' }}>
                         &larr;
                     </Link>
-                    <h1>Key Management</h1>
+                    <h1>Settings</h1>
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 1: BYOK UI</div>
             </div>
 
             <main className="dashboard-main">
-                <KeyForm onKeyAdded={fetchKeys} />
+                <KeyManagementForm onKeyAdded={fetchKeys} />
                 <KeyList keys={keys} onKeyDeleted={fetchKeys} />
             </main>
         </div>
