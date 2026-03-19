@@ -20,6 +20,16 @@ describe("Worker Dispatch & Execution Loop", () => {
   });
 
   it("should successfully execute a single worker task via delegation engine", async () => {
+    // Spy on the engine execution to verify delegation actually occurs
+    const executionEngineModule = require("../core/execution-engine");
+    const originalExecute = executionEngineModule.OpenCodeExecutionEngine.prototype.execute;
+
+    let executeCalledWith: any = null;
+    executionEngineModule.OpenCodeExecutionEngine.prototype.execute = async function(task: any, context: any) {
+      executeCalledWith = { task, context };
+      return originalExecute.call(this, task, context);
+    };
+
     const task: Task = {
       id: "task-1",
       description: "A simple task",
@@ -37,6 +47,15 @@ describe("Worker Dispatch & Execution Loop", () => {
     expect(result.output.message).toContain("task-1");
     expect(result.output.delegated_to).toBe("opencode-mock");
     expect(result.output.skills_used).toEqual(["skill-1"]);
+
+    // Verify delegation details
+    expect(executeCalledWith).not.toBeNull();
+    expect(executeCalledWith.task.id).toBe("task-1");
+    expect(executeCalledWith.context.sessionId).toBe("session-1");
+    expect(executeCalledWith.context.credentials).toBeDefined();
+
+    // Restore mock
+    executionEngineModule.OpenCodeExecutionEngine.prototype.execute = originalExecute;
   });
 
   it("should enforce idempotency for WRITE tasks", async () => {
