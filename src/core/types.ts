@@ -6,6 +6,7 @@ export interface Task {
     credentials: string[];
     depends_on: string[];
     action_type: 'READ' | 'WRITE';
+    parameters?: Record<string, any>;
 }
 
 export interface SwarmManifest {

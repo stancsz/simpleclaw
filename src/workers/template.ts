@@ -67,6 +67,9 @@ export async function executeWorkerTask(
     }
 
     // 5. Dispatch to Engine
+    if (task.parameters) {
+      db.writeAuditLog(sessionId, "worker_dispatching_with_parameters", { task_id: task.id, parameters: task.parameters });
+    }
     const mockOutput = await executeEngine(primarySkill, decryptedCredentials, task);
 
     // 6. Write result to DB and terminate

@@ -124,6 +124,10 @@ export class DBClient {
     }
   }
 
+  createTransactionLogEntry(idempotency_key: string, status: string, result: any) {
+    return this.logTransaction(idempotency_key, status, result);
+  }
+
   logTaskResult(sessionId: string, workerId: string, skillRef: string, status: string, outputOrError: any, isError: boolean = false) {
     if (this.isSupabase) {
       console.warn(`Mock logTaskResult Supabase for ${workerId}`);

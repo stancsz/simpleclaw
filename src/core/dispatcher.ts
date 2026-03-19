@@ -375,41 +375,68 @@ export async function executeSwarmManifest(
         }
       }
 
-      // Use the local API route for simulation if possible, but default to direct invocation
-      // This fulfills the Phase 0 objective of dispatching via HTTP
-      let result: WorkerResult;
-      try {
-        const fetchUrl = process.env.NEXT_PUBLIC_API_URL
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/worker`
-          : "http://localhost:3000/api/worker";
+      const executeOnce = async (): Promise<WorkerResult> => {
+        // Use the local API route for simulation if possible, but default to direct invocation
+        // This fulfills the Phase 0 objective of dispatching via HTTP
+        let result: WorkerResult;
+        // Check if we are in a test environment, and if fetch has been overridden specifically for this test
+        const isFetchMocked = global.fetch && (global.fetch as any).name !== "fetch"; // basic check or just rely on NEXT_PUBLIC_API_URL
 
-        const response = await fetch(fetchUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ task, session_id: sessionId })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Worker HTTP call failed: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        result = data.result as WorkerResult;
-      } catch (fetchError) {
-        // Fallback to direct invocation if the HTTP call fails (e.g. tests)
-        if (task.worker === "github") {
-          result = await executeGithubWorkerTask(task, sessionId, db);
+        if (process.env.NODE_ENV === "test" && !process.env.NEXT_PUBLIC_API_URL && !process.env.FORCE_MOCK_FETCH) {
+            // Default fast path for tests not explicitly testing HTTP routing
+           if (task.worker === "github") {
+             result = await executeGithubWorkerTask(task, sessionId, db);
+           } else {
+             result = await executeWorkerTask(task, sessionId, db);
+           }
         } else {
-          result = await executeWorkerTask(task, sessionId, db);
+            const fetchUrl = process.env.NEXT_PUBLIC_API_URL
+              ? `${process.env.NEXT_PUBLIC_API_URL}/api/worker`
+              : "http://localhost:3000/api/worker";
+
+            const response = await fetch(fetchUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ task, session_id: sessionId })
+            });
+
+            if (!response.ok) {
+              throw new Error(`Worker HTTP call failed: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            result = data.result as WorkerResult;
         }
+
+        if (result.status === "error") {
+            throw new Error(result.error || "Worker task returned error status");
+        }
+        return result;
+      };
+
+      let finalResult: WorkerResult;
+      try {
+        finalResult = await executeOnce();
+      } catch (firstError: any) {
+         db.writeAuditLog(sessionId, "worker_retry_attempt", { task_id: task.id, error: firstError.message });
+         try {
+           finalResult = await executeOnce();
+         } catch (retryError: any) {
+           finalResult = { status: "error", error: retryError.message || String(retryError) };
+         }
       }
 
-      results[task.id] = result;
-      deferredResolvers.get(task.id)?.resolve(result);
-      return result;
+      results[task.id] = finalResult;
+      if (finalResult.status === "error") {
+        // We resolve it so dependent tasks can check the result and fail correctly
+        deferredResolvers.get(task.id)?.resolve(finalResult);
+      } else {
+        deferredResolvers.get(task.id)?.resolve(finalResult);
+      }
+      return finalResult;
     } catch (error: any) {
        const errResult: WorkerResult = { status: "error", error: error.message || String(error) };
-       deferredResolvers.get(task.id)?.reject(error);
+       deferredResolvers.get(task.id)?.resolve(errResult);
        return errResult;
     }
   };
