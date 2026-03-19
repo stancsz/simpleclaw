@@ -73,7 +73,7 @@ export default function KeyManagement() {
     const handleDeleteKey = async (id: string) => {
         if (!confirm('Are you sure you want to delete this key?')) return;
         try {
-            const res = await fetch(`/api/keys?id=${id}`, {
+            const res = await fetch(`/api/keys/${id}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
