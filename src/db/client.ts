@@ -159,6 +159,14 @@ export class DBClient {
     }
   }
 
+  getAuditLogs(sessionId: string): any[] {
+    if (this.isSupabase) return [];
+    if (this.db) {
+        return this.db.query(`SELECT * FROM audit_log WHERE session_id = ? ORDER BY created_at ASC`).all(sessionId) as any[];
+    }
+    return [];
+  }
+
   simulateReadSecret(secretId: string): string | null {
     if (this.isSupabase) return "MOCK_SUPABASE_SECRET";
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { executeSwarmManifest } from "../../../../../src/core/dispatcher";
-import { getDbClient } from "../../../../../src/db/client";
+import { executeSwarmManifest } from "../../../../../../src/core/dispatcher";
+import { getDbClient } from "../../../../../../src/db/client";
 
 export async function POST(req: NextRequest) {
     try {
