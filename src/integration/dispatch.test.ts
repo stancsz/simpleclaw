@@ -39,12 +39,11 @@ describe("Comprehensive Orchestration Flow Integration Test", () => {
     const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
     db.applyMigration(schema);
 
-    // Mock skill
+    // Mock skill in isolated directory
     try {
-      fs.mkdirSync("src/workers/skills", { recursive: true });
-      if (!fs.existsSync("src/workers/skills/mock-skill.md")) {
-        fs.writeFileSync("src/workers/skills/mock-skill.md", "# Mock Skill\nThis is a mock skill for testing.");
-      }
+      const testSkillDir = "src/workers/skills/test-integration";
+      fs.mkdirSync(testSkillDir, { recursive: true });
+      fs.writeFileSync(`${testSkillDir}/mock-skill.md`, "# Mock Skill\nThis is a mock skill for testing.");
     } catch (e) {
       // Ignore
     }
@@ -53,7 +52,12 @@ describe("Comprehensive Orchestration Flow Integration Test", () => {
   afterEach(() => {
     delete process.env.KMS_PROVIDER;
 
-    // Don't unlink the mock skill file as it is needed by other tests
+    // Clean up test skill directory
+    try {
+      fs.rmSync("src/workers/skills/test-integration", { recursive: true, force: true });
+    } catch (e) {
+      // Ignore cleanup errors
+    }
   });
 
   it("should successfully execute a simple single-worker flow", async () => {
