@@ -174,6 +174,7 @@ export class DBClient {
   }
 
   addSecret(userId: string, name: string, secret: string, provider: string, expiresAt?: string | null) {
+    // BYOK Phase 1 vault
     if (this.isSupabase) {
         // In Supabase mode, we would use the Supabase client with Row Level Security
         // For now, mock behavior for testing

@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { provider, key, name, expiresAt } = body;
 
+        // BYOK Phase 1 validation
         if (!provider || !key) {
             return Response.json({ error: "Provider and key are required" }, { status: 400 });
         }

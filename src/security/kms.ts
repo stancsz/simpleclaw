@@ -13,7 +13,7 @@ class LocalKMSProvider implements KMSProvider {
 
     constructor() {
         // Generate a deterministic 32-byte key for consistent local testing
-        // or fall back to an environment variable if provided.
+        // or fall back to an environment variable if provided. (BYOK Phase 1)
         const keyMaterial = process.env.LOCAL_KMS_KEY || 'local-development-kms-key-32-byte-secret-padding-xxx';
         this.key = crypto.createHash('sha256').update(keyMaterial).digest();
     }

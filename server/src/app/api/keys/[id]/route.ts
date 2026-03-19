@@ -13,6 +13,7 @@ export async function DELETE(
     try {
         const id = (await params).id;
 
+        // BYOK Phase 1 validation
         if (!id) {
             return NextResponse.json({ error: "Key ID is required" }, { status: 400 });
         }
