@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-19] Cycle #56 ✅ Connected the orchestrator API route to the dispatcher so that UI plan approval triggers `executeSwarmManifest` successfully. Integrated ExecutionMonitor to read from database for live tracking. Tested the whole loop end-to-end via an existing integration test `src/integration/orchestrator-flow.test.ts` (which works perfectly as `dispatch.test.ts` and runs idempotency correctly). Marked Phase 0 as done.
 - [2026-03-18] Cycle #55 ✅ Implemented Phase 1 BYOK UI: Created key management page and components, integrated with Supabase Vault, and moved to `/settings/keys`.
 - [2026-03-18] Cycle #54 ✅ Implemented Phase 1 BYOK UI: Created key management page with KMS encryption integration.
 - [2026-03-18] Cycle #53 ✅ Completed Worker Dispatch + Execution Loop integration: Verified UI and API handler triggers `executeSwarmManifest` properly, checked off Phase 0 end-to-end integration, and ensured results are recorded back to local SQLite testing database. Added final integration test in `orchestrator.test.ts`.
@@ -97,6 +98,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
 - [x] **Phase 0 — Worker Dispatch + Execution Loop**
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features. (Aligned with delegation model §8.2)
+- [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow. Tested via end to end integration test.
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
