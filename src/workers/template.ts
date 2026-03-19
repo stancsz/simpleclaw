@@ -1,8 +1,8 @@
 import { DBClient } from "../db/client";
-import type { Task } from "../core/types";
+import type { Task, ExecutionContext } from "../core/types";
 import * as fs from "fs";
 import { getKMSProvider } from "../security/kms";
-import { executeEngine } from "../core/engine";
+import { OpenCodeExecutionEngine } from "../core/execution-engine";
 
 export interface WorkerResult {
   status: "success" | "error" | "skipped";
@@ -70,7 +70,17 @@ export async function executeWorkerTask(
     if (task.parameters) {
       db.writeAuditLog(sessionId, "worker_dispatching_with_parameters", { task_id: task.id, parameters: task.parameters });
     }
-    const mockOutput = await executeEngine(primarySkill, decryptedCredentials, task);
+
+    const context: ExecutionContext = {
+      credentials: decryptedCredentials,
+      skillContent,
+      sessionId,
+      userId: session?.user_id
+    };
+
+    // Instantiate appropriate engine. For now, we use OpenCodeExecutionEngine
+    const engine = new OpenCodeExecutionEngine();
+    const mockOutput = await engine.execute(task, context);
 
     // 6. Write result to DB and terminate
     if (task.action_type === "WRITE") {

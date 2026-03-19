@@ -9,6 +9,21 @@ export interface Task {
     parameters?: Record<string, any>;
 }
 
+export interface ExecutionContext {
+    credentials: Record<string, string>;
+    skillContent: string;
+    sessionId: string;
+    userId?: string;
+}
+
+export interface TaskResult {
+    message: string;
+    skills_used: string[];
+    delegated_to: string;
+    status: string;
+    [key: string]: any;
+}
+
 export interface SwarmManifest {
     version: string;
     intent_parsed: string;
