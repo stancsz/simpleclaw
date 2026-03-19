@@ -6,7 +6,7 @@ interface KeyFormProps {
     onKeyAdded: () => void;
 }
 
-export default function KeyForm({ onKeyAdded }: KeyFormProps) {
+export default function KeyManagementForm({ onKeyAdded }: KeyFormProps) {
     const [provider, setProvider] = useState('OpenAI');
     const [apiKey, setApiKey] = useState('');
     const [keyName, setKeyName] = useState('');
