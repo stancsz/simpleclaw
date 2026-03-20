@@ -2,8 +2,8 @@
 // Handles CRUD operations for Bring Your Own Key management,
 // securely encrypting keys via KMS before storing in Supabase Vault.
 import { NextRequest } from "next/server";
-import { getDbClient } from "../../../../../src/db/client";
-import { getKMSProvider } from "../../../../../src/security/kms";
+import { getDbClient } from "@/../../src/db/client";
+import { getKMSProvider } from "@/../../src/security/kms";
 
 const MOCK_USER_ID = 'test-user'; // Minimal auth for Phase 0 / Phase 1 local development
 

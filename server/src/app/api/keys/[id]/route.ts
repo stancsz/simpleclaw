@@ -1,6 +1,6 @@
 // Phase 1 - BYOK UI Key Deletion Route
 import { NextRequest, NextResponse } from "next/server";
-import { getDbClient } from "../../../../../../src/db/client";
+import { getDbClient } from "@/../../src/db/client";
 
 const getUserId = (req: NextRequest): string => {
   // This is a placeholder - will be replaced with real auth
