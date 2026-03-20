@@ -452,8 +452,14 @@ export async function executeSwarmManifest(
 
   db.writeAuditLog(sessionId, "swarm_execution_completed", { tasks_run: tasks.length });
 
-  // Ensure the orchestrator session is marked completed in the database
-  db.updateSessionStatus(sessionId, "completed");
+  // If any task failed, mark session as error, else completed
+  const hasErrors = Object.values(results).some(res => res.status === "error");
+
+  if (hasErrors) {
+      db.updateSessionStatus(sessionId, "error");
+  } else {
+      db.updateSessionStatus(sessionId, "completed");
+  }
 
   return results;
 }
