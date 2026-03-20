@@ -452,5 +452,8 @@ export async function executeSwarmManifest(
 
   db.writeAuditLog(sessionId, "swarm_execution_completed", { tasks_run: tasks.length });
 
+  // Ensure the orchestrator session is marked completed in the database
+  db.updateSessionStatus(sessionId, "completed");
+
   return results;
 }

@@ -136,7 +136,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
 
       {combinedResults && combinedResults.length > 0 && (
         <div style={{ marginTop: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Worker Results</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Live Worker Results</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {combinedResults.map((result, idx) => (
               <div key={idx} style={{
