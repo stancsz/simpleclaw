@@ -102,8 +102,8 @@ export default function Home() {
           <Link href="/onboarding" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
             Onboarding
           </Link>
-          <Link href="/keys" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
-            Keys (BYOK)
+          <Link href="/settings" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
+            Settings (BYOK)
           </Link>
           <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 0: Orchestrator Test</div>
         </div>

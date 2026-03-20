@@ -18,7 +18,7 @@ export default function RootLayout({
       <body className="antialiased">
         <nav className="p-4 border-b border-[#333] flex gap-4 bg-[#1a1a1a]">
           <Link href="/" className="text-[#00E5CC] no-underline font-bold">Dashboard</Link>
-          <Link href="/keys" className="text-[#00E5CC] no-underline font-bold">Keys</Link>
+          <Link href="/settings" className="text-[#00E5CC] no-underline font-bold">Settings (BYOK)</Link>
         </nav>
         {children}
       </body>

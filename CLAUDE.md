@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-20] Cycle #72 ✅ Implemented Phase 1 BYOK UI. Created `server/src/app/settings/page.tsx` integrating the existing `KeyManager.tsx` component to handle key generation. Updated `server/src/app/page.tsx` links, ensured backend correctly implements BYOK, and ran tests and builds successfully. Checked off Phase 1 BYOK UI from the backlog.
 - [2026-03-20] Cycle #71 ✅ Verified the complete end-to-end integration for Phase 0 - Worker Dispatch + Execution Loop. Verified the UI correctly sends execution manifest payload to the newly created `/api/dispatch` endpoint using `handleApprove` to trigger the dispatcher execution. Resolved the Next.js `better-sqlite3` build issues allowing seamless UI orchestration. Handled all verifications using testing scripts locally and `bun test src/workers/worker.test.ts`. Marked task complete.
 - [2026-03-20] Cycle #26 ✅ Verified the full Plan-Diff-Approve → Execute workflow. Ensured the Next.js UI interacts properly with `/api/orchestrator` and `/api/orchestrator/execute` to dispatch workers. Ran integration tests via `bun run test src/core/integration.test.ts` to ensure the flow is robust and complete. Checked off 'Phase 0 — Worker Dispatch + Execution Loop' completion in the backlog.
 - [2026-03-20] Cycle #26 ✅ Implemented end-to-end integration test (`swarm-loop.test.ts`) validating complete orchestrator → worker → motherboard pipeline with 'echo' skill. Checked off 'Phase 0 — Worker Dispatch + Execution Loop' completion.
@@ -109,7 +110,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Build the Orchestrator Cloud Function, Worker dispatch layer, KMS credential encryption flow, and Sovereign Motherboard SQL schema
+- Core work: Finalize Phase 1 BYOK UI and begin Phase 1 Gas Tank / Stripe integration.
 
 ## BACKLOG (Swarm Architecture)
 - [x] **Move 1:** Real LLM Intent Parsing
@@ -134,6 +135,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Verified full Plan-Diff-Approve → Execute workflow and integration tests passing.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.
+- [x] **Phase 1 — BYOK UI:** Implemented UI for key management in the Next.js dashboard at `/settings`.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
