@@ -134,7 +134,8 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         'data-analyzer',
         'generic-web-search',
         'generic-writer',
-        'mock-skill'
+        'mock-skill',
+        'echo'
     ];
 
     try {
