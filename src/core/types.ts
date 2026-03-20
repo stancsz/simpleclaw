@@ -43,7 +43,7 @@ export interface PlanDiffApprove {
     plan: SwarmManifest;
     write_operations: number;
     read_operations: number;
-    status: 'waiting_approval' | 'approved' | 'rejected';
+    status: 'idle' | 'planning' | 'waiting_approval' | 'approved' | 'rejected' | 'executing' | 'completed' | 'error';
     sessionId: string;
 }
 

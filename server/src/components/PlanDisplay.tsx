@@ -89,14 +89,15 @@ export default function PlanDisplay({ pda, sessionId, onApprove }: PlanDisplayPr
         </div>
       </div>
 
-      {pda.status === 'waiting_approval' && onApprove && (
+      {(pda.status === 'waiting_approval' || pda.status === 'executing') && onApprove && (
         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={onApprove}
+            disabled={pda.status === 'executing'}
             className="btn-primary"
-            style={{ backgroundColor: '#16a34a', padding: '1rem 2rem', fontSize: '1.1rem' }}
+            style={{ backgroundColor: pda.status === 'executing' ? '#4b5563' : '#16a34a', padding: '1rem 2rem', fontSize: '1.1rem', cursor: pda.status === 'executing' ? 'not-allowed' : 'pointer' }}
           >
-            Approve & Execute Plan
+            {pda.status === 'executing' ? 'Executing...' : 'Approve & Execute Plan'}
           </button>
         </div>
       )}

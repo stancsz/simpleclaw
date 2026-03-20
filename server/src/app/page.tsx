@@ -68,7 +68,7 @@ export default function Home() {
 
     try {
       // Trigger swarm manifest execution via the orchestrator execute endpoint
-      const response = await fetch('/api/orchestrator/execute', {
+      const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,7 +151,7 @@ export default function Home() {
         {pda && status !== 'error' && (
           <div style={{ marginTop: '2rem' }}>
             <PlanDisplay
-              pda={{ ...pda, status: status === 'waiting_approval' ? 'waiting_approval' : pda.status }}
+              pda={{ ...pda, status: status === 'waiting_approval' ? 'waiting_approval' : status }}
               sessionId={sessionId}
               onApprove={handleApprove}
             />
