@@ -9,10 +9,26 @@ import Link from 'next/link';
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [pda, setPda] = useState<PlanDiffApprove | null>(null);
+  const [keyCount, setKeyCount] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'planning' | 'waiting_approval' | 'executing' | 'completed' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [taskResults, setTaskResults] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchKeys = async () => {
+      try {
+        const res = await fetch('/api/keys');
+        if (res.ok) {
+          const data = await res.json();
+          setKeyCount(data.keys?.length || 0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch keys', err);
+      }
+    };
+    fetchKeys();
+  }, []);
 
   const handlePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +127,33 @@ export default function Home() {
       </div>
 
       <main className="dashboard-main">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <div style={{
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #333',
+            padding: '1rem',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <span style={{ color: '#ccc' }}>
+              Configured Keys: <strong style={{ color: '#00E5CC' }}>{keyCount !== null ? keyCount : '...'}</strong>
+            </span>
+            <Link href="/keys" style={{
+              backgroundColor: 'transparent',
+              color: '#00E5CC',
+              border: '1px solid #00E5CC',
+              borderRadius: '4px',
+              padding: '0.4rem 0.8rem',
+              textDecoration: 'none',
+              fontSize: '0.9rem'
+            }}>
+              Manage Keys
+            </Link>
+          </div>
+        </div>
+
         <div className="create-bot-section">
           <h2>Natural Language Intent</h2>
           <form onSubmit={handlePlan} className="form-container" style={{ maxWidth: '100%' }}>

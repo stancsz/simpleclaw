@@ -11,7 +11,7 @@ export interface KeyRecord {
     expiresAt?: string;
 }
 
-export default function KeyManagement() {
+export default function KeyManager() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
 
     // Form state
