@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-20] Cycle #71 ✅ Verified the complete end-to-end integration for Phase 0 - Worker Dispatch + Execution Loop. Verified the UI correctly sends execution manifest payload to the newly created `/api/dispatch` endpoint using `handleApprove` to trigger the dispatcher execution. Resolved the Next.js `better-sqlite3` build issues allowing seamless UI orchestration. Handled all verifications using testing scripts locally and `bun test src/workers/worker.test.ts`. Marked task complete.
 - [2026-03-20] Cycle #26 ✅ Verified the full Plan-Diff-Approve → Execute workflow. Ensured the Next.js UI interacts properly with `/api/orchestrator` and `/api/orchestrator/execute` to dispatch workers. Ran integration tests via `bun run test src/core/integration.test.ts` to ensure the flow is robust and complete. Checked off 'Phase 0 — Worker Dispatch + Execution Loop' completion in the backlog.
 - [2026-03-20] Cycle #26 ✅ Implemented end-to-end integration test (`swarm-loop.test.ts`) validating complete orchestrator → worker → motherboard pipeline with 'echo' skill. Checked off 'Phase 0 — Worker Dispatch + Execution Loop' completion.
 - [2026-03-20] Cycle #70 ✅ Verified and tested the Plan-Diff-Approve integration with the Worker Dispatch and Execution Loop, confirming the frontend properly displays live status updates via `ExecutionMonitor`.
@@ -132,6 +133,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Implemented and verified the final BYOK Key management UI as requested.
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Verified full Plan-Diff-Approve → Execute workflow and integration tests passing.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 

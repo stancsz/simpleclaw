@@ -7,8 +7,8 @@ import { executeSwarmManifest } from './dispatcher';
 
 export async function executePlan(manifest: SwarmManifest, sessionId: string, db: DBClient): Promise<any> {
     try {
+        // Dispatcher now handles session state update to 'completed'
         const results = await executeSwarmManifest(manifest, sessionId, db);
-        db.updateSessionStatus(sessionId, 'completed');
         return results;
     } catch (error: any) {
         console.error('Error executing swarm manifest in executePlan:', error);
