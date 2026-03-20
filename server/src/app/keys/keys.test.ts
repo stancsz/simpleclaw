@@ -4,19 +4,16 @@ import { DELETE } from '../api/keys/[id]/route';
 import { NextRequest } from 'next/server';
 import { getDbClient } from '../../../../src/db/client';
 import { getKMSProvider } from '../../../../src/security/kms';
+import fs from 'fs';
+import path from 'path';
 
 describe('BYOK API Routes', () => {
     const MOCK_USER_ID = 'test-user';
-    const fs = require('fs');
     const originalDbUrl = process.env.DATABASE_URL;
     process.env.DATABASE_URL = "sqlite://local_test_db_api_keys.sqlite";
 
     const dbClient = getDbClient();
-    const path = require('path');
-    let schemaPath = path.resolve(process.cwd(), "src/db/migrations/001_motherboard.sql");
-    if (!fs.existsSync(schemaPath)) {
-        schemaPath = path.resolve(process.cwd(), "../src/db/migrations/001_motherboard.sql");
-    }
+    const schemaPath = path.resolve(process.cwd(), "src/db/migrations/001_motherboard.sql");
     const schema = fs.readFileSync(schemaPath, "utf-8");
     dbClient.applyMigration(schema);
     const kmsProvider = getKMSProvider();
