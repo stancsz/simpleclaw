@@ -40,7 +40,8 @@
     "openai": "^6.32.0",
     "screenshot-desktop": "^1.15.3",
     "stripe": "^20.4.1",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
   },
   "build": {
     "appId": "com.simpleclaw.app",

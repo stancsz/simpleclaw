@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll, mock } from 'bun:test';
-import { GET, POST, DELETE } from '../../server/src/app/api/keys/route';
+import { GET, POST } from '../../server/src/app/api/keys/route';
+import { DELETE } from '../../server/src/app/api/keys/[id]/route';
 import { getDbClient } from '../db/client';
 import { getKMSProvider } from './kms';
 
@@ -78,9 +79,9 @@ describe('BYOK API Routes', () => {
         const id = dbClient.addSecret(MOCK_USER_ID, 'Delete Test', encryptedKey, 'OpenAI');
 
         const req = {
-            url: `http://localhost:3000/api/keys?id=${id}`
+            url: `http://localhost:3000/api/keys/${id}`
         } as any;
-        const res = await DELETE(req);
+        const res = await DELETE(req, { params: Promise.resolve({ id: id as string }) });
 
         expect(res.status).toBe(200);
         const data = await res.json();
