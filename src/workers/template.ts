@@ -32,7 +32,7 @@ export async function executeWorkerTask(
     const primarySkill = task.skills && task.skills.length > 0 ? task.skills[0] : "none";
     if (task.skills && task.skills.length > 0) {
       try {
-        skillContent = fs.readFileSync(`src/workers/skills/${primarySkill}.md`, "utf-8");
+        skillContent = fs.readFileSync(`src/skills/${primarySkill}.md`, "utf-8");
       } catch (err: any) {
         skillContent = "Skill file not found or failed to load.";
       }

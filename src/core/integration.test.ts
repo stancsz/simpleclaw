@@ -56,10 +56,9 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     });
 
     // Make sure the mock skill file is copied to the right location so executeWorkerTask can find it
-    // because executeWorkerTask reads from "src/workers/skills/${task.skills[0]}.md"
     try {
-      fs.mkdirSync("src/workers/skills", { recursive: true });
-      fs.copyFileSync("test/fixtures/skills/github-fetch-issues.md", "src/workers/skills/github-fetch-issues.md");
+      fs.mkdirSync("src/skills", { recursive: true });
+      fs.copyFileSync("test/fixtures/skills/github-fetch-issues.md", "src/skills/github-fetch-issues.md");
     } catch (e) {
       // Ignore if it already exists or if we can't create it
     }
@@ -71,7 +70,7 @@ describe("Swarm End-to-End Integration Pipeline", () => {
 
     // Clean up mock skill file
     try {
-      fs.unlinkSync("src/workers/skills/github-fetch-issues.md");
+      fs.unlinkSync("src/skills/github-fetch-issues.md");
     } catch (e) {
       // Ignore
     }
