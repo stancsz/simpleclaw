@@ -17,7 +17,7 @@ export async function executeWorkerTask(
 ): Promise<WorkerResult> {
   // 1. Boot: Log start (simulated)
 
-  // 2. Idempotency check before WRITE
+  // 2. Idempotency check before executing WRITE tasks
   if (task.action_type === "WRITE") {
     const isCompleted = db.checkIdempotency(task.id);
     if (isCompleted) {

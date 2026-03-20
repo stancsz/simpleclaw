@@ -86,7 +86,7 @@ export default function Home() {
       // We leave the status in 'executing' state.
       // The ExecutionMonitor component will poll the database for real-time
       // progress of task results. When complete, it calls handleExecutionComplete.
-      console.log('Execution started with ID:', data.executionId);
+      console.log('Swarm execution started with ID:', data.executionId);
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err.message || 'An unexpected error occurred during execution.');

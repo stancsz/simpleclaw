@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
         db.updateSessionStatus(sessionId, "approved");
 
-        // Execute the plan asynchronously to allow the UI to poll
+        // Execute the plan asynchronously to allow the UI to poll for real-time updates
         executePlan(manifest, sessionId, db).catch(() => {});
 
         return Response.json({ status: "success", executionId: sessionId }, { status: 202 });
