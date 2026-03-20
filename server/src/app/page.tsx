@@ -67,13 +67,12 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      // Trigger swarm manifest execution via the orchestrator
-      const response = await fetch('/api/orchestrator', {
+      // Trigger swarm manifest execution via the orchestrator execute endpoint
+      const response = await fetch('/api/orchestrator/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'execute',
-          session_id: sessionId,
+          sessionId: sessionId,
           manifest: pda.plan,
           user_id: 'test-user', // Minimal auth for Phase 0
         }),
