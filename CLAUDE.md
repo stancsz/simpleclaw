@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-24] Cycle #26 ✅ Connected UI approval to dispatcher execution - first end-to-end swarm flow. Validated the `executeSwarmManifest` and the `ExecutionMonitor` live result updates working properly.
 - [2026-03-23] Cycle #83 ✅ Verified Phase 1 BYOK UI. Examined existing implementation across `server/src/app/keys/page.tsx`, `server/src/components/KeyManager.tsx`, and associated API routes. Created end-to-end Playwright tests to add, view, and delete an OpenAI key from the UI, confirming all features behave as expected (including dynamic key masking and Adaptive Minimalism design). Updated dependencies to ensure `better-sqlite3` native drivers are built.
 - [2026-03-23] Cycle #82 ✅ Refactored Phase 1 BYOK UI. Added `react-hook-form` to the frontend, extracted `Navigation` and `CredentialCard` into modular components, and updated `KeyManager.tsx` to display an Adaptive Minimalism design. Verified via Next.js Turbopack build and `bun test`.
 - [2026-03-23] Cycle #81 ✅ Integrated Phase 0 components: Connected Minimal UI to orchestrator dispatch, enabling end-to-end intent approval, worker execution, and real-time result monitoring. Tested successfully using local SQLite database.
@@ -153,6 +154,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Worker Dispatch system with Minimal UI by routing requests directly to `/api/orchestrator` and removing obsolete dispatch wrappers. End-to-end validated execution updates.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the worker dispatch API and Execution UI polling loop.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Shift priority here for Move 3. Phase 0 core functionality is now validated and ready for Phase 1 features. (Aligned with delegation model §8.2)
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
