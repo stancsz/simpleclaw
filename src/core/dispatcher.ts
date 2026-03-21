@@ -450,7 +450,7 @@ export async function executeSwarmManifest(
   // Wait for all tasks to complete
   await Promise.allSettled(Array.from(executionPromises.values()));
 
-  db.writeAuditLog(sessionId, "swarm_execution_completed", { tasks_run: tasks.length });
+  db.writeAuditLog(sessionId, "swarm_execution_completed", { tasks_run: tasks.length, results_summary: Object.keys(results) });
 
   // If any task failed, mark session as error, else completed
   const hasErrors = Object.values(results).some(res => res.status === "error");
