@@ -1,44 +1,10 @@
 import { NextRequest } from "next/server";
 import { orchestratorHandler } from "@/../../src/core/orchestrator";
-import { executeSwarmManifest } from "@/../../src/core/dispatcher";
-import { getDbClient } from "@/../../src/db/client";
 import type { Request, Response } from "@google-cloud/functions-framework";
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-
-        // If the action is approve, directly integrate the dispatcher call here as requested
-        if (body.action === 'approve' || body.approved === true) {
-            const sessionId = body.session_id || body.sessionId;
-            let manifest = body.manifest;
-
-            if (!sessionId) {
-                return Response.json({ error: "Missing sessionId" }, { status: 400 });
-            }
-
-            const db = getDbClient();
-            let session = db.getSession(sessionId);
-
-            if (!session) {
-                console.warn("Session not found in DB (likely running in Next.js stub DBClient), falling back to provided manifest.");
-            } else {
-                manifest = session.manifest || manifest;
-            }
-
-            if (!manifest) {
-                return Response.json({ error: "Manifest not provided and could not be found in session" }, { status: 400 });
-            }
-
-            db.updateSessionStatus(sessionId, "approved");
-
-            // Ensure the orchestrator API endpoint calls executeSwarmManifest
-            executeSwarmManifest(manifest, sessionId, db).catch((error) => {
-                console.error("Execution failed:", error);
-            });
-
-            return Response.json({ status: "dispatched", executionId: sessionId }, { status: 202 });
-        }
 
         // Create mock Request and Response objects to interface with the GCF handler
         const mockReq = {
