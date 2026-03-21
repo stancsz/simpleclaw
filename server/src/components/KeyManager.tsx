@@ -87,18 +87,17 @@ export default function KeyManager() {
     };
 
     return (
-        <div className="key-management-container">
-            <div className="create-bot-section" style={{ marginBottom: '2rem' }}>
-                <h2>Add New Key</h2>
-                <form onSubmit={handleAddKey} className="form-container" style={{ maxWidth: '100%' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                        <div className="input-group">
-                            <label style={{ color: '#ccc', marginBottom: '0.5rem', display: 'block' }}>Provider</label>
+        <div className="flex flex-col gap-8 w-full">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-white mb-6">Add New Key</h2>
+                <form onSubmit={handleAddKey} className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[#888] text-sm font-medium">Provider</label>
                             <select
-                                className="input-field"
+                                className="w-full p-3 bg-[#2a2a2a] text-white border border-[#444] rounded-md focus:outline-none focus:border-[#00E5CC] transition-colors"
                                 value={provider}
                                 onChange={(e) => setProvider(e.target.value)}
-                                style={{ width: '100%', padding: '0.75rem', backgroundColor: '#2a2a2a', color: 'white', border: '1px solid #444', borderRadius: '4px' }}
                             >
                                 <option value="OpenAI">OpenAI</option>
                                 <option value="Anthropic">Anthropic</option>
@@ -107,47 +106,44 @@ export default function KeyManager() {
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-                        <div className="input-group">
-                            <label style={{ color: '#ccc', marginBottom: '0.5rem', display: 'block' }}>Key Name (optional)</label>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[#888] text-sm font-medium">Key Name (optional)</label>
                             <input
                                 type="text"
-                                className="input-field"
+                                className="w-full p-3 bg-[#2a2a2a] text-white border border-[#444] rounded-md focus:outline-none focus:border-[#00E5CC] transition-colors placeholder-[#666]"
                                 placeholder={`e.g., My ${provider} Key`}
                                 value={keyName}
                                 onChange={(e) => setKeyName(e.target.value)}
-                                style={{ width: '100%' }}
                             />
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                        <div className="input-group">
-                            <label style={{ color: '#ccc', marginBottom: '0.5rem', display: 'block' }}>API Key</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[#888] text-sm font-medium">API Key</label>
                             <textarea
-                                className="input-field"
+                                className="w-full p-3 bg-[#2a2a2a] text-white border border-[#444] rounded-md font-mono min-h-[100px] resize-y focus:outline-none focus:border-[#00E5CC] transition-colors placeholder-[#666]"
                                 placeholder="sk-..."
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                style={{ width: '100%', fontFamily: 'monospace', minHeight: '80px', resize: 'vertical' }}
                             />
                         </div>
-                        <div className="input-group">
-                            <label style={{ color: '#ccc', marginBottom: '0.5rem', display: 'block' }}>Expiry Date (optional)</label>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[#888] text-sm font-medium">Expiry Date (optional)</label>
                             <input
                                 type="date"
-                                className="input-field"
+                                className={`w-full p-3 bg-[#2a2a2a] border border-[#444] rounded-md focus:outline-none focus:border-[#00E5CC] transition-colors ${expiresAt ? 'text-white' : 'text-[#666]'}`}
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                style={{ width: '100%', color: expiresAt ? 'white' : '#888' }}
                             />
                         </div>
                     </div>
 
-                    {error && <div style={{ color: '#ef4444', marginBottom: '1rem' }}>{error}</div>}
+                    {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
 
                     <button
                         type="submit"
-                        className="btn-primary"
+                        className="bg-[#00E5CC] hover:bg-[#00c2ad] text-black font-semibold py-3 px-6 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 w-[150px]"
                         disabled={isLoading || !apiKey.trim()}
                     >
                         {isLoading ? 'Adding...' : 'Add Key'}
@@ -155,41 +151,33 @@ export default function KeyManager() {
                 </form>
             </div>
 
-            <div className="create-bot-section">
-                <h2>Stored Keys</h2>
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-white mb-6">Stored Keys</h2>
                 {keys.length === 0 ? (
-                    <p style={{ color: '#888', fontStyle: 'italic', padding: '1rem 0' }}>No keys stored yet.</p>
+                    <p className="text-[#888] italic py-4">No keys stored yet.</p>
                 ) : (
-                    <div style={{ backgroundColor: '#1e1e1e', borderRadius: '8px', overflow: 'hidden', border: '1px solid #333' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <div className="rounded-lg overflow-hidden border border-[#333]">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr style={{ backgroundColor: '#252525', borderBottom: '1px solid #444' }}>
-                                    <th style={{ padding: '1rem', color: '#ccc', fontWeight: 'normal' }}>Name</th>
-                                    <th style={{ padding: '1rem', color: '#ccc', fontWeight: 'normal' }}>Provider</th>
-                                    <th style={{ padding: '1rem', color: '#ccc', fontWeight: 'normal' }}>Secret</th>
-                                    <th style={{ padding: '1rem', color: '#ccc', fontWeight: 'normal' }}>Expires</th>
-                                    <th style={{ padding: '1rem', color: '#ccc', fontWeight: 'normal', textAlign: 'right' }}>Actions</th>
+                                <tr className="bg-[#252525] border-b border-[#444] text-[#ccc] font-medium text-sm">
+                                    <th className="p-4 font-normal">Name</th>
+                                    <th className="p-4 font-normal">Provider</th>
+                                    <th className="p-4 font-normal">Secret</th>
+                                    <th className="p-4 font-normal">Expires</th>
+                                    <th className="p-4 font-normal text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {keys.map((k) => (
-                                    <tr key={k.id} style={{ borderBottom: '1px solid #333' }}>
-                                        <td style={{ padding: '1rem', color: '#fff' }}>{k.name}</td>
-                                        <td style={{ padding: '1rem', color: '#00E5CC' }}>{k.provider}</td>
-                                        <td style={{ padding: '1rem', fontFamily: 'monospace', color: '#aaa' }}>{k.maskedKey}</td>
-                                        <td style={{ padding: '1rem', color: '#aaa' }}>{k.expiresAt || 'Never'}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                    <tr key={k.id} className="border-b border-[#333] hover:bg-[#222] transition-colors">
+                                        <td className="p-4 text-white text-sm">{k.name}</td>
+                                        <td className="p-4 text-[#00E5CC] text-sm">{k.provider}</td>
+                                        <td className="p-4 font-mono text-[#aaa] text-sm">{k.maskedKey}</td>
+                                        <td className="p-4 text-[#aaa] text-sm">{k.expiresAt || 'Never'}</td>
+                                        <td className="p-4 text-right">
                                             <button
                                                 onClick={() => handleDeleteKey(k.id)}
-                                                style={{
-                                                    backgroundColor: 'transparent',
-                                                    color: '#ef4444',
-                                                    border: '1px solid #ef4444',
-                                                    borderRadius: '4px',
-                                                    padding: '0.25rem 0.75rem',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.85rem'
-                                                }}
+                                                className="text-red-500 hover:bg-red-500/10 border border-red-500/50 hover:border-red-500 rounded px-3 py-1 text-xs transition-colors"
                                             >
                                                 Delete
                                             </button>
