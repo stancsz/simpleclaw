@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import AddKeyForm from './components/AddKeyForm';
-import KeyList, { KeyRecord } from './components/KeyList';
+import AddKeyForm from './AddKeyForm';
+import KeyList, { KeyRecord } from './KeyList';
 
-export default function KeysPage() {
+export default function KeyManagement() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
 
     const fetchKeys = async () => {
@@ -41,21 +40,9 @@ export default function KeysPage() {
     };
 
     return (
-        <div className="dashboard-container">
-            <div className="dashboard-header" style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link href="/" style={{ color: '#888', textDecoration: 'none', fontSize: '1.5rem', lineHeight: '1' }}>
-                        &larr;
-                    </Link>
-                    <h1>Key Management</h1>
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 1: BYOK UI</div>
-            </div>
-
-            <main className="dashboard-main flex flex-col gap-8 w-full">
-                <AddKeyForm onKeyAdded={fetchKeys} />
-                <KeyList keys={keys} onDeleteKey={handleDeleteKey} />
-            </main>
+        <div className="flex flex-col gap-8 w-full">
+            <AddKeyForm onKeyAdded={fetchKeys} />
+            <KeyList keys={keys} onDeleteKey={handleDeleteKey} />
         </div>
     );
 }

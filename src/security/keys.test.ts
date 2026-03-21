@@ -10,7 +10,8 @@ describe('BYOK API Flow (Local DB Simulation)', () => {
     process.env.DATABASE_URL = "sqlite://local_test_db_keys_flow.sqlite";
 
     const dbClient = getDbClient();
-    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    const schemaPath = process.cwd().includes('server') ? "../src/db/migrations/001_motherboard.sql" : "src/db/migrations/001_motherboard.sql";
+    const schema = fs.readFileSync(schemaPath, "utf-8");
     dbClient.applyMigration(schema);
 
     const kmsProvider = getKMSProvider();

@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-24] Cycle #89 ✅ Implemented the BYOK UI in the Next.js dashboard by creating `server/src/app/settings/page.tsx` and refactoring key management into the reusable `server/src/components/KeyManagement.tsx` component.
 - [2026-03-24] Cycle #88 ✅ Connected UI approval to dispatcher execution. Validated that server/src/app/page.tsx correctly calls /api/execute (or /api/orchestrator via action 'approve') and that ExecutionMonitor tracks the results.
 - [2026-03-24] Cycle #87 ✅ Validated the Plan-Diff-Approve execution flow. The dashboard in server/src/app/page.tsx correctly communicates with the orchestrator API. The dispatcher executes the swarm manifest, and ExecutionMonitor correctly reads task results from the local DB via the /api/results route. End-to-end integration is robust.
 - [2026-03-24] Cycle #86 ✅ Verified Phase 1 BYOK UI is already fully implemented in `server/src/app/keys/page.tsx` and tested. To avoid duplicate work, I marked this ticket as completed.
@@ -147,6 +148,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
+- [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/settings/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI (Refactor):** Key management screen storing keys in Supabase Vault migrated to `server/src/app/settings` using `KeyManagementForm.tsx` and `KeyList.tsx` components.
 - [x] **Phase 1 — BYOK UI (Final):** Moved key management to `server/src/app/keys/page.tsx` and renamed `KeyManagement.tsx` to `KeyManager.tsx` as per the prompt instructions.
