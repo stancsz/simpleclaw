@@ -390,7 +390,7 @@ describe("Worker Dispatch & Execution Loop", () => {
 
         // Let's import the wrapper route
         // We have to mock NextRequest
-        const { POST } = require("../../server/src/app/api/orchestrator/route");
+        const { POST } = require("../../server/src/app/api/execute/route");
         const nextReq = {
             json: async () => executeReq.body
         };
