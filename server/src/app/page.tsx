@@ -89,6 +89,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'approve',
+          approved: true, // sending the approved=true parameter as well
           session_id: sessionId,
           manifest: pda.plan,
           user_id: 'test-user', // Minimal auth for Phase 0

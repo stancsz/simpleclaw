@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
 
         // If the action is approve, directly integrate the dispatcher call here as requested
-        if (body.action === 'approve') {
+        if (body.action === 'approve' || body.approved === true) {
             const sessionId = body.session_id || body.sessionId;
             let manifest = body.manifest;
 

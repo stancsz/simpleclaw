@@ -317,4 +317,103 @@ describe("Worker Dispatch & Execution Loop", () => {
     if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
     else delete process.env.DATABASE_URL;
   });
+
+  it("should simulate full end-to-end execution flow: user intent -> plan -> approve -> dispatch -> display", async () => {
+    // 1. Setup Phase
+    const kmsProvider = require("../security/kms").getKMSProvider();
+    const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
+    db.applyMigration(`
+      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');
+    `);
+
+    // We override global fetch just to simulate orchestrator POST for generation
+    const { orchestratorHandler } = require("../core/orchestrator");
+    const { parseIntentToManifest } = require("../core/llm");
+
+    const manifest: SwarmManifest = {
+      version: "1.0",
+      intent_parsed: "A generated full flow intent",
+      skills_required: ["mock-skill"],
+      credentials_required: [],
+      steps: [
+        {
+          id: "e2e-step-1",
+          description: "End to end mock skill",
+          worker: "worker-mock",
+          skills: ["mock-skill"],
+          credentials: [],
+          depends_on: [],
+          action_type: "READ",
+        },
+      ],
+    };
+
+    const originalDbUrl = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = "sqlite://local_test_db_e2e_flow.sqlite";
+    const fs = require('fs');
+    const testDb = new DBClient(process.env.DATABASE_URL);
+    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    testDb.applyMigration(schema);
+
+    testDb.applyMigration(`
+      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');
+    `);
+
+    try {
+        // Since we can't easily mock the llm module *after* it's loaded without jest.mock,
+        // we will manually simulate the plan generation by directly inserting a session
+        const sessionId = testDb.createSession("user_full_flow", { prompt: "Run full test" }, manifest);
+
+        // Simulated Approve Request
+        const executeReq = {
+            method: "POST",
+            body: {
+                approved: true, // using the newly added approved=true endpoint trigger
+                session_id: sessionId,
+                manifest: manifest,
+                user_id: "user_full_flow",
+                prompt: "Run full test"
+            }
+        } as any;
+
+        let executeStatusCode = 200;
+        let executeResponseBody: any = null;
+
+        const executeRes = {
+            set: () => {},
+            status: (code: number) => { executeStatusCode = code; return executeRes; },
+            json: (data: any) => { executeResponseBody = data; },
+            send: (data: string) => { executeResponseBody = data; }
+        } as any;
+
+        // Let's import the wrapper route
+        // We have to mock NextRequest
+        const { POST } = require("../../server/src/app/api/orchestrator/route");
+        const nextReq = {
+            json: async () => executeReq.body
+        };
+
+        const response = await POST(nextReq as any);
+        const data = await response.json();
+
+        expect(response.status).toBe(202);
+        expect(data.status).toBe("dispatched");
+        expect(data.executionId).toBe(sessionId);
+
+        // Wait for workers to finish
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const testDbAny = testDb as any;
+        const taskLogs = testDbAny.db.query("SELECT * FROM task_results WHERE session_id = ?").all(sessionId);
+        expect(taskLogs.length).toBe(1);
+        expect(taskLogs[0].status).toBe("success");
+        expect(taskLogs[0].skill_ref).toBe("mock-skill");
+    } finally {
+        try { fs.unlinkSync("local_test_db_e2e_flow.sqlite"); } catch(e) {}
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
+    }
+  });
 });
