@@ -89,7 +89,7 @@ export async function executeWorkerTask(
 
     // Log result for all tasks
     db.logTaskResult(sessionId, `worker-${task.id}`, task.skills[0] || "none", "success", mockOutput, false);
-    db.writeAuditLog(sessionId, "worker_completed", { task_id: task.id });
+    db.writeAuditLog(sessionId, "worker_completed", { task_id: task.id, output: mockOutput });
 
     return { status: "success", output: mockOutput };
 

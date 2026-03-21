@@ -164,6 +164,40 @@ describe("Worker Dispatch & Execution Loop", () => {
     }
   });
 
+  it("should support end-to-end execution of a simple fetch mock data intent", async () => {
+    // 1. Setup Motherboard
+    const manifest: SwarmManifest = {
+      version: "1.0",
+      intent_parsed: "Fetch mock data",
+      skills_required: ["mock-skill"],
+      credentials_required: [],
+      steps: [
+        {
+          id: "fetch-mock-data",
+          description: "Fetch mock data task",
+          worker: "worker-mock",
+          skills: ["mock-skill"],
+          credentials: [],
+          depends_on: [],
+          action_type: "READ",
+        },
+      ],
+    };
+
+    const sessionId = db.createSession("user_mock", { prompt: "Fetch mock data" }, manifest);
+
+    // 2. Dispatch worker
+    const result = await executeSwarmManifest(manifest, sessionId, db);
+
+    // 3. Verify results
+    expect(result["fetch-mock-data"].status).toBe("success");
+    expect(result["fetch-mock-data"].output.message).toContain("fetch-mock-data");
+
+    // Verify db logging
+    const session = db.getSession(sessionId);
+    expect(session.status).toBe("completed");
+  });
+
   it("should handle execute payload via the orchestrator route interface", async () => {
     // 1. Setup Motherboard
     const kmsProvider = require("../security/kms").getKMSProvider();
