@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-23] Cycle #82 ✅ Refactored Phase 1 BYOK UI. Added `react-hook-form` to the frontend, extracted `Navigation` and `CredentialCard` into modular components, and updated `KeyManager.tsx` to display an Adaptive Minimalism design. Verified via Next.js Turbopack build and `bun test`.
 - [2026-03-23] Cycle #81 ✅ Integrated Phase 0 components: Connected Minimal UI to orchestrator dispatch, enabling end-to-end intent approval, worker execution, and real-time result monitoring. Tested successfully using local SQLite database.
 - [2026-03-23] Cycle #80 ✅ Re-verified Phase 1 BYOK UI. The code was already present and fully functional from earlier cycles, implemented in `server/src/app/keys/page.tsx` and `server/src/components/KeyManager.tsx`. Added missing verification and explicitly checked off completion status.
 - [2026-03-23] Cycle #26 ✅ Implemented the end-to-end UI-to-worker execution flow. The API route in `server/src/app/api/orchestrator/route.ts` correctly handles the `action: 'approve'` payload, invoking `executeSwarmManifest` and returning the execution ID. The frontend `page.tsx` successfully dispatches approval to this API and passes control to the `ExecutionMonitor` component, which polls the database via the `/api/results` route to show live worker execution updates. All tests pass and the UI fully functions end-to-end.
@@ -122,7 +123,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Build the Orchestrator Cloud Function, Worker dispatch layer, KMS credential encryption flow, and Sovereign Motherboard SQL schema
+- Core work: Finalizing Phase 1 features, including BYOK UI and real world Swarm capabilities.
 
 ## BACKLOG (Swarm Architecture)
 - [x] **Move 1:** Real LLM Intent Parsing
@@ -145,6 +146,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Implemented user onboarding UI for Supabase credential input with KMS encryption.
 - [x] **Phase 1 — BYOK UI:** Implemented and verified the final BYOK Key management UI as requested.
 - [x] **Phase 1 — BYOK UI:** Completed UI refactor for Adaptive Minimalism (Cycle #80)
+- [x] **Phase 1 — BYOK UI:** Completed React component refactoring with `react-hook-form` and extracted elements for Phase 1 MVP (Cycle #82)
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Verified full Plan-Diff-Approve → Execute workflow and integration tests passing.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.

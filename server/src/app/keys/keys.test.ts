@@ -13,7 +13,7 @@ describe('BYOK API Routes', () => {
     process.env.DATABASE_URL = "sqlite://local_test_db_api_keys.sqlite";
 
     const dbClient = getDbClient();
-    const schemaPath = path.resolve(process.cwd(), "../src/db/migrations/001_motherboard.sql");
+    const schemaPath = path.resolve(process.cwd(), process.cwd().includes('server') ? "../src/db/migrations/001_motherboard.sql" : "src/db/migrations/001_motherboard.sql");
     const schema = fs.readFileSync(schemaPath, "utf-8");
     dbClient.applyMigration(schema);
     const kmsProvider = getKMSProvider();
