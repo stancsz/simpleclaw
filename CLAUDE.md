@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-23] Cycle #81 ✅ Integrated Phase 0 components: Connected Minimal UI to orchestrator dispatch, enabling end-to-end intent approval, worker execution, and real-time result monitoring. Tested successfully using local SQLite database.
 - [2026-03-23] Cycle #80 ✅ Re-verified Phase 1 BYOK UI. The code was already present and fully functional from earlier cycles, implemented in `server/src/app/keys/page.tsx` and `server/src/components/KeyManager.tsx`. Added missing verification and explicitly checked off completion status.
 - [2026-03-23] Cycle #26 ✅ Implemented the end-to-end UI-to-worker execution flow. The API route in `server/src/app/api/orchestrator/route.ts` correctly handles the `action: 'approve'` payload, invoking `executeSwarmManifest` and returning the execution ID. The frontend `page.tsx` successfully dispatches approval to this API and passes control to the `ExecutionMonitor` component, which polls the database via the `/api/results` route to show live worker execution updates. All tests pass and the UI fully functions end-to-end.
 - [2026-03-21] Cycle #79 ✅ Completed final integration of the Worker Dispatch + Execution Loop for Phase 0. Wired up `server/src/app/page.tsx`'s Minimal UI `PlanDisplay` to trigger the orchestrator API directly (`/api/orchestrator` via `action: 'approve'`) instead of relying on the intermediate wrapper. Removed the obsolete `/api/execute` route to enforce cleaner integration. Handled executeSwarmManifest logic directly inside `api/orchestrator/route.ts`. Updated dispatcher and worker templates for final touches, and added end-to-end "fetch mock data" test scenario in `worker.test.ts` as requested. Ensured `ExecutionMonitor` dynamically polls task results. Tests passed, and Phase 0 implementation is fully validated.
@@ -149,6 +150,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Worker Dispatch system with Minimal UI by routing requests directly to `/api/orchestrator` and removing obsolete dispatch wrappers. End-to-end validated execution updates.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the worker dispatch API and Execution UI polling loop.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Completed.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
