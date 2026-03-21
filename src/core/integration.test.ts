@@ -84,6 +84,9 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     const rawServiceRole = "super_secret_supabase_key";
     const encryptedServiceRole = await kmsProvider.encrypt(rawServiceRole);
 
+    // Clean up before insert to avoid UNIQUE constraint failed: platform_users.user_id
+    db.applyMigration(`DELETE FROM platform_users WHERE user_id = 'user_e2e_123';`);
+
     // Insert user into platform
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
@@ -162,6 +165,10 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     // 1. Prepare Motherboard with User (but NO credentials)
     const kmsProvider = getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("super_secret_supabase_key");
+
+    // Clean up before insert
+    db.applyMigration(`DELETE FROM platform_users WHERE user_id = 'user_e2e_123';`);
+
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_e2e_123', 'https://mock.supabase.co', '${encryptedServiceRole}');
@@ -207,6 +214,9 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     const kmsProvider = getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("super_secret_supabase_key");
     const encryptedGithubToken = await kmsProvider.encrypt("ghp_test_token_123");
+
+    db.applyMigration(`DELETE FROM vault_user_secrets WHERE id = 'github_token';`);
+    db.applyMigration(`DELETE FROM platform_users WHERE user_id = 'user_e2e_456';`);
 
     // Insert user into platform
     db.applyMigration(`

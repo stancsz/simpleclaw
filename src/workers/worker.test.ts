@@ -322,6 +322,8 @@ describe("Worker Dispatch & Execution Loop", () => {
     // 1. Setup Phase
     const kmsProvider = require("../security/kms").getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
+    db.applyMigration(`DELETE FROM platform_users WHERE user_id = 'user_full_flow';`);
+    db.applyMigration(`DELETE FROM platform_users WHERE user_id = 'user_e2e_ui';`);
     db.applyMigration(`
       INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');

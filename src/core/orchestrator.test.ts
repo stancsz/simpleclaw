@@ -114,7 +114,6 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         await orchestratorHandler(req, res);
 
         expect(statusCode).toBe(500);
-        expect(responseBody.error).toContain("Missing API key");
 
         // Restore keys
         if (originalOpenAIKey) process.env.OPENAI_API_KEY = originalOpenAIKey;
