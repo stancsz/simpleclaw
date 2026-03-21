@@ -115,6 +115,22 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
 
   const combinedResults = polledResults.length > 0 ? polledResults : (taskResults || []);
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+      case 'completed':
+        return { bg: 'rgba(34, 197, 94, 0.1)', text: '#86efac', border: '#22c55e' };
+      case 'error':
+      case 'failed':
+        return { bg: 'rgba(239, 68, 68, 0.1)', text: '#fca5a5', border: '#ef4444' };
+      case 'running':
+      case 'booting':
+        return { bg: 'rgba(96, 165, 250, 0.1)', text: '#93c5fd', border: '#3b82f6' };
+      default:
+        return { bg: 'rgba(156, 163, 175, 0.1)', text: '#d1d5db', border: '#9ca3af' };
+    }
+  };
+
   return (
     <div style={{ marginTop: '1.5rem' }}>
       <div
@@ -139,37 +155,40 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
         <div style={{ marginTop: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>Live Worker Results</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {combinedResults.map((result, idx) => (
-              <div key={idx} style={{
-                padding: '0.75rem',
-                backgroundColor: 'var(--input-bg)',
-                borderRadius: '6px',
-                borderLeft: `4px solid ${result.status === 'success' ? '#22c55e' : '#ef4444'}`
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <strong>{result.worker_id}</strong>
-                  <span style={{
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem',
-                    backgroundColor: result.status === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    color: result.status === 'success' ? '#86efac' : '#fca5a5',
-                  }}>
-                    {result.status}
-                  </span>
+            {combinedResults.map((result, idx) => {
+              const colors = getStatusColor(result.status);
+              return (
+                <div key={idx} style={{
+                  padding: '0.75rem',
+                  backgroundColor: 'var(--input-bg)',
+                  borderRadius: '6px',
+                  borderLeft: `4px solid ${colors.border}`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <strong>{result.worker_id}</strong>
+                    <span style={{
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.8rem',
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                    }}>
+                      {result.status}
+                    </span>
+                  </div>
+                  {result.output && (
+                    <pre style={{ margin: 0, fontSize: '0.85rem', overflowX: 'auto', color: '#9ca3af' }}>
+                      {typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)}
+                    </pre>
+                  )}
+                  {result.error && (
+                    <pre style={{ margin: 0, fontSize: '0.85rem', overflowX: 'auto', color: '#fca5a5' }}>
+                      {result.error}
+                    </pre>
+                  )}
                 </div>
-                {result.output && (
-                  <pre style={{ margin: 0, fontSize: '0.85rem', overflowX: 'auto', color: '#9ca3af' }}>
-                    {typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)}
-                  </pre>
-                )}
-                {result.error && (
-                  <pre style={{ margin: 0, fontSize: '0.85rem', overflowX: 'auto', color: '#fca5a5' }}>
-                    {result.error}
-                  </pre>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

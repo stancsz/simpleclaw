@@ -84,15 +84,11 @@ export default function Home() {
 
     try {
       // Trigger swarm manifest execution via the orchestrator execute endpoint
-      const response = await fetch('/api/orchestrator', {
+      const response = await fetch('/api/orchestrator/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'approve',
-          approved: true, // sending the approved=true parameter as well
-          session_id: sessionId,
-          manifest: pda.plan,
-          user_id: 'test-user', // Minimal auth for Phase 0
+          sessionId: sessionId
         }),
       });
 

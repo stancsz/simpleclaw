@@ -94,28 +94,6 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
 
-    if (session_id && (action === 'approve' || action === 'execute')) {
-        try {
-            const manifest = body?.manifest;
-            if (!manifest) {
-                res.status(400).json({ error: 'Missing manifest for approval/execution.' });
-                return;
-            }
-
-            dbClient.updateSessionStatus(session_id, 'approved');
-
-            // Execute the plan asynchronously so the UI can poll for results
-            executePlan(manifest, session_id, dbClient).catch(() => {});
-
-            res.status(200).json({ status: 'dispatched', message: 'Session approved and execution started.', executionId: session_id, workers: manifest.steps.map((s: any) => s.worker) });
-            return;
-        } catch (error: any) {
-            console.error('Error dispatching execution:', error);
-            res.status(500).json({ error: error.message || 'Internal server error while starting execution.' });
-            return;
-        }
-    }
-
     // Default to 'plan' action if prompt is provided
     if (!prompt || typeof prompt !== 'string') {
         res.status(400).json({ error: 'Missing or invalid "prompt" field in request body.' });
