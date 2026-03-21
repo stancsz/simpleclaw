@@ -150,7 +150,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Final checks for dispatcher and execution loop.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Worker Dispatch system with Minimal UI by routing requests directly to `/api/orchestrator` and removing obsolete dispatch wrappers. End-to-end validated execution updates.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the worker dispatch API and Execution UI polling loop.
-- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Completed.
+- [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
