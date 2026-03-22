@@ -133,14 +133,14 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
 
     // 3. Simulate POST /api/orchestrator/execute (Approve -> Execute)
     // We import the actual Next.js route handler to test it
-    const { POST: executeRoutePOST } = require("../../server/src/app/api/execute/route");
+    const { POST: executeRoutePOST } = require("../../server/src/app/api/orchestrator/route");
 
     // We mock NextRequest for Next.js app router API
     const executeReq = {
       json: async () => ({
         action: 'approve',
         session_id: sessionId,
-        manifest: generatedManifest
+        user_id: "user_e2e_full"
       })
     } as any;
 
