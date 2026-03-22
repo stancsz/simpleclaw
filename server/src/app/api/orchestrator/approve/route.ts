@@ -26,7 +26,9 @@ export async function POST(req: NextRequest) {
         dbClient.updateSessionStatus(sessionId, 'approved');
 
         // Execute the plan asynchronously so the UI can poll for results
-        executePlan(manifest, sessionId, dbClient).catch(() => {});
+        executePlan(manifest, sessionId, dbClient).catch((err) => {
+            console.error('Error in executePlan:', err);
+        });
 
         return Response.json({
             success: true,
