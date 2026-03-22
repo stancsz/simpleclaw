@@ -254,15 +254,28 @@ describe("Swarm End-to-End Integration Pipeline", () => {
       expect(planResBody.pda.plan.skills_required).toContain("github-fetch-issues");
       const sessionId = planResBody.session_id;
 
-      // Step 2: Plan Approval via the new /api/dispatch endpoint
-      const dispatchRes = await fetch('http://localhost:3000/api/dispatch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-      expect(dispatchRes.status).toBe(200);
-      const dispatchBody = await dispatchRes.json();
-      expect(dispatchBody.success).toBe(true);
+      // Step 2: Plan Approval via the updated orchestrator handler
+      const dispatchReq = {
+        method: "POST",
+        body: {
+          action: 'approve',
+          session_id: sessionId,
+          user_id: 'test_user_integration'
+        },
+      } as any;
+      let dispatchResCode = 0;
+      let dispatchBody: any = null;
+      const dispatchResMock = {
+        set: () => {},
+        status: (code: number) => { dispatchResCode = code; return dispatchResMock; },
+        json: (data: any) => { dispatchBody = data; },
+        send: (data: string) => { dispatchBody = data; },
+      } as any;
+
+      await orchestratorHandler(dispatchReq, dispatchResMock);
+
+      expect(dispatchResCode).toBe(200);
+      expect(dispatchBody.status).toBe('dispatched');
       expect(dispatchBody.executionId).toBe(sessionId);
 
       // Wait for execution to finish by polling the session status (up to 1s)

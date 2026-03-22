@@ -5,19 +5,6 @@ import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
 
-export async function executePlan(manifest: SwarmManifest, sessionId: string, db: DBClient): Promise<any> {
-    try {
-        // Dispatcher now handles session state update to 'completed'
-        const results = await executeSwarmManifest(manifest, sessionId, db);
-        return results;
-    } catch (error: any) {
-        console.error('Error executing swarm manifest in executePlan:', error);
-        db.updateSessionStatus(sessionId, 'error');
-        db.writeAuditLog(sessionId, 'swarm_execution_failed', { error: error.message || String(error) });
-        throw error;
-    }
-}
-
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
 
@@ -93,6 +80,42 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     }
 
     const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
+
+    if (action === 'approve' || action === 'execute') {
+        if (!session_id || typeof session_id !== 'string') {
+            res.status(400).json({ error: 'Missing or invalid "session_id" field for execution.' });
+            return;
+        }
+
+        const session = dbClient.getSession(session_id);
+        if (!session) {
+            res.status(404).json({ error: `Session not found for id: ${session_id}` });
+            return;
+        }
+
+        const manifest = session.manifest;
+        if (!manifest) {
+            res.status(400).json({ error: 'No manifest associated with this session.' });
+            return;
+        }
+
+        dbClient.updateSessionStatus(session_id, 'approved');
+
+        // Execute asynchronously so UI can poll for results
+        executeSwarmManifest(manifest, session_id, dbClient).catch((err) => {
+            console.error('Error in asynchronous executeSwarmManifest:', err);
+            dbClient.updateSessionStatus(session_id, 'error');
+            dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: err.message || String(err) });
+        });
+
+        res.status(200).json({
+            status: 'dispatched',
+            executionId: session_id,
+            message: 'Session approved and execution started.',
+            workers: manifest.steps?.map((s: any) => s.worker) || []
+        });
+        return;
+    }
 
     // Default to 'plan' action if prompt is provided
     if (!prompt || typeof prompt !== 'string') {
