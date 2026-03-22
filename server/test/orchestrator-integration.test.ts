@@ -42,10 +42,12 @@ Mock skill body.
 `);
 
         // Mock LLM intent parsing
-        mock.module("../../../src/core/llm", () => ({
+        mock.module("../../src/core/llm", () => ({
              parseIntentToManifest: async (prompt: string, skills: string[]): Promise<SwarmManifest> => {
                  return {
                      version: "1.0",
+                     intent_parsed: prompt,
+                     credentials_required: [],
                      skills_required: ["mock-skill"],
                      steps: [
                          {
