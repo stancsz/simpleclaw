@@ -254,35 +254,20 @@ describe("Swarm End-to-End Integration Pipeline", () => {
       expect(planResBody.pda.plan.skills_required).toContain("github-fetch-issues");
       const sessionId = planResBody.session_id;
 
-      // Step 2: Plan Approval (POST /api/orchestrator with action: 'approve')
-      let executeResCode = 0;
-      let executeResBody: any = null;
-      const executeReq = {
-        method: "POST",
-        body: {
-          action: "approve",
-          session_id: sessionId,
-          user_id: "user_e2e_456",
-          manifest: planResBody.pda.plan,
-        },
-      } as any;
-      const executeRes = {
-        set: () => {},
-        status: (code: number) => { executeResCode = code; return executeRes; },
-        json: (data: any) => { executeResBody = data; },
-        send: (data: string) => { executeResBody = data; },
-      } as any;
+      // Step 2: Plan Approval
+      // Because we removed the 'approve' action from the orchestrator logic to be
+      // managed exclusively by our `/api/dispatch` API endpoint via Next.js
+      // for the Phase 0 Minimal UI task, we'll simulate that direct backend call here.
 
-      // executeSwarmManifest inside orchestratorHandler is async and not awaited (returns immediately).
-      // We need to await it to finish so we can check results. Let's wait a bit.
-      await orchestratorHandler(executeReq, executeRes);
-
-      expect(executeResCode).toBe(200);
-      expect(executeResBody.status).toBe("dispatched");
-      expect(executeResBody.executionId).toBe(sessionId);
-
-      // Wait for execution to finish by polling the session status (up to 1s)
       const dbClientAny = db as any;
+      dbClientAny.updateSessionStatus(sessionId, 'approved');
+
+      // Execute the plan asynchronously as the /api/dispatch route does.
+      const execPromise = executeSwarmManifest(planResBody.pda.plan, sessionId, dbClientAny);
+
+      // Wait for execution to finish
+      await execPromise;
+
       let session;
       for (let i = 0; i < 100; i++) {
         session = dbClientAny.db.query("SELECT * FROM orchestrator_sessions WHERE id = ?").get(sessionId);
