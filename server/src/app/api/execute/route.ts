@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
             return Response.json({ error: 'No manifest associated with this session.' }, { status: 400 });
         }
 
-        dbClient.updateSessionStatus(session_id, 'approved');
+        dbClient.updateSessionStatus(session_id, 'executing');
 
         // Execute asynchronously so UI can poll for results
         executeSwarmManifest(manifest, session_id, dbClient).catch((err) => {
