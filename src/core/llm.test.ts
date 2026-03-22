@@ -15,8 +15,8 @@ describe("LLM parser configuration", () => {
         } catch (error: any) {
             expect(error.message).toContain("Missing API key");
         } finally {
-            if (oldOpenAi) process.env.OPENAI_API_KEY = oldOpenAi;
-            if (oldDeepseek) process.env.DEEPSEEK_API_KEY = oldDeepseek;
+            if (oldOpenAi !== undefined) process.env.OPENAI_API_KEY = oldOpenAi;
+            if (oldDeepseek !== undefined) process.env.DEEPSEEK_API_KEY = oldDeepseek;
         }
     });
 });
