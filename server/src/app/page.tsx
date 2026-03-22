@@ -84,11 +84,11 @@ export default function Home() {
 
     try {
       // Trigger swarm manifest execution via the dispatcher endpoint
-      const response = await fetch('/api/dispatch', {
+      const response = await fetch('/api/orchestrator/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: sessionId
+          session_id: sessionId
         }),
       });
 

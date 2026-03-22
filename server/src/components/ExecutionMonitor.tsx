@@ -31,7 +31,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
     const fetchResults = async () => {
       if (!sessionId) return;
       try {
-        const res = await fetch(`/api/results?sessionId=${sessionId}`);
+        const res = await fetch(`/api/session/${sessionId}/results`);
         if (res.ok) {
           const data = await res.json();
           if (data.results) {

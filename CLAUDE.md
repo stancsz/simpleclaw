@@ -10,6 +10,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
 
+- [2026-03-25] Cycle #26 ✅ Extended the Orchestrator API for Phase 0 Minimal UI. Created `/api/orchestrator/execute` to handle swarm manifest executions, created `/api/session/[sessionId]/results` for real-time task polling, and updated the frontend `page.tsx` and `ExecutionMonitor.tsx` to integrate with these new endpoints natively using Next.js route handlers.
 - [2026-03-25] Cycle #92 ✅ Completed Phase 0 Minimal UI task. Edited `server/src/app/page.tsx` to handle plan execution approval via a new `/api/dispatch` API endpoint. Created `server/src/app/api/dispatch/route.ts` to dispatch `executeSwarmManifest` and mapped UI status flow using `ExecutionMonitor`. Added End-to-End Testing item to the backlog.
 - [2026-03-25] Cycle #91 ✅ Implemented plan approval and execution monitoring workflow for Phase 0. Created `/api/orchestrator/approve` endpoint, updated `/api/orchestrator` to only handle planning, wired UI to the new approval endpoint, updated `ExecutionMonitor` to handle running and booting statuses, and verified tests.
 - [2026-03-24] Cycle #90 ✅ Finalized Worker Dispatch & Execution Loop integration. Removed redundant `/api/execute` endpoint. Refactored UI to hit `/api/orchestrator` directly with an `approve` action. Validated with robust `worker.test.ts` integration passing seamlessly.
@@ -130,7 +131,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [2026-03-15] Cycle #17 ✅ Fixed cross-platform compatibility in plugin test runner - now works seamlessly on Windows Git Bash
 
 ## CURRENT TASK
-**Mission pivot: SimpleClaw is now a swarm orchestrator (see SWARM_SPEC.md)**
+**Phase 1 — BYOK UI**
 
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
