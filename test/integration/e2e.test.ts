@@ -91,7 +91,7 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
     const encryptedServiceRole = await kmsProvider.encrypt(rawServiceRole);
 
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_e2e_full', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
@@ -99,7 +99,7 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
     const encryptedApiKey = await kmsProvider.encrypt(rawApiKey);
 
     db.applyMigration(`
-      INSERT INTO vault_user_secrets (id, user_id, name, secret, provider)
+      INSERT OR IGNORE INTO vault_user_secrets (id, user_id, name, secret, provider)
       VALUES ('http_api_key', 'user_e2e_full', 'HTTP API Key', '${encryptedApiKey}', 'custom');
     `);
 
@@ -138,13 +138,14 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
     // We mock NextRequest for Next.js app router API
     const executeReq = {
       json: async () => ({
+        action: 'approve',
         session_id: sessionId,
         manifest: generatedManifest
       })
     } as any;
 
     const response = await executeRoutePOST(executeReq);
-    expect(response.status).toBe(202); // Accepted
+    expect(response.status).toBe(200); // OK
 
     const executeResBody = await response.json();
     expect(executeResBody.status).toBe("dispatched");

@@ -203,7 +203,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     const kmsProvider = require("../security/kms").getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_execute_test', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
@@ -323,7 +323,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     const kmsProvider = require("../security/kms").getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
@@ -357,7 +357,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     testDb.applyMigration(schema);
 
     testDb.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 

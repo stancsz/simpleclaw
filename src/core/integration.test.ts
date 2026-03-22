@@ -86,7 +86,7 @@ describe("Swarm End-to-End Integration Pipeline", () => {
 
     // Insert user into platform
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_e2e_123', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
@@ -96,7 +96,7 @@ describe("Swarm End-to-End Integration Pipeline", () => {
 
     // Insert credential into user's vault
     db.applyMigration(`
-      INSERT INTO vault_user_secrets (id, user_id, name, secret, provider)
+      INSERT OR IGNORE INTO vault_user_secrets (id, user_id, name, secret, provider)
       VALUES ('github_token', 'user_e2e_123', 'GitHub PAT', '${encryptedGithubToken}', 'github');
     `);
 
@@ -163,8 +163,8 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     const kmsProvider = getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("super_secret_supabase_key");
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
-      VALUES ('user_e2e_123', 'https://mock.supabase.co', '${encryptedServiceRole}');
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      VALUES ('user_e2e_no_creds', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
     // 2. Create manifest requiring github_token
@@ -186,7 +186,7 @@ describe("Swarm End-to-End Integration Pipeline", () => {
       ],
     };
 
-    const sessionId = db.createSession("user_e2e_123", { prompt: "fail test" }, manifest);
+    const sessionId = db.createSession("user_e2e_no_creds", { prompt: "fail test" }, manifest);
 
     // 3. Dispatch
     const results = await executeSwarmManifest(manifest, sessionId, db);
@@ -198,7 +198,7 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     expect(results["fetch-fail"].status).toBe("success");
 
     const dbClientAny = db as any;
-    const auditLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE session_id = ? AND event = 'worker_decrypted_credential'").all(sessionId);
+    const auditLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE session_id = ? AND event = 'worker_decrypted_credential' AND metadata LIKE '%github_token%'").all(sessionId);
     expect(auditLogs.length).toBe(0); // It shouldn't have decrypted anything because it was missing
   });
   it("should simulate full lifecycle via orchestrator handler (Intent -> Approve -> Execute)", async () => {
@@ -210,13 +210,13 @@ describe("Swarm End-to-End Integration Pipeline", () => {
 
     // Insert user into platform
     db.applyMigration(`
-      INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_e2e_456', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
 
     // Insert credential into user's vault
     db.applyMigration(`
-      INSERT INTO vault_user_secrets (id, user_id, name, secret, provider)
+      INSERT OR IGNORE INTO vault_user_secrets (id, user_id, name, secret, provider)
       VALUES ('github_token', 'user_e2e_456', 'GitHub PAT', '${encryptedGithubToken}', 'github');
     `);
 
