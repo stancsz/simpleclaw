@@ -75,7 +75,14 @@ export class DBClient {
           `UPDATE orchestrator_sessions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
           [status, sessionId]
         );
-        this.writeAuditLog(sessionId, 'plan_approved', { status });
+
+        let eventName = 'session_updated';
+        if (status === 'approved') eventName = 'plan_approved';
+        else if (status === 'executing') eventName = 'execution_started';
+        else if (status === 'completed') eventName = 'execution_completed';
+        else if (status === 'error') eventName = 'execution_failed';
+
+        this.writeAuditLog(sessionId, eventName, { status });
      }
   }
 

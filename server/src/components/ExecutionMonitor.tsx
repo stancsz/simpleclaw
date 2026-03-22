@@ -52,7 +52,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
 
     if (status === 'executing') {
       // Poll faster to show real-time updates more responsively
-      interval = setInterval(fetchResults, 1000);
+      interval = setInterval(fetchResults, 2000);
     } else if (status === 'completed' || status === 'error') {
       fetchResults();
     }
