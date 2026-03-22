@@ -254,35 +254,20 @@ describe("Swarm End-to-End Integration Pipeline", () => {
       expect(planResBody.pda.plan.skills_required).toContain("github-fetch-issues");
       const sessionId = planResBody.session_id;
 
-      // Step 2: Plan Approval (POST /api/orchestrator with action: 'approve')
-      let executeResCode = 0;
-      let executeResBody: any = null;
-      const executeReq = {
-        method: "POST",
-        body: {
-          action: "approve",
-          session_id: sessionId,
-          user_id: "user_e2e_456",
-          manifest: planResBody.pda.plan,
-        },
-      } as any;
-      const executeRes = {
-        set: () => {},
-        status: (code: number) => { executeResCode = code; return executeRes; },
-        json: (data: any) => { executeResBody = data; },
-        send: (data: string) => { executeResBody = data; },
-      } as any;
-
-      // executeSwarmManifest inside orchestratorHandler is async and not awaited (returns immediately).
-      // We need to await it to finish so we can check results. Let's wait a bit.
-      await orchestratorHandler(executeReq, executeRes);
-
-      expect(executeResCode).toBe(200);
-      expect(executeResBody.status).toBe("dispatched");
-      expect(executeResBody.executionId).toBe(sessionId);
+      // Step 2: Plan Approval via the new /api/dispatch endpoint
+      const dispatchRes = await fetch('http://localhost:3000/api/dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+      expect(dispatchRes.status).toBe(200);
+      const dispatchBody = await dispatchRes.json();
+      expect(dispatchBody.success).toBe(true);
+      expect(dispatchBody.executionId).toBe(sessionId);
 
       // Wait for execution to finish by polling the session status (up to 1s)
       const dbClientAny = db as any;
+
       let session;
       for (let i = 0; i < 100; i++) {
         session = dbClientAny.db.query("SELECT * FROM orchestrator_sessions WHERE id = ?").get(sessionId);
