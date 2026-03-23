@@ -1,18 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDbClient } from "@/../../src/db/client";
+// Note: This endpoint is deprecated in favor of the existing /api/keys endpoint
+// which already has full KMS integration and proper user isolation.
+// Redirecting to maintain API compatibility during transition.
 
-// MOCK user id for phase 1
-const MOCK_USER_ID = "test-user";
+import { NextRequest, NextResponse } from "next/server";
+import { redirect } from 'next/navigation';
 
 export async function GET(req: NextRequest) {
-    try {
-        const dbClient = getDbClient();
-        const secrets = dbClient.getSecrets(MOCK_USER_ID);
-        return NextResponse.json({ secrets }, { status: 200 });
-    } catch (error: any) {
-        console.error("Error fetching secrets:", error);
-        return NextResponse.json({ error: "Failed to fetch secrets" }, { status: 500 });
-    }
+    // Redirect to the existing keys API
+    return NextResponse.redirect(new URL('/api/keys', req.url));
+}
+
+export async function POST(req: NextRequest) {
+    // Redirect to the existing keys API
+    return NextResponse.redirect(new URL('/api/keys', req.url), 307);
+}
+
+export async function DELETE(req: NextRequest) {
+    // Redirect to the existing keys API
+    return NextResponse.redirect(new URL('/api/keys', req.url), 307);
 }
 
 export async function POST(req: NextRequest) {

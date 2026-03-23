@@ -23,10 +23,10 @@ export default function SettingsPage() {
 
     const fetchKeys = async () => {
         try {
-            const res = await fetch('/api/secrets');
+            const res = await fetch('/api/keys');
             if (res.ok) {
                 const data = await res.json();
-                setKeys(data.secrets || []);
+                setKeys(data.keys || []);
             }
         } catch (err) {
             console.error('Failed to fetch keys', err);
@@ -40,7 +40,7 @@ export default function SettingsPage() {
     const handleDeleteKey = async (id: string) => {
         if (!confirm('Are you sure you want to delete this key?')) return;
         try {
-            const res = await fetch(`/api/secrets?id=${id}`, {
+            const res = await fetch(`/api/keys?id=${id}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
@@ -59,7 +59,7 @@ export default function SettingsPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch('/api/secrets', {
+            const res = await fetch('/api/keys', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

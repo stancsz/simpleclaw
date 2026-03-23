@@ -10,8 +10,9 @@ async function runMigration() {
     const migrationPath = join(process.cwd(), "src", "db", "migrations", "001_motherboard.sql");
     const migrationSql = readFileSync(migrationPath, "utf-8");
 
-    // Apply migrations
-    dbClient.applyMigration(migrationSql);
+    // Apply migrations by reinitializing the database
+    // Note: initDb() already applies the migration from the same file
+    dbClient.initDb();
     console.log("Migrations applied successfully.");
 }
 
