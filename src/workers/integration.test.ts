@@ -120,4 +120,5 @@ This is a simple test skill to verify worker execution.
       }
     }
   });
-});
+}
+);
