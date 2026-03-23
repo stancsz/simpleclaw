@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-01] Cycle #109 ✅ Implemented BYOK UI for key management. Verified existing Phase 1 BYOK UI components (`KeyManagement.tsx`, `AddKeyForm.tsx`, `KeyList.tsx`, `KeysPage.tsx`) and API routes are already fully implemented. Created navigation card on dashboard. Ensured dependencies are installed and confirmed test suite passes. Marked 'Phase 1 — BYOK UI' as complete in the BACKLOG.
 - [2026-04-01] Cycle #108 ✅ Validated Phase 0 Worker Dispatch + Execution Loop. Verified `executeSwarmManifest` and the execution loop endpoints. Added `@google-cloud/functions-framework` dependency to fix the test environment and passed all integrations successfully.
 - [2026-03-31] Cycle #107 ✅ Finalized Phase 0 Worker Dispatch & Execution Loop System. Created `src/workers/integration.test.ts` to perform end-to-end testing of the worker execution loop including mocking Supabase, simulating KMS decryption flow, loading JIT skills, and asserting idempotency logs. Verified the dispatcher logic and execution monitor logic, updated `SPEC.md` to reflect the execution model, and verified all tests.
 - [2026-03-29] Cycle #105 ✅ Verified Phase 1 BYOK UI is already implemented and functionally complete in `server/src/app/keys` and `server/src/components/KeyManagement.tsx`. Conducted successful Playwright visual verification of the add key and view keys features within the Adaptive Minimalism design language.
