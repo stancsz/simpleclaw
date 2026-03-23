@@ -14,8 +14,21 @@ mock.module("@/../../src/db/client", () => {
             writeAuditLog: mockWriteAuditLog,
             updateSessionStatus: mockUpdateSessionStatus,
             getTaskResults: mockGetTaskResults,
-            getSession: mockGetSession
-        })
+            getSession: mockGetSession,
+            run: mock(() => {}),
+            query: mock(() => ({ get: () => ({}), all: () => [] })),
+            transaction: mock((cb) => cb()),
+        }),
+        DBClient: class {
+            constructor() {}
+            writeAuditLog = mockWriteAuditLog;
+            updateSessionStatus = mockUpdateSessionStatus;
+            getTaskResults = mockGetTaskResults;
+            getSession = mockGetSession;
+            run = mock(() => {});
+            query = mock(() => ({ get: () => ({}), all: () => [] }));
+            transaction = mock((cb) => cb());
+        }
     };
 });
 
@@ -40,7 +53,12 @@ describe("Orchestrator API Route", () => {
     it("should handle POST with action='approve' and dispatch workers", async () => {
         const payload = {
             action: "approve",
-            sessionId: "test-session-123",
+            user_id: "test-user-id",
+            session_id: "test-session-123"
+        };
+        // The orchestrator relies on dbClient.getSession returning a valid session with a manifest
+        mockGetSession.mockReturnValueOnce({
+            status: "waiting_approval",
             manifest: {
                 version: "1.0",
                 intent_parsed: "test intent",
@@ -50,7 +68,7 @@ describe("Orchestrator API Route", () => {
                     { id: "step1", worker: "mock-worker", skills: [], credentials: [], depends_on: [], action_type: "READ", description: "test" }
                 ]
             }
-        };
+        });
 
         const req = new NextRequest("http://localhost/api/orchestrator", {
             method: "POST",
@@ -66,12 +84,13 @@ describe("Orchestrator API Route", () => {
         expect(data.workers).toEqual(["mock-worker"]);
 
         // Ensure session status was updated
-        expect(mockUpdateSessionStatus).toHaveBeenCalledWith("test-session-123", "executing");
+        expect(mockUpdateSessionStatus).toHaveBeenCalledWith("test-session-123", "approved");
     });
 
     it("should return 400 on POST with action='approve' but missing sessionId", async () => {
         const payload = {
             action: "approve",
+            user_id: "test-user-id",
             manifest: {}
         };
 
@@ -84,7 +103,7 @@ describe("Orchestrator API Route", () => {
         const data = await response.json();
 
         expect(response.status).toBe(400);
-        expect(data.error).toContain("Missing or invalid \"sessionId\"");
+        expect(data.error).toContain("Missing or invalid \"session_id\"");
     });
 
     it("should handle GET and return task results", async () => {
