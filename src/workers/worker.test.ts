@@ -1,22 +1,45 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { DBClient } from "../db/client";
-import { executeWorkerTask } from "./template";
+import { executeWorkerTask, platformDbMock } from "./template";
 import { executeSwarmManifest } from "../core/dispatcher";
 import type { SwarmManifest, Task } from "../core/types";
 import * as fs from "fs";
 
+mock.module("@supabase/supabase-js", () => {
+  return {
+    createClient: () => ({
+      from: (table: string) => ({
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { id: "mock_session" }, error: null })
+          })
+        }),
+        insert: async () => ({ error: null })
+      })
+    })
+  };
+});
+
 describe("Worker Dispatch & Execution Loop", () => {
   let db: DBClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Create an in-memory DB for tests
     db = new DBClient("sqlite://:memory:");
     const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
     db.applyMigration(schema);
+
+    // Set a mock platform credential by default to pass the execution engine check
+    const kmsProvider = require("../security/kms").getKMSProvider();
+    const encrypted = await kmsProvider.encrypt("mock_key");
+    platformDbMock.set("session-1-user", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
+    platformDbMock.set("session-idempotent", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
+    platformDbMock.set("session-read", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
   });
 
   afterEach(() => {
     // Cleanup if necessary
+    platformDbMock.clear();
   });
 
   it("should successfully execute a single worker task via delegation engine", async () => {
@@ -40,7 +63,7 @@ describe("Worker Dispatch & Execution Loop", () => {
       action_type: "READ",
     };
 
-    const result = await executeWorkerTask(task, "session-1", db);
+    const result = await executeWorkerTask(task, "session-1", db, "session-1-user");
 
     expect(result.status).toBe("success");
     expect(result.output).toBeDefined();
@@ -70,11 +93,11 @@ describe("Worker Dispatch & Execution Loop", () => {
     };
 
     // First execution should succeed and write to transaction log
-    const result1 = await executeWorkerTask(task, "session-idempotent", db);
+    const result1 = await executeWorkerTask(task, "session-idempotent", db, "session-idempotent");
     expect(result1.status).toBe("success");
 
     // Second execution with same task ID should be skipped
-    const result2 = await executeWorkerTask(task, "session-idempotent", db);
+    const result2 = await executeWorkerTask(task, "session-idempotent", db, "session-idempotent");
     expect(result2.status).toBe("skipped");
     expect(result2.output?.message).toContain("idempotency check");
   });
@@ -90,10 +113,10 @@ describe("Worker Dispatch & Execution Loop", () => {
       action_type: "READ",
     };
 
-    const result1 = await executeWorkerTask(task, "session-read", db);
+    const result1 = await executeWorkerTask(task, "session-read", db, "session-read");
     expect(result1.status).toBe("success");
 
-    const result2 = await executeWorkerTask(task, "session-read", db);
+    const result2 = await executeWorkerTask(task, "session-read", db, "session-read");
     expect(result2.status).toBe("success");
   });
 
@@ -185,6 +208,11 @@ describe("Worker Dispatch & Execution Loop", () => {
     };
 
     const sessionId = db.createSession("user_mock", { prompt: "Fetch mock data" }, manifest);
+
+    // Add mock credentials for this user so supabase client works
+    const kmsProvider = require("../security/kms").getKMSProvider();
+    const encrypted = await kmsProvider.encrypt("mock_key");
+    platformDbMock.set("user_mock", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     // 2. Dispatch worker
     const result = await executeSwarmManifest(manifest, sessionId, db);
@@ -283,6 +311,11 @@ describe("Worker Dispatch & Execution Loop", () => {
 
     // Populate the session we expect
     testDb.createSession("user_execute_test", { prompt: "test execute" }, manifest);
+
+    // Ensure mock credentials are set for this user in platformDbMock too (fallback may fail if not initialized)
+    const kmsProvider2 = require("../security/kms").getKMSProvider();
+    const encrypted2 = await kmsProvider2.encrypt("mock_key");
+    platformDbMock.set("user_execute_test", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted2 });
 
     // We must manually grab the session ID since orchestrator handler will query it
     // But since the DB is recreated, our original sessionId from `db` might not be in testDb.

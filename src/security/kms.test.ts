@@ -79,6 +79,32 @@ describe('BYOK Flow Simulation (Local)', () => {
     });
 });
 
+import { DBClient } from '../db/client';
+import { executeWorkerTask, platformDbMock } from '../workers/template';
+import type { Task } from '../core/types';
+import * as fs from 'fs';
+import { mock } from 'bun:test';
+
+let mockSupabaseKeyReceived: string | null = null;
+
+mock.module("@supabase/supabase-js", () => {
+  return {
+    createClient: (url: string, key: string) => {
+      mockSupabaseKeyReceived = key;
+      return {
+        from: (table: string) => ({
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: { id: "mock_session" }, error: null })
+            })
+          }),
+          insert: async () => ({ error: null })
+        })
+      };
+    }
+  };
+});
+
 describe('Worker Lifecycle Simulation (Local)', () => {
     let mockWorkerDb: Record<string, string> = {};
 
@@ -111,5 +137,47 @@ describe('Worker Lifecycle Simulation (Local)', () => {
 
         // Assert that the decrypted key is no longer available
         expect(decryptedServiceRole).toBeNull();
+    });
+
+    it('should boot with encrypted key, decrypt, instantiate supabase client with decrypted key, execute and cleanup', async () => {
+        const kms = getKMSProvider();
+
+        // Setup DB
+        const db = new DBClient("sqlite://:memory:");
+        const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+        db.applyMigration(schema);
+
+        const testUserId = "test-kms-worker-user-id";
+        const testSessionId = "test-session-id";
+        const plaintextKey = 'test-my-super-secret-service-role-key';
+
+        // 1. Simulating the fetching of the encrypted key
+        const encryptedServiceRole = await kms.encrypt(plaintextKey);
+        platformDbMock.set(testUserId, {
+            supabaseUrl: "https://mock.supabase.co",
+            encryptedKey: encryptedServiceRole
+        });
+
+        // Add a mock task
+        const task: Task = {
+            id: "task-kms-1",
+            description: "A test KMS task",
+            worker: "worker-1",
+            skills: ["none"],
+            credentials: [],
+            depends_on: [],
+            action_type: "READ",
+        };
+
+        // Clear mock var
+        mockSupabaseKeyReceived = null;
+
+        // Execute task (will fetch from platformDbMock, decrypt, call createClient)
+        const result = await executeWorkerTask(task, testSessionId, db, testUserId);
+
+        expect(result.status).toBe("success");
+
+        // Verify the Supabase client received the decrypted plaintext key
+        expect(mockSupabaseKeyReceived).toEqual(plaintextKey);
     });
 });

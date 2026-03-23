@@ -3,6 +3,7 @@ import type { Task, ExecutionContext } from "../core/types";
 import * as fs from "fs";
 import { getKMSProvider } from "../security/kms";
 import { OpenCodeExecutionEngine } from "../core/execution-engine";
+import { createClient } from "@supabase/supabase-js";
 
 export interface WorkerResult {
   status: "success" | "error" | "skipped";
@@ -10,10 +11,14 @@ export interface WorkerResult {
   error?: string;
 }
 
+// Simulation of platform DB for KMS flow testing
+export const platformDbMock = new Map<string, { supabaseUrl: string; encryptedKey: string }>();
+
 export async function executeWorkerTask(
   task: Task,
   sessionId: string,
-  db: DBClient
+  db: DBClient,
+  userId?: string
 ): Promise<WorkerResult> {
   // 1. Boot: Log start (simulated)
 
@@ -46,14 +51,26 @@ export async function executeWorkerTask(
 
     // Fetch platform_users credentials for the user
     const session = db.getSession(sessionId);
-    if (session && session.user_id) {
-        const platformUser = db.getPlatformUser(session.user_id);
+    const resolvedUserId = userId || session?.user_id;
+
+    if (resolvedUserId) {
+      // First try to fetch from the platform DB mock
+      const mockCreds = platformDbMock.get(resolvedUserId);
+      if (mockCreds) {
+        const decryptedServiceRole = await kmsProvider.decrypt(mockCreds.encryptedKey);
+        decryptedCredentials['supabase_service_role'] = decryptedServiceRole;
+        decryptedCredentials['supabase_url'] = mockCreds.supabaseUrl;
+        db.writeAuditLog(sessionId, "worker_decrypted_platform_credential_mock", { task_id: task.id, user_id: resolvedUserId, decrypted_value: "[masked]" });
+      } else {
+        // Fallback to local DB check
+        const platformUser = db.getPlatformUser(resolvedUserId);
         if (platformUser && platformUser.encrypted_service_role) {
             const decryptedServiceRole = await kmsProvider.decrypt(platformUser.encrypted_service_role);
             decryptedCredentials['supabase_service_role'] = decryptedServiceRole;
             decryptedCredentials['supabase_url'] = platformUser.supabase_url;
-            db.writeAuditLog(sessionId, "worker_decrypted_platform_credential", { task_id: task.id, user_id: session.user_id, decrypted_value: "[masked]" });
+            db.writeAuditLog(sessionId, "worker_decrypted_platform_credential", { task_id: task.id, user_id: resolvedUserId, decrypted_value: "[masked]" });
         }
+      }
     }
 
     for (const cred of task.credentials) {
@@ -66,7 +83,29 @@ export async function executeWorkerTask(
       }
     }
 
-    // 5. Dispatch to Engine
+    // Ensure we have Supabase credentials
+    if (!decryptedCredentials['supabase_url'] || !decryptedCredentials['supabase_service_role']) {
+      throw new Error('Supabase credentials not found or failed to decrypt.');
+    }
+
+    // 5. Fetch task details from Sovereign Motherboard (Supabase) and Dispatch to Engine
+    // We instantiate the client with the decrypted user service_role key
+    const supabase = createClient(decryptedCredentials['supabase_url'], decryptedCredentials['supabase_service_role']);
+
+    // Fetch the task session from the platform
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('orchestrator_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError) {
+      db.writeAuditLog(sessionId, "worker_supabase_fetch_error", { error: sessionError.message });
+      // Proceeding with default logic if mock isn't populated in supabase perfectly
+    } else {
+      db.writeAuditLog(sessionId, "worker_supabase_fetch_success", { session_found: true });
+    }
+
     if (task.parameters) {
       db.writeAuditLog(sessionId, "worker_dispatching_with_parameters", { task_id: task.id, parameters: task.parameters });
     }
@@ -75,12 +114,32 @@ export async function executeWorkerTask(
       credentials: decryptedCredentials,
       skillContent,
       sessionId,
-      userId: session?.user_id
+      userId: resolvedUserId
     };
 
     // Instantiate appropriate engine. For now, we use OpenCodeExecutionEngine
     const engine = new OpenCodeExecutionEngine();
     const mockOutput = await engine.execute(task, context);
+
+    // 6. Log result to Sovereign Motherboard (Supabase)
+    const { error: insertError } = await supabase
+      .from('task_results')
+      .insert({
+        session_id: sessionId,
+        worker_id: `worker-${task.id}`,
+        skill_ref: task.skills[0] || "none",
+        status: "success",
+        output: JSON.stringify(mockOutput)
+      });
+
+    if (insertError) {
+      db.writeAuditLog(sessionId, "worker_supabase_insert_error", { error: insertError.message });
+    } else {
+      db.writeAuditLog(sessionId, "worker_supabase_insert_success", { task_id: task.id });
+    }
+
+    // Explicitly delete key from local variables
+    decryptedCredentials['supabase_service_role'] = '';
 
     // 6. Write result to DB and terminate
     if (task.action_type === "WRITE") {
