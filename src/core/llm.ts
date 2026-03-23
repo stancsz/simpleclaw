@@ -22,28 +22,29 @@ export const SwarmManifestSchema = z.object({
     steps: z.array(TaskSchema).describe("DAG of execution steps")
 });
 
-export async function parseIntentToManifest(intent: string, availableSkills: string[]): Promise<SwarmManifest> {
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
+export async function parseIntentToManifest(intent: string, availableSkills: string[], userApiKey?: string): Promise<SwarmManifest> {
+    const openaiApiKey = userApiKey || process.env.OPENAI_API_KEY;
+    const deepseekApiKey = userApiKey || process.env.DEEPSEEK_API_KEY;
 
     if (!openaiApiKey && !deepseekApiKey) {
-        throw new Error("Missing API key. Provide either OPENAI_API_KEY or DEEPSEEK_API_KEY.");
+        throw new Error("Missing API key. Provide either OPENAI_API_KEY, DEEPSEEK_API_KEY, or a user-provided API key.");
     }
 
     let client: OpenAI;
     let model: string;
     let isDeepseek = false;
 
-    if (deepseekApiKey) {
+    // Use Deepseek if the user provided key doesn't start with sk-proj/sk-ant (heuristic) or if we fallback to deepseekApiKey env
+    if (userApiKey ? !userApiKey.startsWith('sk-proj') && !userApiKey.startsWith('sk-ant') && !userApiKey.startsWith('sk-') : deepseekApiKey) {
         client = new OpenAI({
-            apiKey: deepseekApiKey,
+            apiKey: userApiKey || deepseekApiKey,
             baseURL: "https://api.deepseek.com"
         });
         model = "deepseek-chat";
         isDeepseek = true;
     } else {
         client = new OpenAI({
-            apiKey: openaiApiKey!
+            apiKey: userApiKey || openaiApiKey!
         });
         model = "gpt-4o";
     }

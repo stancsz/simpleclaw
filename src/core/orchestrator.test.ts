@@ -41,6 +41,21 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         const schema = fs.readFileSync(path.join(__dirname, "../db/migrations/001_motherboard.sql"), "utf-8");
         testDb.applyMigration(schema);
 
+        // Insert mock data for test-user-123
+        const { getKMSProvider } = require('../security/kms');
+        const kms = getKMSProvider();
+        const encryptedServiceRole = await kms.encrypt('test_service_key');
+        testDb.setPlatformUser('test-user-123', process.env.DATABASE_URL || 'sqlite://local_test_db_orchestrator.sqlite', encryptedServiceRole);
+
+        let validApiKey = process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY;
+        if (!validApiKey) {
+            console.log("No valid API key found in environment variables. Falling back to test key.");
+            validApiKey = 'sk-test';
+        }
+
+        const encryptedLlmKey = await kms.encrypt(validApiKey);
+        testDb.addSecret('test-user-123', 'openai-key', encryptedLlmKey, 'openai');
+
         const req = {
             method: 'POST',
             body: {
@@ -86,11 +101,24 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
         delete process.env.OPENAI_API_KEY;
         delete process.env.DEEPSEEK_API_KEY;
 
+        // Note: For this test we need a user without a key in DB to trigger the error
+        // Ensure local DB is set up since orchestrator handler news up DBClient
+        const originalDbUrl = process.env.DATABASE_URL;
+        process.env.DATABASE_URL = "sqlite://local_test_db_orchestrator_missing_key.sqlite";
+        const { DBClient } = require("../db/client");
+        const fs = require("fs");
+        const testDb = new DBClient(process.env.DATABASE_URL);
+        const path = require('path');
+        const schema = fs.readFileSync(path.join(__dirname, "../db/migrations/001_motherboard.sql"), "utf-8");
+        testDb.applyMigration(schema);
+
+        // We intentionally DO NOT insert an API key for 'test-user-missing'
+
         const req = {
             method: 'POST',
             body: {
                 prompt: "Do something",
-                user_id: "test-user-123"
+                user_id: "test-user-missing"
             }
         } as any;
 
@@ -115,6 +143,13 @@ describe("Orchestrator Cloud Function (Real LLM)", () => {
 
         expect(statusCode).toBe(500);
         expect(responseBody.error).toContain("Missing API key");
+
+        try {
+            fs.unlinkSync("local_test_db_orchestrator_missing_key.sqlite");
+        } catch(e) {}
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
 
         // Restore keys
         if (originalOpenAIKey) process.env.OPENAI_API_KEY = originalOpenAIKey;

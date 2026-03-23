@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #112 ✅ Integrated KMS credential decryption into the orchestrator. Modified `src/core/orchestrator.ts` to fetch user's `platform_users` credentials, create a user-specific Supabase client using decrypted `service_role` keys, and fetch/decrypt the user's personal LLM keys from `vault.user_secrets` to pass to the LLM agent. Updated Next.js `route.ts` to accept `user_id` and ensured integration tests pass seamlessly.
 - [2026-04-02] Cycle #111 ✅ Created dedicated `/api/execute` endpoint for executing approved plans. Updated the UI's 'Approve' button in `server/src/app/page.tsx` to dispatch `executeSwarmManifest` via this new endpoint, decoupling it from `/api/orchestrator`. Ensured tests pass and updated BACKLOG for Phase 0 Worker Dispatch + Execution Loop.
 - [2026-04-01] Cycle #110 ✅ Verified that the integration between the UI approval and the worker dispatch execution loop was already fully implemented. `server/src/app/page.tsx` properly invokes the `POST /api/orchestrator` endpoint with `action: 'approve'` and passes the plan. `server/src/app/api/orchestrator/route.ts` correctly handles this request, initiates `executeSwarmManifest` and returns early. The UI updates the execution monitor which polls the DB and displays real-time execution results correctly. The end-to-end flow is completely functional. Phase 0 is checked in the backlog.
 - [2026-04-01] Cycle #109 ✅ Implemented BYOK UI for key management. Verified existing Phase 1 BYOK UI components (`KeyManagement.tsx`, `AddKeyForm.tsx`, `KeyList.tsx`, `KeysPage.tsx`) and API routes are already fully implemented. Created navigation card on dashboard. Ensured dependencies are installed and confirmed test suite passes. Marked 'Phase 1 — BYOK UI' as complete in the BACKLOG.
@@ -175,6 +176,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Minimal UI (Fully Connected):** Plan-Diff-Approve execution flow connected to the backend orchestrator and dispatcher.
 - [x] **Phase 0 — End-to-End Testing:** Ensure full integration testing across the complete Phase 0 architecture.
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
+- [x] **Phase 0 — Orchestrator KMS Integration:** Integrated KMS credential decryption into the orchestrator to enable user-specific Supabase client creation and AI key fetching.
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/settings/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault

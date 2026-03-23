@@ -4,6 +4,7 @@ import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
+import { getKMSProvider } from '../security/kms';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -80,6 +81,39 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     }
 
     const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
+    let userDbClient = dbClient;
+    let userLlmKey: string | undefined = undefined;
+
+    try {
+        // Wrap platform user retrieval in try-catch to avoid failing entirely if table doesn't exist
+        // This is important for some tests which don't setup the entire schema
+        let platformUser = null;
+        try {
+             platformUser = dbClient.getPlatformUser(user_id);
+        } catch (dbError) {
+             // Ignore table missing errors for tests that don't need it
+        }
+
+        if (platformUser && platformUser.supabase_url && platformUser.encrypted_service_role) {
+            const kmsProvider = getKMSProvider();
+            const decryptedServiceRole = await kmsProvider.decrypt(platformUser.encrypted_service_role);
+
+            // Pass the decrypted service role key if it's a Supabase URL, else just use the URL
+            userDbClient = new DBClient(platformUser.supabase_url.startsWith('supabase://')
+                ? `${platformUser.supabase_url}?service_role=${decryptedServiceRole}`
+                : platformUser.supabase_url);
+
+            const secrets = userDbClient.getSecrets(user_id);
+            const llmSecret = secrets.find((s: any) => s.provider === 'openai' || s.provider === 'deepseek');
+            if (llmSecret && llmSecret.secret) {
+                userLlmKey = await kmsProvider.decrypt(llmSecret.secret);
+            }
+        }
+    } catch (error: any) {
+        console.error("Failed to decrypt KMS key or fetch user credentials:", error);
+        res.status(500).json({ error: 'Failed to decrypt KMS key or fetch user credentials' });
+        return;
+    }
 
     if (action === 'approve' || action === 'execute') {
         if (!session_id || typeof session_id !== 'string') {
@@ -87,7 +121,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             return;
         }
 
-        const session = dbClient.getSession(session_id);
+        const session = userDbClient.getSession(session_id);
         if (!session) {
             res.status(404).json({ error: `Session not found for id: ${session_id}` });
             return;
@@ -99,13 +133,13 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             return;
         }
 
-        dbClient.updateSessionStatus(session_id, 'approved');
+        userDbClient.updateSessionStatus(session_id, 'approved');
 
         // Execute asynchronously so UI can poll for results
-        executeSwarmManifest(manifest, session_id, dbClient).catch((err) => {
+        executeSwarmManifest(manifest, session_id, userDbClient).catch((err) => {
             console.error('Error in asynchronous executeSwarmManifest:', err);
-            dbClient.updateSessionStatus(session_id, 'error');
-            dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: err.message || String(err) });
+            userDbClient.updateSessionStatus(session_id, 'error');
+            userDbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: err.message || String(err) });
         });
 
         res.status(200).json({
@@ -141,7 +175,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     try {
         // Parse the intent into a swarm manifest using LLM
-        const manifest = await parseIntentToManifest(prompt, availableSkills);
+        const manifest = await parseIntentToManifest(prompt, availableSkills, userLlmKey);
 
         // Validate the manifest
         if (!validateManifest(manifest, availableSkills)) {
@@ -154,7 +188,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         const read_operations = manifest.steps.filter(s => s.action_type === 'READ').length;
 
         const context = { prompt, availableSkills };
-        const newSessionId = dbClient.createSession(user_id, context, manifest);
+        const newSessionId = userDbClient.createSession(user_id, context, manifest);
 
         const pda: PlanDiffApprove = {
             plan: manifest,

@@ -28,6 +28,11 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
+        // Hardcode test user if not provided in request
+        if (!body.user_id) {
+            body.user_id = 'test-user';
+        }
+
         // Create mock Request and Response objects to interface with the GCF handler
         const mockReq = {
             method: "POST",
