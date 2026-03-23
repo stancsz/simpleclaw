@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-02] Cycle #116 ✅ Moved Phase 1 BYOK UI components to `/keys` directory to finalize the key management page and updated `page.tsx` references. Checked off 'Phase 1 — BYOK UI' in the BACKLOG and ran `bun test` and `bun run build`.
 - [2026-04-02] Cycle #115 ✅ Fixed the Keys navigation link in `server/src/components/Navigation.tsx` to point to `/settings/keys` instead of `/settings`. Verified existing Phase 1 BYOK UI components are fully implemented.
 - [2026-04-02] Cycle #114 ✅ Migrated Phase 1 BYOK UI components to `/settings/keys` per user instructions. Verified existing components `KeyManagement.tsx`, `AddKeyForm.tsx`, `KeyList.tsx`, and `KeysPage.tsx` and updated routes inside `page.tsx`. Ensured all 'Phase 0 — Worker Dispatch + Execution Loop' and 'Phase 1 — BYOK UI' checkboxes in the BACKLOG are ticked. Ran `bun build` and tests successfully.
 - [2026-04-02] Cycle #113 ✅ Integrated Worker dispatch execution loop with the UI. Created the new endpoint `/api/orchestrator/execute`, removed the obsolete `/api/execute` endpoint, modified the `page.tsx` UI to hit the correct new orchestrator execute endpoint, and validated the execution end-to-end flow with existing testing suites and frontend visual verification loops. Phase 0 has been thoroughly achieved.
