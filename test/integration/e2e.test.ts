@@ -139,7 +139,8 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
     const executeReq = {
       json: async () => ({
         action: 'approve',
-        session_id: sessionId,
+        sessionId: sessionId,
+        manifest: generatedManifest,
         user_id: "user_e2e_full"
       })
     } as any;
