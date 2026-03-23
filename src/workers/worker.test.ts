@@ -370,7 +370,8 @@ describe("Worker Dispatch & Execution Loop", () => {
         const executeReq = {
             method: "POST",
             body: {
-                approved: true, // using the newly added approved=true endpoint trigger
+                action: "approve",
+                sessionId: sessionId,
                 session_id: sessionId,
                 manifest: manifest,
                 user_id: "user_full_flow",
@@ -390,7 +391,7 @@ describe("Worker Dispatch & Execution Loop", () => {
 
         // Let's import the wrapper route
         // We have to mock NextRequest
-        const { POST } = require("../../server/src/app/api/approve-execution/route");
+        const { POST } = require("../../server/src/app/api/orchestrator/route");
 
         const nextReq = {
             json: async () => executeReq.body
