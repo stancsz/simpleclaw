@@ -1,17 +1,22 @@
 // Use dynamic import or fallback type since we can't use bun:sqlite in Next.js edge/node runtime directly
-// Use dynamic import or fallback type since we can't use bun:sqlite in Next.js edge/node runtime directly
-// import { Database } from 'bun:sqlite';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export class DBClient {
   private db: any | null = null;
-  private isSupabase = false;
+  private supabase: SupabaseClient | null = null;
+  public isSupabase = false;
+  private supabaseHealthy = false;
 
   constructor(databaseUrl: string = process.env.DATABASE_URL || 'sqlite://local.db') {
-    if (databaseUrl.startsWith('supabase://')) {
+    if (databaseUrl.startsWith('supabase://') || process.env.SUPABASE_URL) {
       this.isSupabase = true;
-      // Note: In a real app we'd init a Supabase client here.
-      // We are just simulating the DB interface locally for now per the SPEC.
-      console.warn("Supabase connection mode active, but only partial mocked interface is available.");
+      const url = process.env.SUPABASE_URL || databaseUrl.replace('supabase://', 'https://');
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_key';
+      this.supabase = createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+      // Will be set by health check
+      this.supabaseHealthy = true;
     } else {
       const dbPath = databaseUrl.replace('sqlite://', '');
       try {
@@ -32,9 +37,27 @@ export class DBClient {
     }
   }
 
+  async checkSupabaseHealth(retries = 3, delay = 1000): Promise<boolean> {
+    if (!this.isSupabase || !this.supabase) return true;
+    for (let i = 0; i < retries; i++) {
+      try {
+        const { error } = await this.supabase.from('orchestrator_sessions').select('id').limit(1);
+        if (!error || error.code === '42P01') { // 42P01 is expected if tables are not created yet
+          this.supabaseHealthy = true;
+          return true;
+        }
+      } catch (err) {
+        // Continue to retry
+      }
+      await new Promise(res => setTimeout(res, delay));
+    }
+    this.supabaseHealthy = false;
+    return false;
+  }
+
   applyMigration(sql: string) {
     if (this.isSupabase) {
-      console.warn("Migrations are usually handled by Supabase CLI, not the client code.");
+      console.warn("Migrations should be applied using the migration script.");
       return;
     }
     if (this.db) {
@@ -50,8 +73,19 @@ export class DBClient {
 
   createSession(userId: string, context: any, manifest: any): string {
     const sessionId = crypto.randomUUID();
-    if (this.isSupabase) {
-      console.warn("Mock createSession Supabase");
+    if (this.isSupabase && this.supabase) {
+      // Async operation wrapped in fire-and-forget or handled properly depending on usage.
+      // Since createSession in orchestrator is synchronous and returns ID immediately, we do async DB write:
+      this.supabase.from('orchestrator_sessions').insert({
+        id: sessionId,
+        user_id: userId,
+        context: context,
+        manifest: manifest,
+        status: 'active'
+      }).then(({ error }) => {
+        if (error) console.error("Error creating session in Supabase:", error);
+      });
+      this.writeAuditLog(sessionId, 'intent_received', { status: 'active' });
       return sessionId;
     }
 
@@ -66,8 +100,20 @@ export class DBClient {
   }
 
   updateSessionStatus(sessionId: string, status: string) {
-     if (this.isSupabase) {
-        console.warn(`Mock updateSessionStatus to ${status}`);
+     let eventName = 'session_updated';
+     if (status === 'approved') eventName = 'plan_approved';
+     else if (status === 'executing') eventName = 'execution_started';
+     else if (status === 'completed') eventName = 'execution_completed';
+     else if (status === 'error') eventName = 'execution_failed';
+
+     if (this.isSupabase && this.supabase) {
+        this.supabase.from('orchestrator_sessions').update({
+          status,
+          updated_at: new Date().toISOString()
+        }).eq('id', sessionId).then(({ error }) => {
+          if (error) console.error("Error updating session in Supabase:", error);
+        });
+        this.writeAuditLog(sessionId, eventName, { status });
         return;
      }
      if (this.db) {
@@ -86,16 +132,47 @@ export class DBClient {
      }
   }
 
+  async getTaskResultsAsync(sessionId: string): Promise<any[]> {
+    if (this.isSupabase && this.supabase) {
+      const { data, error } = await this.supabase
+        .from('task_results')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+      if (error) console.error("Error fetching task results:", error);
+      return data || [];
+    }
+    return this.getTaskResults(sessionId);
+  }
+
   getTaskResults(sessionId: string): any[] {
-    if (this.isSupabase) return [];
+    if (this.isSupabase) {
+      // Synchronous fallback (ideally callers should use async version)
+      console.warn("getTaskResults called synchronously in Supabase mode - returning empty. Callers should be async.");
+      return [];
+    }
     if (this.db) {
         return this.db.query(`SELECT * FROM task_results WHERE session_id = ? ORDER BY created_at ASC`).all(sessionId) as any[];
     }
     return [];
   }
 
+  async getSessionAsync(sessionId: string): Promise<any> {
+    if (this.isSupabase && this.supabase) {
+        const { data, error } = await this.supabase
+          .from('orchestrator_sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .single();
+        if (error) console.error("Error fetching session:", error);
+        return data || null;
+    }
+    return this.getSession(sessionId);
+  }
+
   getSession(sessionId: string): any {
     if (this.isSupabase) {
+        console.warn("getSession called synchronously in Supabase mode. Callers should be async.");
         return null;
     }
     if (this.db) {
@@ -109,6 +186,19 @@ export class DBClient {
     return null;
   }
 
+  async checkIdempotencyAsync(key: string): Promise<boolean> {
+    if (this.isSupabase && this.supabase) {
+        const { data, error } = await this.supabase
+          .from('transaction_log')
+          .select('idempotency_key')
+          .eq('idempotency_key', key)
+          .eq('status', 'completed')
+          .single();
+        return !!data;
+    }
+    return this.checkIdempotency(key);
+  }
+
   checkIdempotency(key: string): boolean {
     if (this.isSupabase) {
         return false;
@@ -120,8 +210,27 @@ export class DBClient {
     return false;
   }
 
+  async logTransactionAsync(key: string, status: string, result: any) {
+    if (this.isSupabase && this.supabase) {
+        await this.supabase.from('transaction_log').upsert({
+            idempotency_key: key,
+            status: status,
+            result: result
+        });
+        return;
+    }
+    this.logTransaction(key, status, result);
+  }
+
   logTransaction(key: string, status: string, result: any) {
-    if (this.isSupabase) return;
+    if (this.isSupabase && this.supabase) {
+        this.supabase.from('transaction_log').upsert({
+            idempotency_key: key,
+            status: status,
+            result: result
+        }).then();
+        return;
+    }
     if (this.db) {
         this.db.run(
             `INSERT INTO transaction_log (idempotency_key, status, result) VALUES (?, ?, ?)
@@ -136,8 +245,21 @@ export class DBClient {
   }
 
   logTaskResult(sessionId: string, workerId: string, skillRef: string, status: string, outputOrError: any, isError: boolean = false) {
-    if (this.isSupabase) {
-      console.warn(`Mock logTaskResult Supabase for ${workerId}`);
+    if (this.isSupabase && this.supabase) {
+      const payload: any = {
+          session_id: sessionId,
+          worker_id: workerId,
+          skill_ref: skillRef,
+          status: status
+      };
+      if (isError) {
+          payload.error = String(outputOrError);
+      } else {
+          payload.output = outputOrError;
+      }
+      this.supabase.from('task_results').insert(payload).then(({ error }) => {
+          if (error) console.error("Error logging task result:", error);
+      });
       return;
     }
     if (this.db) {
@@ -156,7 +278,16 @@ export class DBClient {
   }
 
   writeAuditLog(sessionId: string, event: string, metadata: any) {
-    if (this.isSupabase) return;
+    if (this.isSupabase && this.supabase) {
+        this.supabase.from('audit_log').insert({
+            session_id: sessionId || null, // handle empty sessionId for secret access
+            event: event,
+            metadata: metadata
+        }).then(({ error }) => {
+            if (error) console.error("Error writing audit log:", error);
+        });
+        return;
+    }
     if (this.db) {
         const id = crypto.randomUUID();
         this.db.run(
@@ -164,6 +295,18 @@ export class DBClient {
             [id, sessionId, event, JSON.stringify(metadata)]
         );
     }
+  }
+
+  async getAuditLogsAsync(sessionId: string): Promise<any[]> {
+    if (this.isSupabase && this.supabase) {
+        const { data, error } = await this.supabase
+          .from('audit_log')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true });
+        return data || [];
+    }
+    return this.getAuditLogs(sessionId);
   }
 
   getAuditLogs(sessionId: string): any[] {
@@ -174,8 +317,24 @@ export class DBClient {
     return [];
   }
 
+  async readSecretAsync(secretId: string): Promise<string | null> {
+    if (this.isSupabase && this.supabase) {
+        // Use RPC to read secret
+        const { data, error } = await this.supabase.rpc('read_secret', { p_secret_id: secretId });
+        if (error) {
+            console.error("Error reading secret via RPC:", error);
+            return null;
+        }
+        return data;
+    }
+    return this.simulateReadSecret(secretId);
+  }
+
   simulateReadSecret(secretId: string): string | null {
-    if (this.isSupabase) return "MOCK_SUPABASE_SECRET";
+    if (this.isSupabase) {
+        console.warn("simulateReadSecret called in Supabase mode synchronously. Call readSecretAsync instead.");
+        return "MOCK_SUPABASE_SECRET";
+    }
 
     if (this.db) {
         const row = this.db.query(`SELECT secret FROM vault_user_secrets WHERE id = ?`).get(secretId) as any;
@@ -188,14 +347,28 @@ export class DBClient {
     return null;
   }
 
+  async addSecretAsync(userId: string, name: string, secret: string, provider: string, expiresAt?: string | null): Promise<string | null> {
+    if (this.isSupabase && this.supabase) {
+        const { data, error } = await this.supabase.from('vault_user_secrets').insert({ // using vault_user_secrets proxy table or actual table
+            user_id: userId,
+            name: name,
+            secret: secret, // in real supabase this would be encrypted by an RPC or DB trigger
+            provider: provider,
+            expires_at: expiresAt || null
+        }).select('id').single();
+        if (error) {
+            console.error("Error adding secret:", error);
+            return null;
+        }
+        return data?.id || null;
+    }
+    return this.addSecret(userId, name, secret, provider, expiresAt);
+  }
+
   addSecret(userId: string, name: string, secret: string, provider: string, expiresAt?: string | null) {
-    // BYOK Phase 1 vault
     if (this.isSupabase) {
-        // In Supabase mode, we would use the Supabase client with Row Level Security
-        // For now, mock behavior for testing
-        console.warn("addSecret called in Supabase mode - using mock implementation for testing.");
-        const mockId = `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        return mockId;
+        console.warn("addSecret called synchronously in Supabase mode.");
+        return null;
     }
     if (this.db) {
         const id = crypto.randomUUID();
@@ -208,9 +381,31 @@ export class DBClient {
     return null;
   }
 
+  async getSecretsAsync(userId: string): Promise<any[]> {
+    if (this.isSupabase && this.supabase) {
+        const { data, error } = await this.supabase
+          .from('vault_user_secrets')
+          .select('id, name, provider, expires_at, created_at')
+          .eq('user_id', userId);
+        if (error) {
+            console.error("Error getting secrets:", error);
+            return [];
+        }
+        return (data || []).map(r => ({
+            id: r.id,
+            name: r.name,
+            provider: r.provider,
+            expiresAt: r.expires_at,
+            maskedKey: 'sk-...abcd',
+            createdAt: r.created_at
+        }));
+    }
+    return this.getSecrets(userId);
+  }
+
   getSecrets(userId: string): any[] {
     if (this.isSupabase) {
-        console.warn("getSecrets called in Supabase mode - requires direct Supabase client.");
+        console.warn("getSecrets called synchronously in Supabase mode.");
         return [];
     }
     if (this.db) {
@@ -228,9 +423,17 @@ export class DBClient {
     return [];
   }
 
+  async deleteSecretAsync(userId: string, secretId: string) {
+    if (this.isSupabase && this.supabase) {
+        await this.supabase.from('vault_user_secrets').delete().eq('id', secretId).eq('user_id', userId);
+        return;
+    }
+    this.deleteSecret(userId, secretId);
+  }
+
   deleteSecret(userId: string, secretId: string) {
     if (this.isSupabase) {
-        console.warn("deleteSecret called in Supabase mode - requires direct Supabase client.");
+        this.deleteSecretAsync(userId, secretId).then();
         return;
     }
     if (this.db) {
@@ -238,8 +441,23 @@ export class DBClient {
     }
   }
 
+  async setPlatformUserAsync(userId: string, supabaseUrl: string, encryptedServiceRole: string) {
+    if (this.isSupabase && this.supabase) {
+        await this.supabase.from('platform_users').upsert({
+            user_id: userId,
+            supabase_url: supabaseUrl,
+            encrypted_service_role: encryptedServiceRole
+        });
+        return;
+    }
+    this.setPlatformUser(userId, supabaseUrl, encryptedServiceRole);
+  }
+
   setPlatformUser(userId: string, supabaseUrl: string, encryptedServiceRole: string) {
-    if (this.isSupabase) return;
+    if (this.isSupabase) {
+        this.setPlatformUserAsync(userId, supabaseUrl, encryptedServiceRole).then();
+        return;
+    }
     if (this.db) {
         this.db.run(
             `INSERT INTO platform_users (user_id, supabase_url, encrypted_service_role) VALUES (?, ?, ?)
@@ -247,6 +465,18 @@ export class DBClient {
             [userId, supabaseUrl, encryptedServiceRole]
         );
     }
+  }
+
+  async getPlatformUserAsync(userId: string): Promise<any> {
+    if (this.isSupabase && this.supabase) {
+        const { data } = await this.supabase
+          .from('platform_users')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        return data;
+    }
+    return this.getPlatformUser(userId);
   }
 
   getPlatformUser(userId: string): any {

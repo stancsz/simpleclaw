@@ -138,3 +138,59 @@ describe("Database Client Tests (SQLite Local)", () => {
         expect(missingSecret).toBeNull();
     });
 });
+
+describe("Database Client Tests (Supabase Mock)", () => {
+    let originalEnvUrl: string | undefined;
+    let originalEnvKey: string | undefined;
+
+    beforeAll(() => {
+        originalEnvUrl = process.env.SUPABASE_URL;
+        originalEnvKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        process.env.SUPABASE_URL = "https://mock.supabase.co";
+        process.env.SUPABASE_SERVICE_ROLE_KEY = "mock_key";
+    });
+
+    afterAll(() => {
+        if (originalEnvUrl) process.env.SUPABASE_URL = originalEnvUrl;
+        else delete process.env.SUPABASE_URL;
+
+        if (originalEnvKey) process.env.SUPABASE_SERVICE_ROLE_KEY = originalEnvKey;
+        else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    });
+
+    test("Initializes in Supabase mode based on environment variables", () => {
+        const client = new DBClient();
+        expect(client.isSupabase).toBe(true);
+    });
+
+    test("Health check retry logic returns true when successful", async () => {
+        const client = new DBClient();
+        // Since we don't have a real Supabase instance, we're mocking the internal supabase object
+        const mockSupabase = {
+            from: () => ({
+                select: () => ({
+                    limit: () => Promise.resolve({ error: { code: '42P01' } }) // simulates missing table, which is considered healthy
+                })
+            })
+        };
+        (client as any).supabase = mockSupabase;
+
+        const isHealthy = await client.checkSupabaseHealth(3, 10);
+        expect(isHealthy).toBe(true);
+    });
+
+    test("Health check retry logic returns false when failed", async () => {
+        const client = new DBClient();
+        const mockSupabase = {
+            from: () => ({
+                select: () => ({
+                    limit: () => Promise.reject(new Error("Network Error")) // simulates connection failure
+                })
+            })
+        };
+        (client as any).supabase = mockSupabase;
+
+        const isHealthy = await client.checkSupabaseHealth(2, 10);
+        expect(isHealthy).toBe(false);
+    });
+});

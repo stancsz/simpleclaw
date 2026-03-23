@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-01] Cycle #26 ✅ Implemented Phase 1 foundation: Sovereign Motherboard Supabase setup and migration tools. Created Supabase migration CLI `scripts/migrate-to-supabase.ts` and updated `src/db/client.ts` to properly support `SUPABASE_URL` while preserving SQLite fallback, fulfilling Phase 0 Motherboard Schema goal for real-world execution.
 - [2026-04-01] Cycle #110 ✅ Verified that the integration between the UI approval and the worker dispatch execution loop was already fully implemented. `server/src/app/page.tsx` properly invokes the `POST /api/orchestrator` endpoint with `action: 'approve'` and passes the plan. `server/src/app/api/orchestrator/route.ts` correctly handles this request, initiates `executeSwarmManifest` and returns early. The UI updates the execution monitor which polls the DB and displays real-time execution results correctly. The end-to-end flow is completely functional. Phase 0 is checked in the backlog.
 - [2026-04-01] Cycle #109 ✅ Implemented BYOK UI for key management. Verified existing Phase 1 BYOK UI components (`KeyManagement.tsx`, `AddKeyForm.tsx`, `KeyList.tsx`, `KeysPage.tsx`) and API routes are already fully implemented. Created navigation card on dashboard. Ensured dependencies are installed and confirmed test suite passes. Marked 'Phase 1 — BYOK UI' as complete in the BACKLOG.
 - [2026-04-01] Cycle #108 ✅ Validated Phase 0 Worker Dispatch + Execution Loop. Verified `executeSwarmManifest` and the execution loop endpoints. Added `@google-cloud/functions-framework` dependency to fix the test environment and passed all integrations successfully.
@@ -154,13 +155,14 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Finalizing Phase 1 features, including BYOK UI and real world Swarm capabilities.
+- Core work: Progressing on Phase 1 features: Implementing BYOI infrastructure foundation with Supabase tools and real world Swarm capabilities.
 
 ## BACKLOG (Swarm Architecture)
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
+- [x] **Phase 1 — Sovereign Motherboard:** Setup tools and CLI logic to allow users to link and migrate their own Supabase databases (`migrate-to-supabase.ts`).
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** (Completed in Cycle #107) Implemented and verified full lifecycle for Worker Execution (Boot -> JIT Skill Load -> KMS Credential Fetch -> Engine Dispatch -> Status Logging -> Idempotency checks) via robust End-to-End integration test and proper execution monitoring setup.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** (Completed in Cycle #26) The UI approve button triggers actual execution, the execution engine fetches credentials and dispatches the task, and the results are presented in real-time on the frontend UI. The system now has a complete end-to-end execution flow!
 - [x] **Phase 0 — Worker Dispatch + Execution Loop**

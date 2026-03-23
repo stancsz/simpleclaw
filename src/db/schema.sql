@@ -77,6 +77,53 @@ CREATE TABLE skill_refs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE SCHEMA IF NOT EXISTS swarms;
+
+CREATE OR REPLACE FUNCTION swarms.verify_motherboard_integrity()
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_missing_tables TEXT[] := '{}';
+    v_required_tables TEXT[] := ARRAY[
+        'orchestrator_sessions',
+        'task_results',
+        'audit_log',
+        'transaction_log',
+        'heartbeat_queue',
+        'gas_ledger',
+        'skill_refs'
+    ];
+    v_table TEXT;
+BEGIN
+    FOREACH v_table IN ARRAY v_required_tables
+    LOOP
+        IF NOT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = v_table
+        ) THEN
+            v_missing_tables := array_append(v_missing_tables, v_table);
+        END IF;
+    END LOOP;
+
+    -- Also check vault.user_secrets
+    IF NOT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'vault'
+        AND table_name = 'user_secrets'
+    ) THEN
+        v_missing_tables := array_append(v_missing_tables, 'vault.user_secrets');
+    END IF;
+
+    IF array_length(v_missing_tables, 1) > 0 THEN
+        RETURN jsonb_build_object('status', 'error', 'version', '1.0', 'missing_tables', v_missing_tables);
+    END IF;
+
+    RETURN jsonb_build_object('status', 'ok', 'version', '1.0', 'missing_tables', '[]');
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION swarms.read_secret(p_secret_id UUID)
 RETURNS TEXT
 LANGUAGE plpgsql
