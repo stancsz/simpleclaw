@@ -103,11 +103,11 @@ export default function Home() {
 
     try {
       // Trigger worker dispatch and swarm manifest execution via the orchestrator endpoint
-      const response = await fetch('/api/orchestrator/execute', {
+      const response = await fetch('/api/execution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: sessionId,
+          session_id: sessionId,
           manifest: pda.plan,
         }),
       });
