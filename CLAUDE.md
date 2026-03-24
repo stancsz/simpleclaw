@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #121 ✅ Verified Phase 1 BYOK UI. Examined existing implementation across `server/src/app/settings/keys/page.tsx` and associated components. Concluded the task is fully completed, ran tests successfully, and marked BACKLOG appropriately.
 - [2026-04-03] Cycle #120 ✅ Implemented Phase 1 BYOK UI directory restructuring: Relocated `server/src/app/keys` to `server/src/app/settings/keys` to meet prompt specifications, and updated `Navigation.tsx` correspondingly.
 - [2026-04-03] Cycle #119 ✅ Implemented Phase 1 BYOK UI Edit functionality: Added PATCH route to `api/keys/[id]`, updated `src/db/client.ts` with `updateSecret`, and enhanced the `CredentialCard` component with an inline edit form for changing key name, API key, and expiry date.
 - [2026-04-03] Cycle #118 ✅ Implemented Phase 1 BYOK UI: Moved the key management page to `server/src/app/keys/page.tsx` and updated the dashboard navigation links per requirements.
