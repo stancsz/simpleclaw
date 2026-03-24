@@ -15,9 +15,10 @@ export interface KeyRecord {
 interface KeyListProps {
     keys: KeyRecord[];
     onDeleteKey: (id: string) => void;
+    onUpdateKey: (id: string, name: string, key?: string, expiresAt?: string | null) => Promise<void>;
 }
 
-export default function KeyList({ keys, onDeleteKey }: KeyListProps) {
+export default function KeyList({ keys, onDeleteKey, onUpdateKey }: KeyListProps) {
     return (
         <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-white mb-6">Stored Keys</h2>
@@ -35,6 +36,7 @@ export default function KeyList({ keys, onDeleteKey }: KeyListProps) {
                             createdAt={k.createdAt}
                             expiresAt={k.expiresAt}
                             onDelete={onDeleteKey}
+                            onUpdate={onUpdateKey}
                         />
                     ))}
                 </div>

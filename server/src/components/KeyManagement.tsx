@@ -39,10 +39,32 @@ export default function KeyManagement() {
         }
     };
 
+    const handleUpdateKey = async (id: string, name: string, key?: string, expiresAt?: string | null) => {
+        const payload: any = { name, expiresAt };
+        if (key) {
+            payload.key = key;
+        }
+
+        const res = await fetch(`/api/keys/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to update key');
+        }
+
+        fetchKeys();
+    };
+
     return (
         <div className="flex flex-col gap-8 w-full">
             <AddKeyForm onKeyAdded={fetchKeys} />
-            <KeyList keys={keys} onDeleteKey={handleDeleteKey} />
+            <KeyList keys={keys} onDeleteKey={handleDeleteKey} onUpdateKey={handleUpdateKey} />
         </div>
     );
 }

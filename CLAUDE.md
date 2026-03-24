@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #119 ✅ Implemented Phase 1 BYOK UI Edit functionality: Added PATCH route to `api/keys/[id]`, updated `src/db/client.ts` with `updateSecret`, and enhanced the `CredentialCard` component with an inline edit form for changing key name, API key, and expiry date.
 - [2026-04-03] Cycle #118 ✅ Implemented Phase 1 BYOK UI: Moved the key management page to `server/src/app/keys/page.tsx` and updated the dashboard navigation links per requirements.
 - [2026-03-24] Cycle #117 ✅ Created end-to-end integration test for worker dispatch and execution loop. Validated orchestrator → worker → KMS credential → task result flow.
 - [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created settings page with Supabase Vault integration for key management.

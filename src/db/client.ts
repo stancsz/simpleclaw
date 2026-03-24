@@ -109,6 +109,39 @@ export class DBClient {
     return null;
   }
 
+  updateSecret(userId: string, secretId: string, name?: string, secret?: string, expiresAt?: string | null) {
+    if (this.isSupabase) {
+        console.warn("updateSecret called in Supabase mode - requires direct Supabase client.");
+        return;
+    }
+    if (this.db) {
+        const updates: string[] = [];
+        const params: any[] = [];
+
+        if (name !== undefined) {
+            updates.push(`name = ?`);
+            params.push(name);
+        }
+        if (secret !== undefined) {
+            updates.push(`secret = ?`);
+            params.push(secret);
+        }
+        if (expiresAt !== undefined) {
+            updates.push(`expires_at = ?`);
+            params.push(expiresAt);
+        }
+
+        if (updates.length > 0) {
+            params.push(secretId);
+            params.push(userId);
+            this.db.run(
+                `UPDATE vault_user_secrets SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`,
+                params
+            );
+        }
+    }
+  }
+
   checkIdempotency(key: string): boolean {
     if (this.isSupabase) {
         return false;

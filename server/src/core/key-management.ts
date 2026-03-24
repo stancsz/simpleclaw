@@ -90,3 +90,19 @@ export async function deleteKey(secretId: string) {
     const dbClient = getDbClient();
     dbClient.deleteSecret(MOCK_USER_ID, secretId);
 }
+
+export async function updateKey(secretId: string, name?: string, key?: string, expiresAt?: string | null) {
+    if (!secretId) {
+        throw new Error("Secret ID is required");
+    }
+
+    const dbClient = getDbClient();
+    const kmsProvider = getKMSProvider();
+
+    let encryptedKey: string | undefined = undefined;
+    if (key !== undefined) {
+        encryptedKey = await kmsProvider.encrypt(key);
+    }
+
+    dbClient.updateSecret(MOCK_USER_ID, secretId, name, encryptedKey, expiresAt);
+}

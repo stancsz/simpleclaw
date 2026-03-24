@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll } from 'bun:test';
 import { GET, POST } from './route';
-import { DELETE } from './[id]/route';
+import { DELETE, PATCH } from './[id]/route';
 import { NextRequest } from 'next/server';
 import { getDbClient } from '@/../../src/db/client';
 import { getKMSProvider } from '@/../../src/security/kms';
@@ -125,5 +125,41 @@ describe('BYOK API Routes', () => {
 
         const data = await response.json();
         expect(data.error).toBe("Provider and key are required");
+    });
+
+    it('should update a key via PATCH', async () => {
+        // Pre-insert a key directly
+        const testKey = 'sk-proj-update-test-1111';
+        const encryptedKey = await kmsProvider.encrypt(testKey);
+        const secretId = dbClient.addSecret(MOCK_USER_ID, 'Update Test Key', encryptedKey, 'OpenAI');
+
+        const newName = 'Updated Test Key Name';
+        const newKey = 'sk-proj-updated-key-2222';
+        const newExpiresAt = '2028-01-01';
+
+        const req = new NextRequest(`http://localhost/api/keys/${secretId}?id=${secretId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                name: newName,
+                key: newKey,
+                expiresAt: newExpiresAt
+            })
+        });
+
+        const response = await PATCH(req, { params: Promise.resolve({ id: secretId! }) });
+        expect(response.status).toBe(200);
+
+        const data = await response.json();
+        expect(data.success).toBe(true);
+
+        // Verify it was updated
+        const secrets = dbClient.getSecrets(MOCK_USER_ID);
+        expect(secrets.length).toBe(1);
+        expect(secrets[0].name).toBe(newName);
+        expect(secrets[0].expiresAt).toBe(newExpiresAt);
+
+        // Decrypt to verify key was updated
+        const updatedDecryptedKey = await kmsProvider.decrypt(secrets[0].secret);
+        expect(updatedDecryptedKey).toBe(newKey);
     });
 });
