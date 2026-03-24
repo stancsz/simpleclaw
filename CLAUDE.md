@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #118 ✅ Implemented Phase 1 BYOK UI: Moved the key management page to `server/src/app/keys/page.tsx` and updated the dashboard navigation links per requirements.
 - [2026-03-24] Cycle #117 ✅ Created end-to-end integration test for worker dispatch and execution loop. Validated orchestrator → worker → KMS credential → task result flow.
 - [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created settings page with Supabase Vault integration for key management.
 - [2026-04-03] Cycle #26 ✅ Implemented hardcoded single-skill worker execution for Phase 0 validation. Created `mock-worker.ts`, loaded a `mock-fetch.md` skill, fetched public API data, and logged the result to the database. Integrated with `dispatcher.ts` and `orchestrator.ts`. Verified by unit tests.
