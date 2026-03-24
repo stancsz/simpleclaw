@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created settings page with Supabase Vault integration for key management.
 - [2026-04-03] Cycle #26 ✅ Implemented hardcoded single-skill worker execution for Phase 0 validation. Created `mock-worker.ts`, loaded a `mock-fetch.md` skill, fetched public API data, and logged the result to the database. Integrated with `dispatcher.ts` and `orchestrator.ts`. Verified by unit tests.
 - [2026-04-02] Cycle #116 ✅ Moved Phase 1 BYOK UI components to `/keys` directory to finalize the key management page and updated `page.tsx` references. Checked off 'Phase 1 — BYOK UI' in the BACKLOG and ran `bun test` and `bun run build`.
 - [2026-04-02] Cycle #115 ✅ Fixed the Keys navigation link in `server/src/components/Navigation.tsx` to point to `/settings/keys` instead of `/settings`. Verified existing Phase 1 BYOK UI components are fully implemented.
@@ -203,6 +204,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Minimal UI execution flow to point to `/api/execute` API route. Real-time updates working correctly via `ExecutionMonitor`.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Implemented hardcoded single-skill worker execution for Phase 0 validation.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/keys/page.tsx`
+- [x] **Phase 1 — BYOK UI:** Created settings page with Supabase Vault integration for key management
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat

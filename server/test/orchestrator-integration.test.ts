@@ -23,7 +23,7 @@ describe("Orchestrator Execution Flow Integration", () => {
         // Initialize DBClient (which auto-creates tables for local sqlite)
         db = new DBClient(TEST_DB_PATH);
 
-        const migrationSql = fs.readFileSync(path.join(process.cwd(), "..", "src", "db", "migrations", "001_motherboard.sql"), 'utf-8');
+        const migrationSql = fs.readFileSync(path.join(process.cwd().includes('server') ? ".." : ".", "src", "db", "migrations", "001_motherboard.sql"), 'utf-8');
         db.applyMigration(migrationSql);
 
         // Add a mock skill for the test
