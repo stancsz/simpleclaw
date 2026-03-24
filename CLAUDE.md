@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-03] Cycle #127 ✅ Re-verified Phase 0 Worker Dispatch + Execution Loop API Integration. Created `server/src/app/api/execute/route.ts` API route file based on user's direct instruction, by moving it out of `orchestrator/execute` and updating the UI (`server/src/app/page.tsx`) to hit this endpoint correctly for plan approval and manifest execution. Fully tested the frontend loop with Playwright tests.
 - [2026-04-03] Cycle #126 ✅ Relocated Phase 1 BYOK UI from `/settings/keys` to `/keys` as requested. Renamed component to `KeysPage` and updated dashboard navigation links.
 - [2026-04-03] Cycle #125 ✅ Verified Worker Dispatch + Execution Loop integration. Confirmed that Minimal UI (`server/src/app/page.tsx`) already successfully triggers the `executeSwarmManifest` dispatch loop via POST requests to `/api/orchestrator/execute` using the `handleApprove` function, and `ExecutionMonitor` correctly polls to provide live task results. End-to-end functionality is robust and task checks have been cleared.
 - [2026-04-03] Cycle #124 ✅ Completed Worker Dispatch + Execution Loop integration. Consolidated the orchestrator execution endpoints by migrating `/api/execution` to a dedicated sub-route at `/api/orchestrator/execute`. Updated the `server/src/app/page.tsx` Minimal UI approval flow to seamlessly trigger this endpoint and display dynamic statuses via the `ExecutionMonitor`. Verified frontend and backend testing via `bun test` in `server/`.
@@ -188,6 +189,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Minimal UI (Fully Connected):** Plan-Diff-Approve execution flow connected to the backend orchestrator and dispatcher.
 - [x] **Phase 0 — End-to-End Testing:** Ensure full integration testing across the complete Phase 0 architecture.
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the execute endpoint `/api/execute/route.ts` and UI execution monitoring in `server/src/app/page.tsx`.
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/settings/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
