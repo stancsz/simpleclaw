@@ -138,6 +138,9 @@ export class DBClient {
                 `UPDATE vault_user_secrets SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`,
                 params
             );
+
+            // Log update audit event
+            this.writeAuditLog(secretId, 'secret_updated', { secret_id: secretId, fields_updated: updates.map(u => u.split(' ')[0]) });
         }
     }
   }
@@ -236,6 +239,7 @@ export class DBClient {
             `INSERT INTO vault_user_secrets (id, user_id, name, secret, provider, expires_at) VALUES (?, ?, ?, ?, ?, ?)`,
             [id, userId, name, secret, provider, expiresAt || null]
         );
+        this.writeAuditLog(id, 'secret_created', { provider, expires_at: expiresAt });
         return id;
     }
     return null;
@@ -268,6 +272,7 @@ export class DBClient {
     }
     if (this.db) {
         this.db.run(`DELETE FROM vault_user_secrets WHERE id = ? AND user_id = ?`, [secretId, userId]);
+        this.writeAuditLog(secretId, 'secret_deleted', { secret_id: secretId });
     }
   }
 
