@@ -336,11 +336,11 @@ export async function executeSwarmManifest(
   sessionId: string,
   db: DBClient
 ): Promise<Record<string, WorkerResult>> {
-  const tasks = manifest.steps;
+  const tasks = manifest?.steps || [];
   const executionPromises = new Map<string, Promise<WorkerResult>>();
   const results: Record<string, WorkerResult> = {};
 
-  db.writeAuditLog(sessionId, "swarm_execution_started", { manifest_version: manifest.version });
+  db.writeAuditLog(sessionId, "swarm_execution_started", { manifest_version: manifest?.version || "unknown" });
 
   // 1. Setup deferred promises for all tasks to handle out-of-order execution graph
   const deferredResolvers = new Map<string, { resolve: (val: WorkerResult) => void, reject: (err: any) => void }>();

@@ -21,20 +21,20 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     // The sessionId itself is not the user_id. executeSwarmManifest fetches the user via the session.
     // We need to create mock sessions with specific user IDs that we also mock in platformDb.
 
-    db.createSession("user_dag", { prompt: "Test ordered DAG" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-dag' WHERE user_id = 'user_dag';`);
+    const sessionDagId = db.createSession("user_dag", { prompt: "Test ordered DAG" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-dag' WHERE id = '${sessionDagId}';`);
     platformDbMock.set("user_dag", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
-    db.createSession("user_parallel", { prompt: "Test parallel DAG" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-parallel' WHERE user_id = 'user_parallel';`);
+    const sessionParallelId = db.createSession("user_parallel", { prompt: "Test parallel DAG" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-parallel' WHERE id = '${sessionParallelId}';`);
     platformDbMock.set("user_parallel", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
-    db.createSession("user_fail", { prompt: "Test failure handling" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-fail' WHERE user_id = 'user_fail';`);
+    const sessionFailId = db.createSession("user_fail", { prompt: "Test failure handling" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-fail' WHERE id = '${sessionFailId}';`);
     platformDbMock.set("user_fail", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
-    db.createSession("user_retry", { prompt: "Test retry logic" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-retry' WHERE user_id = 'user_retry';`);
+    const sessionRetryId = db.createSession("user_retry", { prompt: "Test retry logic" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-retry' WHERE id = '${sessionRetryId}';`);
     platformDbMock.set("user_retry", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     // Mock fetch for Cloud Function worker dispatch simulation

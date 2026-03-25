@@ -21,12 +21,12 @@ describe("Worker Execution Module", () => {
     const encrypted = await kmsProvider.encrypt("mock_key");
 
     // Create sessions with specific user IDs
-    db.createSession("user_monitor_test", { prompt: "test" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test' WHERE user_id = 'user_monitor_test';`);
+    const sessionMonitorTestId = db.createSession("user_monitor_test", { prompt: "test" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test' WHERE id = '${sessionMonitorTestId}';`);
     platformDbMock.set("user_monitor_test", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
-    db.createSession("user_idempotent", { prompt: "test idempotent" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-idempotent' WHERE user_id = 'user_idempotent';`);
+    const sessionIdempotentId = db.createSession("user_idempotent", { prompt: "test idempotent" }, {});
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-idempotent' WHERE id = '${sessionIdempotentId}';`);
     platformDbMock.set("user_idempotent", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     // Mock fetch for Cloud Function worker dispatch simulation
