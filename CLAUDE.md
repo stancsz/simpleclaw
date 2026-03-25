@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #135 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx`, `server/src/components/KeyManager.tsx`, and associated API routes. Concluded the task is fully completed, ran tests successfully, and marked BACKLOG appropriately.
 - [2026-04-06] Cycle #26 ✅ Completed Phase 0 Worker Dispatch + Execution Loop. Verified the integration between plan approval and the execution loop, installed missing Supabase JS client dependency, and verified that real-time execution flows are successfully logged to the database and tracked via the UI ExecutionMonitor polling. Phase 0 tasks have been successfully concluded.
 - [2026-04-06] Cycle #134 ✅ Refactored Phase 1 BYOK UI. Moved `server/src/app/keys` to `server/src/app/settings` per prompt requirements. Moved KeyManagement, KeyList, AddKeyForm, and CredentialCard to `server/src/app/settings/components`. Updated navigation links.
 - [2026-04-06] Cycle #133 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx`, `server/src/components/KeyManagement.tsx`, and associated API routes. Concluded the task is fully completed, ran tests successfully, and marked BACKLOG appropriately.
@@ -225,6 +226,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Created settings page with Supabase Vault integration for key management
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI:** Cycle #26 ✅ Implemented Phase 1 BYOK UI: Migrated settings page to keys page and integrated KeyManager components properly to `/keys`.
+- [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat

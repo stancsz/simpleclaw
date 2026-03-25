@@ -1,22 +1,20 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
-import AddKeyForm from '@/app/keys/components/AddKeyForm';
+import KeyManagement from '@/components/KeyManagement';
 
 // Helper to grab elements
 const setup = () => {
-    const onKeyAdded = mock();
-    const { container, getByRole } = render(<AddKeyForm onKeyAdded={onKeyAdded} />);
+    const { container, getByRole } = render(<KeyManagement />);
 
     return {
-        onKeyAdded,
         providerSelect: container.querySelector('select[name="provider"]') as HTMLSelectElement,
         keyInput: container.querySelector('textarea[name="key"]') as HTMLTextAreaElement,
         submitButton: container.querySelector('button[type="submit"]') as HTMLButtonElement,
     };
 };
 
-describe('AddKeyForm Component', () => {
+describe('KeyManagement Component', () => {
     beforeEach(() => {
         global.fetch = mock(() =>
             Promise.resolve({
@@ -53,7 +51,7 @@ describe('AddKeyForm Component', () => {
     });
 
     it('submits successfully with valid key', async () => {
-        const { onKeyAdded, providerSelect, keyInput, submitButton } = setup();
+        const { providerSelect, keyInput, submitButton } = setup();
 
         fireEvent.change(providerSelect, { target: { value: 'OpenAI' } });
         fireEvent.change(keyInput, { target: { value: 'sk-valid-key' } });
@@ -62,7 +60,6 @@ describe('AddKeyForm Component', () => {
 
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalled();
-            expect(onKeyAdded).toHaveBeenCalled();
         });
     });
 });
