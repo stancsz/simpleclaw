@@ -7,16 +7,23 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         // Fallback to sessionId if session_id is not provided, matching UI payload behavior
         const sessionId = body.session_id || body.sessionId;
-        const manifest = body.manifest;
 
         if (!sessionId || typeof sessionId !== 'string') {
             return Response.json({ error: 'Missing or invalid "session_id" field for execution.' }, { status: 400 });
         }
-        if (!manifest) {
-            return Response.json({ error: 'Missing "manifest" field for execution.' }, { status: 400 });
-        }
 
         const dbClient = getDbClient();
+
+        const session = dbClient.getSession(sessionId);
+        if (!session) {
+            return Response.json({ error: `Session not found for id: ${sessionId}` }, { status: 404 });
+        }
+
+        const manifest = session.manifest || body.manifest;
+        if (!manifest) {
+            return Response.json({ error: 'No manifest associated with this session.' }, { status: 400 });
+        }
+
         dbClient.updateSessionStatus(sessionId, 'executing');
 
         // Dispatch worker execution asynchronously so the UI can immediately poll for results
