@@ -183,6 +183,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
 - Core work: Finalizing Phase 1 features, including BYOK UI and real world Swarm capabilities.
+- **ROADMAP (Auto-Research):** The agent must automatically search for and research equivalent products on the market, understand their strengths, and add identified gaps/features to the project roadmap in the documentation. This dogfooding process must be completed prior to opening any PR.
 
 ## BACKLOG (Swarm Architecture)
 - [x] **Move 1:** Real LLM Intent Parsing
@@ -223,6 +224,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/keys/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Created settings page with Supabase Vault integration for key management
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
+- [x] **Phase 1 — BYOK UI:** Cycle #26 ✅ Implemented Phase 1 BYOK UI: Migrated settings page to keys page and integrated KeyManager components properly to `/keys`.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AddKeyForm from './AddKeyForm';
-import KeyList, { KeyRecord } from './KeyList';
+import AddKeyForm from '@/app/keys/components/AddKeyForm';
+import KeyList, { KeyRecord } from '@/app/keys/components/KeyList';
 
-export default function KeyManagement() {
+export default function KeyManager() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
 
     const fetchKeys = async () => {

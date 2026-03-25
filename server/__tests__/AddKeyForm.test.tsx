@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
-import AddKeyForm from '../src/app/settings/components/AddKeyForm';
+import AddKeyForm from '@/app/keys/components/AddKeyForm';
 
 // Helper to grab elements
 const setup = () => {
