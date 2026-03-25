@@ -223,6 +223,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/keys/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Created settings page with Supabase Vault integration for key management
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
+- [x] **Phase 1 — BYOK UI:** Cycle #26 ✅ Implemented Phase 1 BYOK UI: Migrated settings page to keys page and integrated KeyManager components properly to `/keys`.
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
