@@ -131,7 +131,7 @@ Mock skill body.
         // createSession defaults to 'active' internally, which is conceptually 'waiting_approval' in PDA
         expect(session?.status).toBe("active");
 
-        // Step 2: Trigger execution directly (simulating what the /api/orchestrator/execute route does)
+        // Step 2: Trigger execution directly (simulating what the /api/orchestrator/approve route does)
         db.updateSessionStatus(sessionId, "approved");
         expect(db.getSession(sessionId)?.status).toBe("approved");
 

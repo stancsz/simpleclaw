@@ -131,7 +131,7 @@ describe("Phase 0 End-to-End Execution Flow with Real LLM and API Logic", () => 
     expect(generatedManifest.steps.length).toBeGreaterThan(0);
     const sessionId = planResBody.session_id;
 
-    // 3. Simulate POST /api/orchestrator/execute (Approve -> Execute)
+    // 3. Simulate POST /api/orchestrator/approve (Approve -> Execute)
     // We import the actual Next.js route handler to test it
     const { POST: executeRoutePOST } = require("../../server/src/app/api/orchestrator/route");
 

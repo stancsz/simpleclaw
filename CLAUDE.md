@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #140 ✅ Completed Worker Dispatch + Execution Loop for Phase 0. Ensured the orchestrator approve API endpoint dispatches worker properly and status polling correctly polls database.
 - [2026-04-06] Cycle #139 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx` and associated components. Concluded the task is already fully completed.
 - [2026-04-06] Cycle #138 ✅ Completed Worker Dispatch + Execution Loop for Phase 0. Fixed missing Next.js UI execution loop by ensuring `/api/orchestrator/execute` properly dispatches jobs asynchronously and updates ExecutionMonitor. Addressed DBUNIQUE collisions inside `dispatcher.test.ts` and `worker-execution.test.ts` for concurrent memory tests, validating the full end-to-end task pipeline and UI polling correctly.
 - [2026-04-06] Cycle #26 ✅ Implemented the approval flow in the Minimal UI to trigger worker dispatch via the orchestrator API, completing the Worker Dispatch + Execution Loop.

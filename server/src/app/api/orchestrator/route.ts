@@ -1,27 +1,6 @@
 import { NextRequest } from "next/server";
 import { orchestratorHandler } from "@/../../src/core/orchestrator";
-import { getDbClient } from "@/../../src/db/client";
 import type { Request, Response } from "@google-cloud/functions-framework";
-
-export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const sessionId = searchParams.get("sessionId");
-
-        if (!sessionId) {
-            return Response.json({ error: "Missing sessionId" }, { status: 400 });
-        }
-
-        const db = getDbClient();
-        const results = db.getTaskResults(sessionId);
-        const session = db.getSession(sessionId);
-
-        return Response.json({ status: "success", results, sessionStatus: session?.status || "unknown" }, { status: 200 });
-    } catch (error) {
-        console.error("Error in orchestrator GET route:", error);
-        return Response.json({ error: "Internal server error" }, { status: 500 });
-    }
-}
 
 export async function POST(req: NextRequest) {
     try {
