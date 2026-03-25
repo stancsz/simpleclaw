@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #26 ✅ Integrated Phase 0 end-to-end: Connected minimal UI to orchestrator backend, enabling full intent → plan → approve → execute flow.
 - [2026-04-06] Cycle #26 ✅ Relocated keys page to `/settings/keys` per Phase 1 BYOK UI requirements.
 - [2026-04-06] Cycle #135 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx`, `server/src/components/KeyManager.tsx`, and associated API routes. Concluded the task is fully completed, ran tests successfully, and marked BACKLOG appropriately.
 - [2026-04-06] Cycle #26 ✅ Completed Phase 0 Worker Dispatch + Execution Loop. Verified the integration between plan approval and the execution loop, installed missing Supabase JS client dependency, and verified that real-time execution flows are successfully logged to the database and tracked via the UI ExecutionMonitor polling. Phase 0 tasks have been successfully concluded.
@@ -201,6 +202,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Minimal UI (Fully Connected):** Plan-Diff-Approve execution flow connected to the backend orchestrator and dispatcher.
 - [x] **Phase 0 — End-to-End Testing:** Ensure full integration testing across the complete Phase 0 architecture.
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop**
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the execute endpoint `/api/execute/route.ts` and UI execution monitoring in `server/src/app/page.tsx`.
 - [x] **Phase 1 — Real GitHub Worker Integration:** End-to-end validation with KMS-decrypted credentials and actual API calls.
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/settings/page.tsx`
