@@ -22,19 +22,19 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     // We need to create mock sessions with specific user IDs that we also mock in platformDb.
 
     const sessionDagId = db.createSession("user_dag", { prompt: "Test ordered DAG" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-dag' WHERE id = '${sessionDagId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-dag-disp-${Date.now()}' WHERE id = '${sessionDagId}';`);
     platformDbMock.set("user_dag", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     const sessionParallelId = db.createSession("user_parallel", { prompt: "Test parallel DAG" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-parallel' WHERE id = '${sessionParallelId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-parallel-disp-${Date.now()}' WHERE id = '${sessionParallelId}';`);
     platformDbMock.set("user_parallel", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     const sessionFailId = db.createSession("user_fail", { prompt: "Test failure handling" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-fail' WHERE id = '${sessionFailId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-fail-disp-${Date.now()}' WHERE id = '${sessionFailId}';`);
     platformDbMock.set("user_fail", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     const sessionRetryId = db.createSession("user_retry", { prompt: "Test retry logic" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-retry' WHERE id = '${sessionRetryId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-retry-disp-${Date.now()}' WHERE id = '${sessionRetryId}';`);
     platformDbMock.set("user_retry", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     // Mock fetch for Cloud Function worker dispatch simulation
@@ -60,6 +60,10 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
   });
 
   it("should execute SwarmManifest DAG in correct order", async () => {
+    const dbClientAny = db as any;
+    const row = dbClientAny.db.query("SELECT id FROM orchestrator_sessions WHERE id LIKE 'session-dag-disp-%'").get();
+    const sessionId = row.id;
+
     const manifest: SwarmManifest = {
       version: "1.0",
       intent_parsed: "Test ordered DAG",
@@ -96,7 +100,7 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
       ],
     };
 
-    const results = await executeSwarmManifest(manifest, "session-dag", db);
+    const results = await executeSwarmManifest(manifest, sessionId, db);
 
     expect(results["step-1"].status).toBe("success");
     expect(results["step-2"].status).toBe("success");
@@ -105,6 +109,10 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
   });
 
   it("should run independent tasks in parallel", async () => {
+    const dbClientAny = db as any;
+    const row = dbClientAny.db.query("SELECT id FROM orchestrator_sessions WHERE id LIKE 'session-parallel-disp-%'").get();
+    const sessionId = row.id;
+
     const manifest: SwarmManifest = {
       version: "1.0",
       intent_parsed: "Test parallel DAG",
@@ -133,13 +141,17 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     };
 
     const start = Date.now();
-    await executeSwarmManifest(manifest, "session-parallel", db);
+    await executeSwarmManifest(manifest, sessionId, db);
     const duration = Date.now() - start;
 
     expect(duration).toBeLessThan(120);
   });
 
   it("should skip dependent tasks if parent fails", async () => {
+    const dbClientAny = db as any;
+    const row = dbClientAny.db.query("SELECT id FROM orchestrator_sessions WHERE id LIKE 'session-fail-disp-%'").get();
+    const sessionId = row.id;
+
     const manifest: SwarmManifest = {
       version: "1.0",
       intent_parsed: "Test failure handling",
@@ -179,7 +191,7 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     };
 
     try {
-      const results = await executeSwarmManifest(manifest, "session-fail", db);
+      const results = await executeSwarmManifest(manifest, sessionId, db);
 
       expect(results["fail-step-1"].status).toBe("error");
       expect(results["fail-step-1"].error).toBe("Simulated task failure");
@@ -192,6 +204,10 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
   });
 
   it("should retry a failed worker task once before throwing", async () => {
+    const dbClientAny = db as any;
+    const row = dbClientAny.db.query("SELECT id FROM orchestrator_sessions WHERE id LIKE 'session-retry-disp-%'").get();
+    const sessionId = row.id;
+
     const manifest: SwarmManifest = {
       version: "1.0",
       intent_parsed: "Test retry logic",
@@ -226,15 +242,14 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     };
 
     try {
-      const results = await executeSwarmManifest(manifest, "session-retry", db);
+      const results = await executeSwarmManifest(manifest, sessionId, db);
 
       // Verify that the task was retried and eventually succeeded
       expect(attemptCount).toBe(2);
       expect(results["retry-step"].status).toBe("success");
 
       // Verify retry audit log is recorded
-      const dbClientAny = db as any;
-      const retryLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE event = 'worker_retry_attempt' AND session_id = 'session-retry'").all();
+      const retryLogs = dbClientAny.db.query("SELECT * FROM audit_log WHERE event = 'worker_retry_attempt' AND session_id = ?").all(sessionId);
       expect(retryLogs.length).toBe(1);
     } finally {
         executionEngineModule.OpenCodeExecutionEngine.prototype.execute = originalExecute;

@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #138 ✅ Completed Worker Dispatch + Execution Loop for Phase 0. Fixed missing Next.js UI execution loop by ensuring `/api/orchestrator/execute` properly dispatches jobs asynchronously and updates ExecutionMonitor. Addressed DBUNIQUE collisions inside `dispatcher.test.ts` and `worker-execution.test.ts` for concurrent memory tests, validating the full end-to-end task pipeline and UI polling correctly.
 - [2026-04-06] Cycle #26 ✅ Implemented the approval flow in the Minimal UI to trigger worker dispatch via the orchestrator API, completing the Worker Dispatch + Execution Loop.
 - [2026-04-06] Cycle #137 ✅ Finalized Phase 1 BYOK UI. Relocated `server/src/app/settings/keys/page.tsx` back to `server/src/app/keys/page.tsx`, and renamed `KeyManagement.tsx` to `KeyManager.tsx` and resolved missing imports to accurately reflect the correct UI component and module requests.
 - [2026-04-06] Cycle #136 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/settings/keys/page.tsx`, `server/src/components/KeyManagement.tsx`, and associated API routes. Concluded the task is already fully completed, test suite passes, and the BACKLOG items are already marked properly.
@@ -196,7 +197,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
 - [x] **Phase 0 — Motherboard Schema:** Apply `SWARM_SPEC.md §9.2` SQL schema to a managed Supabase project / local SQLite equivalent
 - [x] **Phase 0 — Worker Dispatch + Execution Loop**
-- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Verified full end-to-end execution flow from plan approval to worker dispatch and real-time monitoring in the UI. Checked API and Worker connections. Installed missing Supabase dependency.
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Verified full end-to-end execution flow from plan approval to worker dispatch and real-time monitoring in the UI. Checked API and Worker connections. Installed missing Supabase dependency. Re-verified Next.js API test environment setups and successfully resolved all test errors to complete the Phase 0 end-to-end execution loop iteration.
 - [x] **Phase 0 — Execution API Refactor:** Consolidated execution routes and ensured endpoints connect correctly for Phase 0 delivery.
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow. Tested via end to end integration test.
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys

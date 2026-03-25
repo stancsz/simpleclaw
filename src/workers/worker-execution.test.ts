@@ -22,11 +22,11 @@ describe("Worker Execution Module", () => {
 
     // Create sessions with specific user IDs
     const sessionMonitorTestId = db.createSession("user_monitor_test", { prompt: "test" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test' WHERE id = '${sessionMonitorTestId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test-exec-${Date.now()}' WHERE id = '${sessionMonitorTestId}';`);
     platformDbMock.set("user_monitor_test", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     const sessionIdempotentId = db.createSession("user_idempotent", { prompt: "test idempotent" }, {});
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-idempotent' WHERE id = '${sessionIdempotentId}';`);
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-idempotent-exec-${Date.now()}' WHERE id = '${sessionIdempotentId}';`);
     platformDbMock.set("user_idempotent", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     // Mock fetch for Cloud Function worker dispatch simulation
@@ -69,10 +69,11 @@ describe("Worker Execution Module", () => {
         });
     };
 
-    const sessionId = db.createSession("user_monitor_test", { prompt: "test" }, manifest);
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test-1' WHERE id = '${sessionId}';`);
+    const sessionIdRaw = db.createSession("user_monitor_test", { prompt: "test" }, manifest);
+    const newSessionId = `session-monitor-test-exec-1-${Date.now()}`;
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = '${newSessionId}' WHERE id = '${sessionIdRaw}';`);
 
-    const monitor = new ExecutionMonitor(db, "session-monitor-test-1");
+    const monitor = new ExecutionMonitor(db, newSessionId);
 
     let progressEvents = 0;
 
@@ -90,7 +91,7 @@ describe("Worker Execution Module", () => {
     expect(progressEvents).toBeGreaterThan(0); // Ensure the callback was invoked
 
     // Session status should be completed
-    const session = db.getSession("session-monitor-test-1");
+    const session = db.getSession(newSessionId);
     expect(session.status).toBe("completed");
   });
 
@@ -120,10 +121,11 @@ describe("Worker Execution Module", () => {
         throw new Error("Internal Server Error");
     };
 
-    const sessionId = db.createSession("user_monitor_test", { prompt: "test fail" }, manifest);
-    db.applyMigration(`UPDATE orchestrator_sessions SET id = 'session-monitor-test-2' WHERE id = '${sessionId}';`);
+    const sessionIdRaw = db.createSession("user_monitor_test", { prompt: "test fail" }, manifest);
+    const newSessionId = `session-monitor-test-exec-2-${Date.now()}`;
+    db.applyMigration(`UPDATE orchestrator_sessions SET id = '${newSessionId}' WHERE id = '${sessionIdRaw}';`);
 
-    const monitor = new ExecutionMonitor(db, "session-monitor-test-2");
+    const monitor = new ExecutionMonitor(db, newSessionId);
 
     try {
         await monitor.startAndMonitor(manifest);
@@ -132,7 +134,7 @@ describe("Worker Execution Module", () => {
         expect(error).toBeDefined();
     }
 
-    const session = db.getSession("session-monitor-test-2");
+    const session = db.getSession(newSessionId);
     // Since the worker task internally returned an error status in our mock
     // executeSwarmManifest completes but has errors, so it correctly marks the session as 'error'.
     expect(session.status).toBe("error");
@@ -141,6 +143,10 @@ describe("Worker Execution Module", () => {
   });
 
   it("should enforce idempotency correctly", async () => {
+      const dbClientAny = db as any;
+      const row = dbClientAny.db.query("SELECT id FROM orchestrator_sessions WHERE id LIKE 'session-idempotent-exec-%'").get();
+      const sessionId = row.id;
+
       const task: Task = {
           id: "task-write-idempotent",
           description: "A write task",
@@ -151,10 +157,10 @@ describe("Worker Execution Module", () => {
           action_type: "WRITE",
       };
 
-      const result1 = await executeWorkerTask(task, "session-idempotent", db);
+      const result1 = await executeWorkerTask(task, sessionId, db);
       expect(result1.status).toBe("success");
 
-      const result2 = await executeWorkerTask(task, "session-idempotent", db);
+      const result2 = await executeWorkerTask(task, sessionId, db);
       expect(result2.status).toBe("skipped");
       expect(result2.output?.message).toContain("idempotency check");
   });
