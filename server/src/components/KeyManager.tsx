@@ -355,9 +355,9 @@ function KeyList({ keys, onDeleteKey, onUpdateKey }: KeyListProps) {
     );
 }
 
-// === Main KeyManagement Component ===
+// === Main KeyManager Component ===
 
-export default function KeyManagement() {
+export default function KeyManager() {
     const [keys, setKeys] = useState<KeyRecord[]>([]);
 
     const fetchKeys = async () => {

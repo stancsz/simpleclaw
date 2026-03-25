@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
-import KeyManagement from '@/components/KeyManagement';
+import KeyManager from '@/components/KeyManager';
 
 // Helper to grab elements
 const setup = () => {
-    const { container, getByRole } = render(<KeyManagement />);
+    const { container, getByRole } = render(<KeyManager />);
 
     return {
         providerSelect: container.querySelector('select[name="provider"]') as HTMLSelectElement,
@@ -14,7 +14,7 @@ const setup = () => {
     };
 };
 
-describe('KeyManagement Component', () => {
+describe('KeyManager Component', () => {
     beforeEach(() => {
         global.fetch = mock(() =>
             Promise.resolve({

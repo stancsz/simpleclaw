@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import KeyManagement from '@/components/KeyManagement';
+import KeyManager from '@/components/KeyManager';
 
 export default function KeysPage() {
     return (
@@ -18,7 +18,7 @@ export default function KeysPage() {
             </div>
 
             <main className="dashboard-main flex flex-col gap-8 w-full">
-                <KeyManagement />
+                <KeyManager />
             </main>
         </div>
     );

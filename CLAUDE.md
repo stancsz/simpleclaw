@@ -9,6 +9,8 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #137 ✅ Finalized Phase 1 BYOK UI. Relocated `server/src/app/settings/keys/page.tsx` back to `server/src/app/keys/page.tsx`, and renamed `KeyManagement.tsx` to `KeyManager.tsx` and resolved missing imports to accurately reflect the correct UI component and module requests.
+- [2026-04-06] Cycle #136 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/settings/keys/page.tsx`, `server/src/components/KeyManagement.tsx`, and associated API routes. Concluded the task is already fully completed, test suite passes, and the BACKLOG items are already marked properly.
 - [2026-04-06] Cycle #26 ✅ Relocated keys page to `/settings/keys` per Phase 1 BYOK UI requirements.
 - [2026-04-06] Cycle #135 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx`, `server/src/components/KeyManager.tsx`, and associated API routes. Concluded the task is fully completed, ran tests successfully, and marked BACKLOG appropriately.
 - [2026-04-06] Cycle #26 ✅ Completed Phase 0 Worker Dispatch + Execution Loop. Verified the integration between plan approval and the execution loop, installed missing Supabase JS client dependency, and verified that real-time execution flows are successfully logged to the database and tracked via the UI ExecutionMonitor polling. Phase 0 tasks have been successfully concluded.
