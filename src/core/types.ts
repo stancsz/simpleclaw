@@ -7,6 +7,7 @@ export interface Task {
     depends_on: string[];
     action_type: 'READ' | 'WRITE';
     parameters?: Record<string, any>;
+    timeout?: number;
 }
 
 export interface ExecutionContext {

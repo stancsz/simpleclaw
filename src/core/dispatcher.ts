@@ -343,12 +343,66 @@ export async function executeSwarmManifest(
   }
 
   const tasks = manifest.steps || [];
-  const executionPromises = new Map<string, Promise<WorkerResult>>();
   const results: Record<string, WorkerResult> = {};
 
   db.writeAuditLog(sessionId, "swarm_execution_started", { manifest_version: manifest.version || "unknown" });
 
-  // 1. Setup deferred promises for all tasks to handle out-of-order execution graph
+  // 1. Build Adjacency List and In-Degree Map
+  const adjList = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+  const taskMap = new Map<string, Task>();
+
+  for (const task of tasks) {
+    adjList.set(task.id, []);
+    inDegree.set(task.id, 0);
+    taskMap.set(task.id, task);
+  }
+
+  for (const task of tasks) {
+    for (const dep of task.depends_on || []) {
+      if (!taskMap.has(dep)) {
+        const errorMsg = `Invalid dependency: Task ${task.id} depends on non-existent task ${dep}`;
+        db.writeAuditLog(sessionId, "swarm_execution_failed", { error: errorMsg });
+        db.updateSessionStatus(sessionId, "error");
+        return { error: { status: "error", error: errorMsg } };
+      }
+      adjList.get(dep)!.push(task.id);
+      inDegree.set(task.id, inDegree.get(task.id)! + 1);
+    }
+  }
+
+  // 2. Topological Sort / Cycle Detection
+  const queue: string[] = [];
+  for (const [taskId, degree] of inDegree.entries()) {
+    if (degree === 0) {
+      queue.push(taskId);
+    }
+  }
+
+  let visitedCount = 0;
+  // We use this just to check for cycles before execution
+  const tempQueue = [...queue];
+  const tempInDegree = new Map(inDegree);
+  while (tempQueue.length > 0) {
+    const current = tempQueue.shift()!;
+    visitedCount++;
+    for (const neighbor of adjList.get(current)!) {
+      tempInDegree.set(neighbor, tempInDegree.get(neighbor)! - 1);
+      if (tempInDegree.get(neighbor) === 0) {
+        tempQueue.push(neighbor);
+      }
+    }
+  }
+
+  if (visitedCount !== tasks.length) {
+    const errorMsg = "Cycle detected in DAG dependencies";
+    db.writeAuditLog(sessionId, "swarm_execution_failed", { error: errorMsg });
+    db.updateSessionStatus(sessionId, "error");
+    return { error: { status: "error", error: errorMsg } };
+  }
+
+  // 3. Execution Setup
+  const executionPromises = new Map<string, Promise<WorkerResult>>();
   const deferredResolvers = new Map<string, { resolve: (val: WorkerResult) => void, reject: (err: any) => void }>();
 
   for (const task of tasks) {
@@ -358,18 +412,11 @@ export async function executeSwarmManifest(
     executionPromises.set(task.id, promise);
   }
 
-  // Helper to execute a single task, waiting for its dependencies via the deferred promises
-  const runTask = async (task: Task): Promise<WorkerResult> => {
+  // Helper to execute a single task with timeout
+  const runTaskWithTimeout = async (task: Task): Promise<WorkerResult> => {
     try {
       if (task.depends_on && task.depends_on.length > 0) {
-        const depPromises = task.depends_on.map((depId) => {
-          const promise = executionPromises.get(depId);
-          if (!promise) {
-            throw new Error(`Dependency ${depId} for task ${task.id} not found`);
-          }
-          return promise;
-        });
-
+        const depPromises = task.depends_on.map((depId) => executionPromises.get(depId)!);
         const depResults = await Promise.all(depPromises);
 
         for (const res of depResults) {
@@ -384,20 +431,7 @@ export async function executeSwarmManifest(
       }
 
       const executeOnce = async (): Promise<WorkerResult> => {
-        // Use the local API route for simulation if possible, but default to direct invocation
-        // This fulfills the Phase 0 objective of dispatching via HTTP
-        let result: WorkerResult;
-
-        // For local development and testing, directly invoke the worker task.
-        if (task.worker === "github") {
-          result = await executeGithubWorkerTask(task, sessionId, db);
-        } else if (task.worker === "worker-mock") {
-          result = await executeMockWorkerTask(task, sessionId, db);
-        } else if (task.worker === "demo-worker") {
-          result = await executeDemoWorkerTask(task, sessionId, db);
-        } else {
-          result = await executeWorkerTask(task, sessionId, db);
-        }
+        const result = await executeWorkerTask(task, sessionId, db);
 
         if (result.status === "error") {
             throw new Error(result.error || "Worker task returned error status");
@@ -405,37 +439,51 @@ export async function executeSwarmManifest(
         return result;
       };
 
+      const executeWithTimeout = async (): Promise<WorkerResult> => {
+        const timeoutMs = task.timeout || 30000; // Use task timeout or 30 seconds default
+        let timeoutId: ReturnType<typeof setTimeout>;
+        const timeoutPromise = new Promise<WorkerResult>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Task execution timed out after ${timeoutMs}ms`)), timeoutMs);
+        });
+
+        try {
+          const res = await Promise.race([executeOnce(), timeoutPromise]);
+          clearTimeout(timeoutId!);
+          return res;
+        } catch (error) {
+          clearTimeout(timeoutId!);
+          throw error;
+        }
+      };
+
       let finalResult: WorkerResult;
       try {
-        finalResult = await executeOnce();
+        finalResult = await executeWithTimeout();
       } catch (firstError: any) {
          db.writeAuditLog(sessionId, "worker_retry_attempt", { task_id: task.id, error: firstError.message });
          try {
-           finalResult = await executeOnce();
+           finalResult = await executeWithTimeout();
          } catch (retryError: any) {
            finalResult = { status: "error", error: retryError.message || String(retryError) };
          }
       }
 
       results[task.id] = finalResult;
-      if (finalResult.status === "error") {
-        // We resolve it so dependent tasks can check the result and fail correctly
-        deferredResolvers.get(task.id)?.resolve(finalResult);
-      } else {
-        deferredResolvers.get(task.id)?.resolve(finalResult);
-      }
+
+      deferredResolvers.get(task.id)?.resolve(finalResult);
       return finalResult;
     } catch (error: any) {
        const errResult: WorkerResult = { status: "error", error: error.message || String(error) };
+       results[task.id] = errResult;
+
        deferredResolvers.get(task.id)?.resolve(errResult);
        return errResult;
     }
   };
 
-  // 2. Start all task resolutions (they will await their respective promises if needed)
+  // 4. Start all tasks (they wait for dependencies via promises internally)
   for (const task of tasks) {
-     // intentionally not awaiting runTask here, allowing parallel graph resolution
-     runTask(task);
+     runTaskWithTimeout(task);
   }
 
   // Wait for all tasks to complete
