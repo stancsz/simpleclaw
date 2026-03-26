@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #145 ✅ Implemented Phase 1 BYOK UI for key management. Verified existing KeyManager and BYOK components logic inside `/settings/keys`, checked API routes, resolved build dependencies in Next.js Turbopack via `serverExternalPackages`, updated Minimal UI dashboard links, and verified tests pass.
 - [2026-04-06] Cycle #144 ✅ Verified Worker Dispatch + Execution Loop integration with Minimal UI. Tested end-to-end execution flow locally. Updated execution routes and verified real-time `ExecutionMonitor` updates.
 - [2026-04-06] Cycle #143 ✅ Implemented Phase 1 BYOK UI: Migrated key management UI to `/settings/keys`, updated `Navigation` component, and validated existing tests and features. Verified 'Phase 1 — BYOK UI' is marked complete in BACKLOG.
 - [2026-04-06] Cycle #142 ✅ Created and executed a comprehensive end-to-end integration test (`scripts/test-integration.ts`) for the SimpleClaw Phase 0 swarm orchestrator. Created a hardcoded `mock-greeting` test skill to validate that the orchestrator correctly parses natural language into a manifest, dispatches it to a worker, loads the JIT skill, executes the task, and logs the result to the local SQLite Motherboard `task_results` table. Marked 'Phase 0 — End-to-End Integration Test' as completed in BACKLOG.
