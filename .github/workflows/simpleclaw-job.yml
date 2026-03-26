@@ -24,6 +24,9 @@ on:
       model:
         description: 'AI Model (e.g. deepseek-reasoner, gpt-4o)'
         default: 'deepseek-reasoner'
+      custom_prompt:
+        description: 'Optional: Custom prompt for opencode before it dispatches.'
+        required: false
   workflow_call:
     inputs:
       objective:
@@ -50,6 +53,9 @@ on:
         type: string
         required: false
         default: 'deepseek-reasoner'
+      custom_prompt:
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -107,6 +113,11 @@ jobs:
             }
           "
           rm env_vars.json
+
+      - name: Inject Custom Prompt
+        if: ${{ inputs.custom_prompt != '' || github.event.inputs.custom_prompt != '' }}
+        run: |
+          echo "CUSTOM_PROMPT=${{ inputs.custom_prompt || github.event.inputs.custom_prompt }}" >> $GITHUB_ENV
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
