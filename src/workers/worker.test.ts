@@ -10,14 +10,36 @@ mock.module("@supabase/supabase-js", () => {
     createClient: () => ({
       from: (table: string) => ({
         select: () => ({
-          eq: () => ({
-            single: async () => ({ data: { id: "mock_session" }, error: null })
+          eq: (field: string, val: string) => ({
+            single: async () => {
+              if (table === "vault.user_secrets") {
+                // Return a mock encrypted secret that the local KMS mock can decrypt
+                // In KMS mock, the encrypted form of "mock_secret" is typically handled safely
+                // But tests setup `encrypt("mock_key")` in BeforeEach.
+                // We'll return an encrypted payload for testing
+                const kmsProvider = require("../security/kms").getKMSProvider();
+                const encrypted = await kmsProvider.encrypt("mock_decrypted_secret");
+                return { data: { secret: encrypted }, error: null };
+              }
+              return { data: { id: "mock_session" }, error: null };
+            }
           })
         }),
         insert: async () => ({ error: null })
       })
     })
   };
+});
+
+describe("Dispatcher DAG Validation", () => {
+  let db: DBClient;
+
+  beforeEach(() => {
+    db = new DBClient("sqlite://:memory:");
+    const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
+    db.applyMigration(schema);
+  });
+
   it("should detect and reject DAG cycles", async () => {
     const manifest: SwarmManifest = {
       version: "1.0",
@@ -92,6 +114,11 @@ mock.module("@supabase/supabase-js", () => {
       executionOrder.push(task.id);
       return { status: "success", output: { message: `executed ${task.id}` } };
     };
+
+    // Make sure we have mock credentials so executeWorkerTask doesn't throw
+    const kmsProvider = require("../security/kms").getKMSProvider();
+    const encrypted = await kmsProvider.encrypt("mock_key");
+    platformDbMock.set("user_test", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted });
 
     const manifest: SwarmManifest = {
       version: "1.0",

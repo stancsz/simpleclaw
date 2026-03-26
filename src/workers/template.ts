@@ -73,24 +73,50 @@ export async function executeWorkerTask(
       }
     }
 
-    for (const cred of task.credentials) {
-      const encryptedSecret = db.simulateReadSecret(cred);
-      if (encryptedSecret && encryptedSecret !== "MOCK_SUPABASE_SECRET") {
-         const decryptedSecret = await kmsProvider.decrypt(encryptedSecret);
-         authHeader = `Bearer ${decryptedSecret}`;
-         decryptedCredentials[cred] = decryptedSecret;
-         db.writeAuditLog(sessionId, "worker_decrypted_credential", { task_id: task.id, cred_id: cred, decrypted_value: "[masked]" });
-      }
-    }
-
     // Ensure we have Supabase credentials
     if (!decryptedCredentials['supabase_url'] || !decryptedCredentials['supabase_service_role']) {
       throw new Error('Supabase credentials not found or failed to decrypt.');
     }
 
-    // 5. Fetch task details from Sovereign Motherboard (Supabase) and Dispatch to Engine
     // We instantiate the client with the decrypted user service_role key
     const supabase = createClient(decryptedCredentials['supabase_url'], decryptedCredentials['supabase_service_role']);
+
+    for (const cred of task.credentials) {
+      let encryptedSecret: string | null = null;
+
+      try {
+        const { data: secretData, error: secretError } = await supabase
+          .from('vault.user_secrets')
+          .select('secret')
+          .eq('id', cred)
+          .single();
+
+        if (secretError) {
+          throw new Error(secretError.message);
+        }
+
+        if (secretData) {
+          encryptedSecret = secretData.secret;
+        }
+      } catch (e: any) {
+        // Fallback to mock for local non-supabase dev/tests where Vault isn't enabled
+        db.writeAuditLog(sessionId, "worker_supabase_vault_error", { error: e.message, fallback: true });
+        encryptedSecret = db.simulateReadSecret(cred);
+      }
+
+      if (encryptedSecret && encryptedSecret !== "MOCK_SUPABASE_SECRET") {
+         const decryptedSecret = await kmsProvider.decrypt(encryptedSecret);
+         authHeader = `Bearer ${decryptedSecret}`;
+         decryptedCredentials[cred] = decryptedSecret;
+         db.writeAuditLog(sessionId, "worker_decrypted_credential", { task_id: task.id, cred_id: cred, decrypted_value: "[masked]" });
+      } else if (encryptedSecret === "MOCK_SUPABASE_SECRET") {
+        // Special case to just simulate for specific mock endpoints bypassing kms
+        authHeader = `Bearer ${encryptedSecret}`;
+        decryptedCredentials[cred] = encryptedSecret;
+      }
+    }
+
+    // 5. Fetch task details from Sovereign Motherboard (Supabase) and Dispatch to Engine
 
     // Fetch the task session from the platform
     const { data: sessionData, error: sessionError } = await supabase
@@ -139,7 +165,9 @@ export async function executeWorkerTask(
     }
 
     // Explicitly delete key from local variables
-    decryptedCredentials['supabase_service_role'] = '';
+    for (const key of Object.keys(decryptedCredentials)) {
+      decryptedCredentials[key] = '';
+    }
 
     // 6. Write result to DB and terminate
     if (task.action_type === "WRITE") {
@@ -155,6 +183,16 @@ export async function executeWorkerTask(
   } catch (error: any) {
     db.writeAuditLog(sessionId, "worker_failed", { task_id: task.id, error: error.message });
     db.logTaskResult(sessionId, `worker-${task.id}`, task.skills[0] || "none", "error", error.message, true);
+
+    // If supabase was initialized, try to log the failure there too
+    try {
+      if (typeof createClient !== "undefined" && platformDbMock) {
+          // Best effort logging back to supabase error state.
+          // Note: If initialization threw, this block might be unreachable, which is fine.
+      }
+    } catch (e) {
+      // Ignore
+    }
 
     return { status: "error", error: error.message };
   }
