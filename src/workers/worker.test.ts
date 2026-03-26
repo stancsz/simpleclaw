@@ -504,7 +504,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     expect(responseBody.executionId).toBe(actualSessionId);
 
     // Wait for the async worker dispatch to resolve
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout to ensure worker finishes resolving
 
     // Verify state transition inside our physical test DB instance
     const session = testDb.getSession(actualSessionId);

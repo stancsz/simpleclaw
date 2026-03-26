@@ -113,6 +113,7 @@ export async function executeWorkerTask(
         // Special case to just simulate for specific mock endpoints bypassing kms
         authHeader = `Bearer ${encryptedSecret}`;
         decryptedCredentials[cred] = encryptedSecret;
+        db.writeAuditLog(sessionId, "worker_decrypted_credential", { task_id: task.id, cred_id: cred, decrypted_value: "[masked]" });
       }
     }
 
