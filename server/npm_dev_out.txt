@@ -1,0 +1,85 @@
+$ bun --bun next dev --webpack
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+▲ Next.js 16.2.1 (webpack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:3001
+✓ Ready in 529ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /app/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles:
+   * /app/server/bun.lock
+
+
+○ Compiling / ...
+[bun] Warning: async_hooks.createHook is not implemented in Bun. Hooks can still be created but will never be called.
+[bun] Warning: async_hooks.executionAsyncId/triggerAsyncId are not implemented in Bun. It will return 0 every time.
+ GET / 200 in 8.7s (next.js: 7.9s, application-code: 787ms)
+○ Compiling /keys ...
+⨯ Error: failed to pipe response
+    at processTicksAndRejections (null) {
+  [cause]: Error: Stream is already ended
+      at writeHead (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at processTicksAndRejections (null) {
+    code: 'ERR_STREAM_ALREADY_FINISHED',
+    toString: [Function: toString]
+  }
+}
+⨯ Error: Stream is already ended
+    at writeHead (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at <anonymous> (null)
+    at processTicksAndRejections (null) {
+  digest: '1980803657',
+  code: 'ERR_STREAM_ALREADY_FINISHED',
+  toString: [Function: toString]
+}
+⨯ Error: failed to pipe response
+    at processTicksAndRejections (null) {
+  [cause]: Error: Stream is already ended
+      at writeHead (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at processTicksAndRejections (null) {
+    digest: '1980803657',
+    code: 'ERR_STREAM_ALREADY_FINISHED',
+    toString: [Function: toString]
+  }
+}
+⨯ Error: failed to pipe response
+    at processTicksAndRejections (null) {
+  page: '/keys',
+  [cause]: Error: Stream is already ended
+      at writeHead (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at <anonymous> (null)
+      at processTicksAndRejections (null) {
+    digest: '1980803657',
+    code: 'ERR_STREAM_ALREADY_FINISHED',
+    toString: [Function: toString]
+  }
+}
+○ Compiling /_error ...
