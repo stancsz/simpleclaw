@@ -102,12 +102,14 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      // Dispatch the generated swarm manifest directly to the execution endpoint
-      const response = await fetch('/api/orchestrator/execute', {
+      // Dispatch the generated swarm manifest directly to the orchestrator endpoint
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'approve',
           session_id: sessionId,
+          user_id: 'test-user',
           manifest: pda.plan,
         }),
       });
