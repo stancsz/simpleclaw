@@ -160,6 +160,7 @@ Workers act as the ephemeral "muscle" of the system. Their lifecycle guarantees 
 - [ ] Multi-worker parallel dispatch
 - [ ] Full Motherboard schema v1.0 + integrity checker (`swarms.verify_motherboard_integrity()`)
 - [ ] BYOS: GitHub skill import + file upload
+- [ ] **CLI-Anything Integration** - Learn and implement [CLI-Anything](https://github.com/HKUDS/CLI-Anything) for SimpleClaw to dramatically expand capabilities, allowing agents to automatically generate and use CLI harnesses for everyday GUI software and APIs via the CLI-Hub.
 
 ### Phase 3 — Marketplace & Enterprise (Weeks 17+)
 - [ ] Public skill marketplace (community contributed)
