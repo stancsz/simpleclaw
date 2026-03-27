@@ -135,8 +135,8 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      // Dispatch the generated swarm manifest directly to the orchestrator endpoint
-      const response = await fetch('/api/orchestrator', {
+      // Dispatch the generated swarm manifest directly to the dedicated execution endpoint
+      const response = await fetch('/api/orchestrator/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #156 ✅ Worker Dispatch + Execution Loop Minimal UI Integration: Configured `server/src/app/page.tsx` 'Approve' button to dispatch the `executeSwarmManifest` using the dedicated `/api/orchestrator/execute` endpoint. Verified end-to-end execution flow locally and fixed previously failing tests in `worker.test.ts` by ensuring test DB properly provisions platform credentials and gas.
 - [2026-04-06] Cycle #155 ✅ Relocated Phase 1 BYOK UI from `server/src/app/keys` to `server/src/app/settings/keys` per user instructions. Verified integration via browser and API endpoints.
 - [2026-04-06] Cycle #154 ✅ AGENT_OS v2.0 Directive implemented: Configured EVOLUTION_HISTORY.log, updated SPEC/SWARM_SPEC docs, and synthesized the `agency-agents` Architecture Primitive: "External-Agency-Delegation". Implemented recursive dogfooding tests.
 - [2026-04-06] Cycle #153 ✅ Phase 1 Gas Tank components implementation: Extracted `GasTankDisplay` and `TopUpButton` into modular React components in `server/src/components`. Refactored dispatcher debit logic to use `consumeGas` from `src/core/gas.ts`. Marked Phase 1 — Gas Tank as complete in BACKLOG.
@@ -265,7 +266,8 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Refactored UI components into `GasTankDisplay` and `TopUpButton` and updated dispatcher to use `consumeGas`.
-- [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Built DAG scheduler for swarm manifests
+- [x] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
 ## DISCOVERY LOG
 - The project is currently Bun-centric for the core engine.

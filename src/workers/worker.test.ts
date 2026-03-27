@@ -485,6 +485,13 @@ describe("Worker Dispatch & Execution Loop", () => {
     const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
     testDb1.applyMigration(schema);
 
+    testDb1.applyMigration(`
+      INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
+      VALUES ('user_execute_test', 'https://mock.supabase.co', '${encryptedServiceRole}');
+      INSERT OR IGNORE INTO gas_ledger (id, user_id, balance_credits)
+      VALUES ('gas_user_execute_test', 'user_execute_test', 100);
+    `);
+
     // Populate the session we expect
     testDb1.createSession("user_execute_test", { prompt: "test execute" }, manifest);
 
