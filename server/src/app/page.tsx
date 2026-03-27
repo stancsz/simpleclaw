@@ -14,6 +14,7 @@ export default function Home() {
   const [status, setStatus] = useState<'idle' | 'planning' | 'waiting_approval' | 'executing' | 'completed' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [taskResults, setTaskResults] = useState<any[]>([]);
+  const [gasBalance, setGasBalance] = useState<number | null>(null);
 
   React.useEffect(() => {
     const fetchKeys = async () => {
@@ -27,8 +28,39 @@ export default function Home() {
         console.error('Failed to fetch keys', err);
       }
     };
+
+    const fetchGas = async () => {
+      try {
+        const res = await fetch('/api/gas');
+        if (res.ok) {
+          const data = await res.json();
+          setGasBalance(data.balance);
+        }
+      } catch (err) {
+        console.error('Failed to fetch gas balance', err);
+      }
+    };
+
     fetchKeys();
+    fetchGas();
   }, []);
+
+  const handleBuyGas = async () => {
+    try {
+      const res = await fetch('/api/gas', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        const data = await res.json();
+        setErrorMessage(data.error || 'Failed to initiate checkout');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to initiate checkout');
+    }
+  };
 
   const handlePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,17 +219,42 @@ export default function Home() {
 
           <div style={{
             backgroundColor: '#1a1a1a',
-            border: '1px dashed #333',
+            border: '1px solid #333',
             padding: '1.5rem',
             borderRadius: '8px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
+            justifyContent: 'space-between',
             gap: '1rem'
           }}>
-             <p style={{ color: '#666', fontSize: '0.9rem' }}>More integrations coming soon.</p>
+             <div>
+                <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Gas Tank</h2>
+                <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                   Purchase execution credits. Your swarm consumes 1 Gas Credit per successful execution.
+                </p>
+             </div>
+             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                   Available Balance: <strong style={{ color: gasBalance && gasBalance > 0 ? '#86efac' : '#fca5a5' }}>
+                     {gasBalance !== null ? gasBalance : '...'} Credits
+                   </strong>
+                </span>
+                <button
+                  onClick={handleBuyGas}
+                  style={{
+                    backgroundColor: '#00E5CC',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s'
+                  }}>
+                  Top Up
+                </button>
+             </div>
           </div>
         </div>
 

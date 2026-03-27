@@ -399,9 +399,16 @@ describe("Worker Dispatch & Execution Loop", () => {
     // 1. Setup Motherboard
     const kmsProvider = require("../security/kms").getKMSProvider();
     const encryptedServiceRole = await kmsProvider.encrypt("mock_service_role_key");
-    db.applyMigration(`
+
+    // Create new testDB instance that aligns with what the route handles to prevent state clobbering
+    const testDb = new DBClient("sqlite://:memory:");
+    testDb.applyMigration(require("fs").readFileSync("src/db/migrations/001_motherboard.sql", "utf-8"));
+
+    testDb.applyMigration(`
       INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_execute_test', 'https://mock.supabase.co', '${encryptedServiceRole}');
+      INSERT OR IGNORE INTO gas_ledger (id, user_id, balance_credits)
+      VALUES ('gas_user_execute_test', 'user_execute_test', 100);
     `);
 
     // 2. Create manifest requiring mock-skill

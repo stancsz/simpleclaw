@@ -294,6 +294,54 @@ export class DBClient {
     }
     return null;
   }
+
+  getGasBalance(userId: string): number {
+    if (this.isSupabase) {
+        console.warn("getGasBalance called in Supabase mode - using mock implementation.");
+        return 1000;
+    }
+    if (this.db) {
+        let row = this.db.query(`SELECT balance_credits FROM gas_ledger WHERE user_id = ?`).get(userId) as any;
+        if (!row) {
+            // Give new users 10 free credits for testing
+            this.db.run(`INSERT INTO gas_ledger (id, user_id, balance_credits) VALUES (?, ?, ?)`, [crypto.randomUUID(), userId, 10]);
+            row = { balance_credits: 10 };
+        }
+        return row.balance_credits;
+    }
+    return 0;
+  }
+
+  incrementGasBalance(userId: string, amount: number) {
+    if (this.isSupabase) {
+        console.warn("incrementGasBalance called in Supabase mode.");
+        return;
+    }
+    if (this.db) {
+        // Ensure user exists in ledger
+        this.getGasBalance(userId);
+
+        this.db.run(
+            `UPDATE gas_ledger SET balance_credits = balance_credits + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+            [amount, userId]
+        );
+        this.writeAuditLog(userId, 'gas_purchased', { amount });
+    }
+  }
+
+  decrementGasBalance(userId: string, amount: number) {
+    if (this.isSupabase) {
+        console.warn("decrementGasBalance called in Supabase mode.");
+        return;
+    }
+    if (this.db) {
+        this.db.run(
+            `UPDATE gas_ledger SET balance_credits = balance_credits - ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND balance_credits >= ?`,
+            [amount, userId, amount]
+        );
+        this.writeAuditLog(userId, 'gas_consumed', { amount });
+    }
+  }
 }
 
 export const getDbClient = () => {

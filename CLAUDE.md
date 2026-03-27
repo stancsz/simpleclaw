@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Stripe integration and credit debit system. Integrated Stripe webhooks to handle topping up user credits, added a gas balance display and Top Up button to the UI, enforced gas balance checks before executing swarms via the orchestrator, and deducted credits via the dispatcher.
 - [2026-04-06] Cycle #150 ✅ Completed the final integration for Phase 0 Worker Dispatch + Execution Loop. Modified `server/src/app/page.tsx` to handle plan approvals via the core orchestrator API route directly (`/api/orchestrator` with `action: 'approve'`). Verified end-to-end execution scenarios where intent is parsed into a swarm manifest, passed through Plan-Diff-Approve, workers dispatched, executed in parallel, and task results dynamically pushed back to the local `ExecutionMonitor`.
 - [2026-04-06] Cycle #149 ✅ Verified the BYOK (Bring Your Own Key) UI component for key management is already fully implemented, functional, and adhering to the Adaptive Minimalism design language. Confirmed key storage operates securely with local simulated KMS flow, keys are viewable, masking is active, and existing test suites pass.
 - [2026-04-06] Cycle #148 ✅ Integrated Phase 0 Worker Dispatch with the UI correctly by ensuring `/api/orchestrator` directly invokes `executeSwarmManifest` from the backend when handling `action: 'approve'`, modified UI's `ExecutionMonitor` component to dynamically poll real-time statuses and execution outputs, implemented mock data fallbacks in `template.ts` for credential tests, successfully validated robust integration suite via local `bun test` checks. Marked Phase 0 UI execution as thoroughly tested and completed.
@@ -252,8 +253,8 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Added missing @supabase/supabase-js dependency and ensured tests run smoothly.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fixed testing issues in `server/` and ensured all tests pass end to end.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Dispatch with UI by making `orchestrator/route.ts` dispatch workers asynchronously on approve and returning early. Updated `ExecutionMonitor` UI to poll and retrieve `worker_decrypted_credential` tasks accurately from test mock endpoints, added end-to-end integration tests in `worker.test.ts` to simulate entire execution loop.
-- [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
-- [ ] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
+- [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
+- [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
 ## DISCOVERY LOG

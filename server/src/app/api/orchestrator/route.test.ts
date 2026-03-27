@@ -15,6 +15,7 @@ mock.module("@/../../src/db/client", () => {
             updateSessionStatus: mockUpdateSessionStatus,
             getTaskResults: mockGetTaskResults,
             getSession: mockGetSession,
+            getGasBalance: mock(() => 10), // Mock 10 gas credits
             run: mock(() => {}),
             query: mock(() => ({ get: () => ({}), all: () => [] })),
             transaction: mock((cb) => cb()),
@@ -25,6 +26,7 @@ mock.module("@/../../src/db/client", () => {
             updateSessionStatus = mockUpdateSessionStatus;
             getTaskResults = mockGetTaskResults;
             getSession = mockGetSession;
+            getGasBalance = mock(() => 10);
             run = mock(() => {});
             query = mock(() => ({ get: () => ({}), all: () => [] }));
             transaction = mock((cb) => cb());

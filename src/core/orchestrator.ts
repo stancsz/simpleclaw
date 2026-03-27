@@ -99,6 +99,13 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             return;
         }
 
+        // Check for sufficient gas before execution
+        const gasBalance = dbClient.getGasBalance(user_id);
+        if (gasBalance <= 0) {
+            res.status(402).json({ error: 'Insufficient gas credits. Please purchase more credits to execute this swarm.' });
+            return;
+        }
+
         dbClient.updateSessionStatus(session_id, 'approved');
 
         // Execute asynchronously so UI can poll for results
