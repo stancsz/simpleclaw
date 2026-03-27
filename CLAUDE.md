@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-27] Cycle #158 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation across `server/src/app/keys/page.tsx` and associated components. Concluded the task is already fully completed, test suite passes, and marked BACKLOG appropriately.
 - [2026-04-06] Cycle #157 ✅ Implemented Phase 1 BYOK UI: Investigated UI and API components, successfully moved `server/src/app/settings/keys/page.tsx` to `server/src/app/keys/page.tsx` to meet user requirements. Updated navigation and ensured all tests passed.
 - [2026-04-06] Cycle #156 ✅ Worker Dispatch + Execution Loop Minimal UI Integration: Configured `server/src/app/page.tsx` 'Approve' button to dispatch the `executeSwarmManifest` using the dedicated `/api/orchestrator/execute` endpoint. Verified end-to-end execution flow locally and fixed previously failing tests in `worker.test.ts` by ensuring test DB properly provisions platform credentials and gas.
 - [2026-04-06] Cycle #155 ✅ Relocated Phase 1 BYOK UI from `server/src/app/keys` to `server/src/app/settings/keys` per user instructions. Verified integration via browser and API endpoints.
@@ -261,6 +262,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
 - [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
 - [x] **Phase 1 — BYOK UI:** Cycle #157 ✅ Implemented Phase 1 BYOK UI: Migrated keys page from `/settings/keys` to `/keys` and updated Navigation component properly.
+- [x] **Phase 1 — BYOK UI:** Cycle #158 ✅ Verified Phase 1 BYOK UI Implementation. Examined existing implementation and concluded the task is already fully completed.
 - [x] **Phase 0 — End-to-End Integration Test**
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Added missing @supabase/supabase-js dependency and ensured tests run smoothly.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fixed testing issues in `server/` and ensured all tests pass end to end.
