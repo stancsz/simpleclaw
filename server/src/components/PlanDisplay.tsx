@@ -20,13 +20,15 @@ export default function PlanDisplay({ pda, sessionId, onApprove }: PlanDisplayPr
     setError('');
 
     try {
-      const response = await fetch('/api/execute', {
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          action: 'approve',
           session_id: sessionId,
+          user_id: 'test-user',
           manifest: pda.plan,
         }),
       });

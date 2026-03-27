@@ -8,7 +8,7 @@ export async function generatePlan(prompt: string, userId: string = 'test-user')
 }
 
 export async function executePlan(sessionId: string, manifest: any, userId: string = 'test-user') {
-  const response = await fetch('/api/orchestrator/execute', {
+  const response = await fetch('/api/orchestrator', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
