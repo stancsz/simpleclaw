@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import PlanDisplay from '../components/PlanDisplay';
 import ExecutionMonitor from '../components/ExecutionMonitor';
+import GasTankDisplay from '../components/GasTankDisplay';
 import type { PlanDiffApprove } from '@/../../src/core/types';
 import Link from 'next/link';
 
@@ -217,45 +218,7 @@ export default function Home() {
              </div>
           </div>
 
-          <div style={{
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            padding: '1.5rem',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '1rem'
-          }}>
-             <div>
-                <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Gas Tank</h2>
-                <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                   Purchase execution credits. Your swarm consumes 1 Gas Credit per successful execution.
-                </p>
-             </div>
-             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                   Available Balance: <strong style={{ color: gasBalance && gasBalance > 0 ? '#86efac' : '#fca5a5' }}>
-                     {gasBalance !== null ? gasBalance : '...'} Credits
-                   </strong>
-                </span>
-                <button
-                  onClick={handleBuyGas}
-                  style={{
-                    backgroundColor: '#00E5CC',
-                    color: '#000',
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s'
-                  }}>
-                  Top Up
-                </button>
-             </div>
-          </div>
+          <GasTankDisplay balance={gasBalance} onTopUp={handleBuyGas} />
         </div>
 
         <div className="create-bot-section">

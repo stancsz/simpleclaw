@@ -6,6 +6,7 @@ import { executeWorkerTask, type WorkerResult } from "../workers/template";
 import { executeGithubWorkerTask } from "../workers/github.worker";
 import { executeMockWorkerTask } from "../workers/mock-worker";
 import { executeDemoWorkerTask } from "../workers/demo-worker";
+import { consumeGas } from "./gas";
 
 import {
   runAgentLoop,
@@ -502,7 +503,7 @@ export async function executeSwarmManifest(
       // Debit 1 Gas Credit after successful execution
       const session = db.getSession(sessionId);
       if (session && session.user_id) {
-          db.decrementGasBalance(session.user_id, 1);
+          await consumeGas(session.user_id, 1, db);
       }
   }
 
