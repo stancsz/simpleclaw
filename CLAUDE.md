@@ -266,8 +266,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Refactored UI components into `GasTankDisplay` and `TopUpButton` and updated dispatcher to use `consumeGas`.
-- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Built DAG scheduler for swarm manifests
-- [x] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
 ## DISCOVERY LOG
 - The project is currently Bun-centric for the core engine.
