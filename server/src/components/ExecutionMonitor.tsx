@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { pollExecutionResults } from '../lib/api-client';
 
 interface ExecutionMonitorProps {
   status: 'idle' | 'planning' | 'waiting_approval' | 'executing' | 'completed' | 'error';
@@ -32,7 +33,7 @@ export default function ExecutionMonitor({ status, errorMessage, taskResults, se
     const fetchResults = async () => {
       if (!sessionId) return;
       try {
-        const res = await fetch(`/api/orchestrator?sessionId=${sessionId}`);
+        const res = await pollExecutionResults(sessionId);
         if (res.ok) {
           const data = await res.json();
           if (data.results) {

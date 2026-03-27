@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-27] Cycle #162 ✅ Verified Phase 0 Worker Dispatch + Execution Loop Minimal UI Integration: Verified the dashboard UI components already integrated the orchestrator API endpoint correctly. Created `server/src/lib/api-client.ts` to encapsulate the fetch logic for `generatePlan`, `executePlan`, and `pollExecutionResults`. Refactored `server/src/app/page.tsx` and `server/src/components/ExecutionMonitor.tsx` to use the new `api-client.ts` utility. Checked off `Phase 0 — Minimal UI` tasks in the BACKLOG.
 - [2026-04-06] Cycle #161 ✅ Verified Phase 1 BYOK UI is already implemented: Relocated `server/src/app/settings/keys/page.tsx` to `server/src/app/keys/page.tsx` and updated the Next.js `Navigation.tsx` component to reflect this change in the routing. Tested and ensured all unit/integration tests in `server` continue to pass without errors. Checked off 'Phase 1 — BYOK UI' backlogs.
 - [2026-04-06] Cycle #160 ✅ Verified Phase 1 BYOK UI is already implemented: Investigated the codebase and confirmed that `server/src/app/settings/keys/page.tsx`, `server/src/components/KeyManager.tsx`, and `server/src/app/api/keys/route.ts` are all fully implemented, passing tests, and functionally complete. No changes were necessary.
 - [2026-04-06] Cycle #159 ✅ Verified Phase 1 BYOK UI is already fully implemented: Created key management screen with Supabase Vault integration, UI and API routes are verified.
@@ -253,6 +254,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **Phase 0 — KMS Flow:** GCP Cloud KMS key ring setup + encrypt/decrypt service for Supabase `service_role` keys
 - [x] **Phase 0 — Minimal UI:** Text input → plan display → approve button (Next.js dashboard in `server/`)
 - [x] **Phase 0 — Minimal UI (Fully Connected):** Plan-Diff-Approve execution flow connected to the backend orchestrator and dispatcher.
+- [x] **Phase 0 — Minimal UI (API Client):** Created utility functions `generatePlan`, `executePlan` and `pollExecutionResults` in `api-client.ts` to encapsulate `fetch` for Phase 0 execution.
 - [x] **Phase 0 — End-to-End Testing:** Ensure full integration testing across the complete Phase 0 architecture.
 - [x] **Phase 0 — End-to-End Integration:** Fully connected the UI approve button to the dispatcher execution flow.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fully integrated the execute endpoint `/api/execute/route.ts` and UI execution monitoring in `server/src/app/page.tsx`.

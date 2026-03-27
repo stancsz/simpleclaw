@@ -6,6 +6,7 @@ import ExecutionMonitor from '../components/ExecutionMonitor';
 import GasTankDisplay from '../components/GasTankDisplay';
 import type { PlanDiffApprove } from '@/../../src/core/types';
 import Link from 'next/link';
+import { generatePlan, executePlan } from '../lib/api-client';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -73,14 +74,7 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/orchestrator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          user_id: 'test-user', // Minimal auth for Phase 0
-        }),
-      });
+      const response = await generatePlan(prompt, 'test-user');
 
       const data = await response.json();
 
@@ -136,16 +130,7 @@ export default function Home() {
 
     try {
       // Dispatch the generated swarm manifest directly to the dedicated execution endpoint
-      const response = await fetch('/api/orchestrator/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'approve',
-          session_id: sessionId,
-          user_id: 'test-user',
-          manifest: pda.plan,
-        }),
-      });
+      const response = await executePlan(sessionId, pda.plan, 'test-user');
 
       const data = await response.json();
 
