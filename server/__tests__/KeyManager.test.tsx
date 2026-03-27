@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
-import KeyManager from '@/components/KeyManager';
+import KeyManager from '@/app/components/KeyManager';
 
 // Helper to grab elements
 const setup = () => {

@@ -7,6 +7,7 @@ import GasTankDisplay from '../components/GasTankDisplay';
 import type { PlanDiffApprove } from '@/../../src/core/types';
 import Link from 'next/link';
 import { generatePlan, executePlan } from '../lib/api-client';
+import KeyManager from './components/KeyManager';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -151,41 +152,8 @@ export default function Home() {
 
       <main className="dashboard-main">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div style={{
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            padding: '1.5rem',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '1rem'
-          }}>
-             <div>
-                <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Keys (BYOK)</h2>
-                <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                   Manage your AI provider keys (OpenAI, Gemini, etc.). Keys are securely encrypted via Supabase Vault.
-                </p>
-             </div>
-             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                   Configured Keys: <strong style={{ color: '#00E5CC' }}>{keyCount !== null ? keyCount : '...'}</strong>
-                </span>
-                <Link href="/settings" style={{
-                  backgroundColor: '#00E5CC',
-                  color: '#000',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '0.5rem 1rem',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  transition: 'opacity 0.2s',
-                  cursor: 'pointer'
-                }}>
-                  Manage Keys
-                </Link>
-             </div>
+          <div id="key-manager-section" style={{ gridColumn: '1 / -1', marginBottom: '2rem' }}>
+              <KeyManager />
           </div>
 
           <GasTankDisplay balance={gasBalance} onTopUp={handleBuyGas} />

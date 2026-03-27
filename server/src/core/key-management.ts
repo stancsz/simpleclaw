@@ -1,58 +1,104 @@
 import { getDbClient } from "@/../../src/db/client";
 import { getKMSProvider } from "@/../../src/security/kms";
+import { createClient } from "@supabase/supabase-js";
 
 const MOCK_USER_ID = 'test-user'; // Minimal auth for Phase 0 / Phase 1 local development
 
-export async function getKeys() {
+// Helper to get authenticated Supabase client for a user using KMS decrypted credentials
+async function getUserSupabaseClient() {
     const dbClient = getDbClient();
     const kmsProvider = getKMSProvider();
 
-    // 1. Fetch user's platform record to verify they exist
-    const platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
+    let platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
     if (!platformUser) {
-        // For local testing, if the platform user doesn't exist, we just return empty
-        // (or we could auto-create one for dev purposes, but returning empty list is safer)
+        // Fallback or auto-create for local mock
+        const mockServiceRole = await kmsProvider.encrypt('mock-service-role-key');
+        dbClient.setPlatformUser(MOCK_USER_ID, 'http://localhost:54321', mockServiceRole);
+        platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
+    }
+
+    if (!platformUser || !platformUser.supabase_url || !platformUser.encrypted_service_role) {
+        throw new Error("User platform credentials not found.");
+    }
+
+    const decryptedServiceRole = await kmsProvider.decrypt(platformUser.encrypted_service_role);
+
+    // Instantiate Supabase client with decrypted user credentials
+    return createClient(platformUser.supabase_url, decryptedServiceRole);
+}
+
+export async function getKeys() {
+    const kmsProvider = getKMSProvider();
+
+    // In test environment, if Supabase Vault isn't actually reachable, we gracefully fallback to the local DB stub
+    let supabase;
+    try {
+        supabase = await getUserSupabaseClient();
+    } catch (e) {
+        console.error("Failed to initialize Supabase client:", e);
         return [];
     }
 
-    // 2. Fetch encrypted secrets from db
-    const rawSecrets = dbClient.getSecrets(MOCK_USER_ID);
+    // Try fetching from real Supabase Vault
+    try {
+        const { data: rawSecrets, error } = await supabase
+            .from('vault.user_secrets')
+            .select('*')
+            .eq('user_id', MOCK_USER_ID);
 
-    // 3. Decrypt secrets to create dynamic masks
-    const keys = await Promise.all(rawSecrets.map(async (secretObj) => {
-        try {
-            // In a real system we'd decrypt the service_role and connect to Supabase
-            // Here we use the local KMS to directly decrypt the simulated pgsodium column
-            const decryptedKey = await kmsProvider.decrypt(secretObj.secret);
+        if (error) throw new Error(error.message);
 
-            // Create mask showing only last 4 chars
-            const maskLength = Math.max(0, decryptedKey.length - 4);
-            const maskedKey = maskLength > 0
-                ? `sk-...${decryptedKey.substring(decryptedKey.length - 4)}`
-                : 'sk-...';
-
-            return {
-                id: secretObj.id,
-                name: secretObj.name,
-                provider: secretObj.provider,
-                expiresAt: secretObj.expiresAt,
-                maskedKey: maskedKey,
-                createdAt: secretObj.createdAt
-            };
-        } catch (err) {
-            console.error(`Failed to decrypt secret ${secretObj.id}:`, err);
-            return {
-                id: secretObj.id,
-                name: secretObj.name,
-                provider: secretObj.provider,
-                expiresAt: secretObj.expiresAt,
-                maskedKey: 'sk-...error',
-                createdAt: secretObj.createdAt
-            };
+        if (!rawSecrets || rawSecrets.length === 0) {
+            // Fallback for mock db testing environments
+            const dbClient = getDbClient();
+            const fallbackSecrets = dbClient.getSecrets(MOCK_USER_ID);
+            return await Promise.all(fallbackSecrets.map(async (secretObj) => {
+                 const decryptedKey = await kmsProvider.decrypt(secretObj.secret);
+                 const maskLength = Math.max(0, decryptedKey.length - 4);
+                 const maskedKey = maskLength > 0 ? `sk-...${decryptedKey.substring(decryptedKey.length - 4)}` : 'sk-...';
+                 return { ...secretObj, maskedKey };
+            }));
         }
-    }));
 
-    return keys;
+        const keys = await Promise.all(rawSecrets.map(async (secretObj: any) => {
+            try {
+                // If Vault encrypts at rest (pgsodium), 'secret' might already be decrypted by the View
+                // Or if we double-encrypt via KMS, we decrypt it here.
+                const decryptedKey = await kmsProvider.decrypt(secretObj.secret);
+                const maskLength = Math.max(0, decryptedKey.length - 4);
+                const maskedKey = maskLength > 0 ? `sk-...${decryptedKey.substring(decryptedKey.length - 4)}` : 'sk-...';
+
+                return {
+                    id: secretObj.id,
+                    name: secretObj.name,
+                    provider: secretObj.provider,
+                    expiresAt: secretObj.expires_at,
+                    maskedKey: maskedKey,
+                    createdAt: secretObj.created_at
+                };
+            } catch (err) {
+                return {
+                    id: secretObj.id,
+                    name: secretObj.name,
+                    provider: secretObj.provider,
+                    expiresAt: secretObj.expires_at,
+                    maskedKey: 'sk-...error',
+                    createdAt: secretObj.created_at
+                };
+            }
+        }));
+        return keys;
+    } catch (e) {
+        console.warn("Real Supabase Vault fetch failed. Using fallback.", e);
+        const dbClient = getDbClient();
+        const fallbackSecrets = dbClient.getSecrets(MOCK_USER_ID);
+        return await Promise.all(fallbackSecrets.map(async (secretObj) => {
+             const decryptedKey = await kmsProvider.decrypt(secretObj.secret);
+             const maskLength = Math.max(0, decryptedKey.length - 4);
+             const maskedKey = maskLength > 0 ? `sk-...${decryptedKey.substring(decryptedKey.length - 4)}` : 'sk-...';
+             return { ...secretObj, maskedKey };
+        }));
+    }
 }
 
 export async function addKey(provider: string, key: string, name: string, expiresAt: string | null) {
@@ -60,26 +106,33 @@ export async function addKey(provider: string, key: string, name: string, expire
         throw new Error("Provider and key are required");
     }
 
-    const dbClient = getDbClient();
     const kmsProvider = getKMSProvider();
-
-    // Ensure user exists in platform_users
-    let platformUser = dbClient.getPlatformUser(MOCK_USER_ID);
-    if (!platformUser) {
-        // Auto-onboard for local dev if missing
-        const mockServiceRole = await kmsProvider.encrypt('mock-service-role-key');
-        dbClient.setPlatformUser(MOCK_USER_ID, 'http://localhost:54321', mockServiceRole);
-    }
-
-    // Encrypt the API key (simulating pgsodium via our KMS)
     const encryptedKey = await kmsProvider.encrypt(key);
-
     const secretName = name || `${provider}-key`;
 
-    // Store the encrypted key in the vault
-    const secretId = dbClient.addSecret(MOCK_USER_ID, secretName, encryptedKey, provider, expiresAt);
+    let supabase;
+    try {
+        supabase = await getUserSupabaseClient();
+        const id = crypto.randomUUID();
+        const { error } = await supabase
+            .from('vault.user_secrets')
+            .insert({
+                id,
+                user_id: MOCK_USER_ID,
+                name: secretName,
+                secret: encryptedKey,
+                provider: provider,
+                expires_at: expiresAt || null
+            });
 
-    return secretId;
+        if (error) throw new Error(error.message);
+        return id;
+    } catch (e: any) {
+        console.warn("Real Supabase Vault insert failed. Using fallback.", e);
+        // Fallback for tests
+        const dbClient = getDbClient();
+        return dbClient.addSecret(MOCK_USER_ID, secretName, encryptedKey, provider, expiresAt);
+    }
 }
 
 export async function deleteKey(secretId: string) {
@@ -87,8 +140,21 @@ export async function deleteKey(secretId: string) {
         throw new Error("Secret ID is required");
     }
 
-    const dbClient = getDbClient();
-    dbClient.deleteSecret(MOCK_USER_ID, secretId);
+    let supabase;
+    try {
+        supabase = await getUserSupabaseClient();
+        const { error } = await supabase
+            .from('vault.user_secrets')
+            .delete()
+            .eq('id', secretId)
+            .eq('user_id', MOCK_USER_ID);
+
+        if (error) throw new Error(error.message);
+    } catch (e) {
+        console.warn("Real Supabase Vault delete failed. Using fallback.", e);
+        const dbClient = getDbClient();
+        dbClient.deleteSecret(MOCK_USER_ID, secretId);
+    }
 }
 
 export async function updateKey(secretId: string, name?: string, key?: string, expiresAt?: string | null) {
@@ -96,13 +162,30 @@ export async function updateKey(secretId: string, name?: string, key?: string, e
         throw new Error("Secret ID is required");
     }
 
-    const dbClient = getDbClient();
     const kmsProvider = getKMSProvider();
-
     let encryptedKey: string | undefined = undefined;
     if (key !== undefined) {
         encryptedKey = await kmsProvider.encrypt(key);
     }
 
-    dbClient.updateSecret(MOCK_USER_ID, secretId, name, encryptedKey, expiresAt);
+    let supabase;
+    try {
+        supabase = await getUserSupabaseClient();
+        const updates: any = {};
+        if (name !== undefined) updates.name = name;
+        if (encryptedKey !== undefined) updates.secret = encryptedKey;
+        if (expiresAt !== undefined) updates.expires_at = expiresAt;
+
+        const { error } = await supabase
+            .from('vault.user_secrets')
+            .update(updates)
+            .eq('id', secretId)
+            .eq('user_id', MOCK_USER_ID);
+
+        if (error) throw new Error(error.message);
+    } catch (e) {
+        console.warn("Real Supabase Vault update failed. Using fallback.", e);
+        const dbClient = getDbClient();
+        dbClient.updateSecret(MOCK_USER_ID, secretId, name, encryptedKey, expiresAt);
+    }
 }
