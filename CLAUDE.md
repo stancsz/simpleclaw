@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #152 ✅ Implemented Phase 1 BYOK UI: Moved the existing Key Management page to `server/src/app/settings/page.tsx` and updated references, including `Navigation.tsx` and `page.tsx`. Ensured Turbopack build succeeded by adding `stripe` dependency.
 - [2026-03-27] Cycle #151 ✅ Implemented Phase 1 BYOK UI: Created key management screen with Supabase Vault integration.
 - [2026-03-16 20:00] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created key management page with form and list components, integrated with Supabase Vault.
 - [2026-04-06] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Stripe integration and credit debit system. Integrated Stripe webhooks to handle topping up user credits, added a gas balance display and Top Up button to the UI, enforced gas balance checks before executing swarms via the orchestrator, and deducted credits via the dispatcher.
@@ -251,6 +252,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — BYOK UI:** Cycle #26 ✅ Implemented Phase 1 BYOK UI: Migrated settings page to keys page and integrated KeyManager components properly to `/keys`.
 - [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
 - [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
+- [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation migrated to `server/src/app/settings/page.tsx`.
 - [x] **Phase 0 — End-to-End Integration Test**
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Added missing @supabase/supabase-js dependency and ensured tests run smoothly.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fixed testing issues in `server/` and ensured all tests pass end to end.
