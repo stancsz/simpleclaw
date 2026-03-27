@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #155 ✅ Relocated Phase 1 BYOK UI from `server/src/app/keys` to `server/src/app/settings/keys` per user instructions. Verified integration via browser and API endpoints.
 - [2026-04-06] Cycle #154 ✅ AGENT_OS v2.0 Directive implemented: Configured EVOLUTION_HISTORY.log, updated SPEC/SWARM_SPEC docs, and synthesized the `agency-agents` Architecture Primitive: "External-Agency-Delegation". Implemented recursive dogfooding tests.
 - [2026-04-06] Cycle #153 ✅ Phase 1 Gas Tank components implementation: Extracted `GasTankDisplay` and `TopUpButton` into modular React components in `server/src/components`. Refactored dispatcher debit logic to use `consumeGas` from `src/core/gas.ts`. Marked Phase 1 — Gas Tank as complete in BACKLOG.
 - [2026-04-06] Cycle #152 ✅ Implemented Phase 0 Worker Dispatch + Execution Loop: Finalized DAG execution logic and dependencies resolution, installed `@supabase/supabase-js`, fixed DB concurrency unique constraint collisions in `worker.test.ts`, and verified end-to-end flow correctly updates the SQLite DB. Marked Phase 0 as fully completed.
@@ -251,7 +252,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Minimal UI execution flow to point to `/api/execute` API route. Real-time updates working correctly via `ExecutionMonitor`.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Implemented hardcoded single-skill worker execution for Phase 0 validation.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Created end-to-end integration test for worker dispatch and execution loop. Validated orchestrator → worker → KMS credential → task result flow.
-- [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/keys/page.tsx`
+- [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault implemented in `server/src/app/settings/keys/page.tsx`
 - [x] **Phase 1 — BYOK UI:** Created settings page with Supabase Vault integration for key management
 - [x] **Phase 1 — BYOK UI:** Key management screen storing keys in Supabase Vault
 - [x] **Phase 1 — BYOK UI:** Cycle #26 ✅ Implemented Phase 1 BYOK UI: Migrated settings page to keys page and integrated KeyManager components properly to `/keys`.
