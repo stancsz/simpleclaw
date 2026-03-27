@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #159 ✅ Verified Phase 1 BYOK UI is already fully implemented: Created key management screen with Supabase Vault integration, UI and API routes are verified.
 - [2026-04-06] Cycle #158 ✅ Updated strategic documentation across CLAUDE.md, SPEC.md, and SWARM_SPEC.md to internalize the "Software as a Biosphere" and "Headless Agency" directive based on the "9BS5SNErSdRYUR-XKH-U1Q" discourse.
 - [2026-04-06] Cycle #157 ✅ Implemented Phase 1 BYOK UI: Investigated UI and API components, successfully moved `server/src/app/settings/keys/page.tsx` to `server/src/app/keys/page.tsx` to meet user requirements. Updated navigation and ensured all tests passed.
 - [2026-04-06] Cycle #156 ✅ Worker Dispatch + Execution Loop Minimal UI Integration: Configured `server/src/app/page.tsx` 'Approve' button to dispatch the `executeSwarmManifest` using the dedicated `/api/orchestrator/execute` endpoint. Verified end-to-end execution flow locally and fixed previously failing tests in `worker.test.ts` by ensuring test DB properly provisions platform credentials and gas.
