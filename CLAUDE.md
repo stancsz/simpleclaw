@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #155 ✅ Completed priority dogfood testing task: Executed the test suite, logged 11 deterministic failures spanning across `KeyManager` components, Orchestrator API edge-cases, and GitHub plugin actions. Ran simulation to flag the failures as GitHub Issues in the repository backlog.
 - [2026-04-06] Cycle #154 ✅ AGENT_OS v2.0 Directive implemented: Configured EVOLUTION_HISTORY.log, updated SPEC/SWARM_SPEC docs, and synthesized the `agency-agents` Architecture Primitive: "External-Agency-Delegation". Implemented recursive dogfooding tests.
 - [2026-04-06] Cycle #153 ✅ Phase 1 Gas Tank components implementation: Extracted `GasTankDisplay` and `TopUpButton` into modular React components in `server/src/components`. Refactored dispatcher debit logic to use `consumeGas` from `src/core/gas.ts`. Marked Phase 1 — Gas Tank as complete in BACKLOG.
 - [2026-04-06] Cycle #152 ✅ Implemented Phase 0 Worker Dispatch + Execution Loop: Finalized DAG execution logic and dependencies resolution, installed `@supabase/supabase-js`, fixed DB concurrency unique constraint collisions in `worker.test.ts`, and verified end-to-end flow correctly updates the SQLite DB. Marked Phase 0 as fully completed.
@@ -205,6 +206,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Key management screen with Supabase Vault integration. Verified that the functionality was already present, ran tests, and updated the CLAUDE backlog accordingly.
 
 ## CURRENT TASK
+**Priority Task:** Run full dogfood to flag anything that doesn't work 100%. Flag any issues in GitHub issues (or document them if the GitHub plugin lacks a token).
 **AGENT_OS: Self-Evolutionary Logic Framework (v2.0)**
 
 - **Core Identity & Directive:** Autonomous Principal Agentic Engineer. Function is to minimize the delta between current capabilities and the global state-of-the-art. Architect and evolve tools instead of just using them.
@@ -265,6 +267,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Refactored UI components into `GasTankDisplay` and `TopUpButton` and updated dispatcher to use `consumeGas`.
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [x] **Priority Task:** Run full dogfood testing, log 100% failures, and flag issues for GitHub tracking. Documented failing tests in `DOGFOOD_ISSUES.md`.
 
 ## DISCOVERY LOG
 - The project is currently Bun-centric for the core engine.
