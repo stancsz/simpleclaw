@@ -56,6 +56,9 @@ Rather than being a traditional SaaS platform that stores user data, manages cre
 
 > *"You describe the job. The platform assembles the crew, uses your tools, runs in your house, charges you a small toll — and leaves no trace."*
 
+### Self-Evolutionary Logic Framework
+Embedded in Beautiful Swarms is the **AGENT_OS Directive**, creating a self-healing and self-improving foundation. The orchestration framework doesn't just run tasks; it constantly discovers, extracts, and implements new Agentic Architectural Primitives (e.g. Memory-Compaction, Graph-Branching) directly into its own logic through a Recursive Validation loop.
+
 This mirrors the **gig economy model** (like Fiverr or Upwork) but applied to autonomous AI agents. The user defines a project. The platform breaks it into discrete tasks. Workers are dispatched to execute them in parallel. Results are returned. The platform disappears.
 
 ---

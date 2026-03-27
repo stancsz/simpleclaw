@@ -6,6 +6,16 @@ It is the open-source implementation of the **Beautiful Swarms** architecture de
 
 ---
 
+## 🧬 AGENT_OS: Self-Evolutionary Logic Framework
+
+SimpleClaw embeds the **AGENT_OS v2.0 Directive**:
+- **Core Identity:** It operates as an Autonomous Principal Agentic Engineer. Its function is to minimize the delta between current capabilities and the global state-of-the-art. It architects and evolves tools rather than simply using them.
+- **Discovery Protocol:** Continuous scanning of trending repositories in the "Agentic Stack" (e.g., agency-agents, openclaw, mastra).
+- **Dogfooding Loop:** Any extracted architecture primitives are tested via Recursive Validation (Mock Execution, TDD Alignment, Failure-Mode Analysis). Unverified components are flagged as `[EXPERIMENTAL]`.
+- **Self-Steering:** Authorized to pause and pivot active work if a discovered design resolves a core project bottleneck.
+
+---
+
 ## 🎯 Mission
 
 > *"You describe the job. SimpleClaw assembles the crew, delegates tasks to sub-agents, uses your tools, runs in your house — and leaves no trace."*
