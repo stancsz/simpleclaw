@@ -40,7 +40,7 @@ async function main() {
     execSync('git config --global user.name "simpleclaw"');
     execSync('git config --global user.email "simpleclaw@users.noreply.github.com"');
 
-    // 1. Fetch Open PRs
+    // 1. Fetch Open PRs and Issues
     console.log(chalk.cyan("Fetching open PRs..."));
     let prsJson = "";
     try {
@@ -218,6 +218,30 @@ ${testResults}
                 console.warn(chalk.red(`🚫 PR #${pr.number} is no longer mergeable (Status: ${finalCheck}). Skipping merge.`));
                 execSync(`git checkout ${pr.baseRefName}`);
                 continue;
+            }
+
+            // Check if there are related issues referenced in the PR body/commits to close or update them
+            let issueMentions: string[] = [];
+            try {
+                const prBody = execSafe(`gh pr view ${pr.number} --json body -q .body`) || "";
+                const prCommits = execSafe(`gh pr view ${pr.number} --json commits -q '.commits[].messageBody'`) || "";
+
+                // Match #123 or fix #123 patterns
+                const combinedText = `${prBody}\n${prCommits}`;
+                const matches = combinedText.match(/#(\d+)/g);
+                if (matches) {
+                    issueMentions = [...new Set(matches.map(m => m.replace('#', '')))];
+                }
+            } catch (e) {
+                console.warn(chalk.yellow("Could not check for issue mentions."));
+            }
+
+            if (issueMentions.length > 0) {
+                console.log(chalk.cyan(`Found related issues: ${issueMentions.join(', ')}`));
+                for (const issue of issueMentions) {
+                    console.log(chalk.cyan(`Adding comment to issue #${issue}...`));
+                    execSafe(`gh issue comment ${issue} -b "Code review completed. Related PR #${pr.number} has been approved and is being merged."`);
+                }
             }
 
             // Post the LLM-generated review comment as an approval log

@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Current Task: Update GitHub Issues priority for Delegator and Reviewer interactions. Working on Phase 1 GitHub Issues Priority.
 - [2026-04-06] Cycle #153 ✅ Phase 1 Gas Tank components implementation: Extracted `GasTankDisplay` and `TopUpButton` into modular React components in `server/src/components`. Refactored dispatcher debit logic to use `consumeGas` from `src/core/gas.ts`. Marked Phase 1 — Gas Tank as complete in BACKLOG.
 - [2026-04-06] Cycle #152 ✅ Implemented Phase 0 Worker Dispatch + Execution Loop: Finalized DAG execution logic and dependencies resolution, installed `@supabase/supabase-js`, fixed DB concurrency unique constraint collisions in `worker.test.ts`, and verified end-to-end flow correctly updates the SQLite DB. Marked Phase 0 as fully completed.
 - [2026-03-27] Cycle #151 ✅ Implemented Phase 1 BYOK UI: Created key management screen with Supabase Vault integration.
@@ -260,6 +261,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Stripe integration + `gas_ledger` debit after execution
 - [x] **Phase 1 — Gas Tank:** Refactored UI components into `GasTankDisplay` and `TopUpButton` and updated dispatcher to use `consumeGas`.
+- [x] **Phase 1 — GitHub Issues Priority:** Ensured delegator prioritizes GitHub issues, then reviewer updates and interacts with issues.
 - [ ] **Phase 2 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 
 ## DISCOVERY LOG

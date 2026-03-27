@@ -44,6 +44,15 @@ async function main() {
     }
     const prs = prsJson ? JSON.parse(prsJson) : [];
 
+    console.log(chalk.cyan("Fetching open Issues..."));
+    let issuesJson = "";
+    try {
+        issuesJson = execSync("gh issue list --json number,title,author,body --state open", { encoding: "utf-8" });
+    } catch (e) {
+        console.warn(chalk.yellow("Failed to fetch Issues using gh CLI. Proceeding without Issue context."));
+    }
+    const issues = issuesJson ? JSON.parse(issuesJson) : [];
+
     const llm = createLLM();
     const model = process.env.MODEL || "deepseek-reasoner";
     console.log(chalk.gray(`[Config] Using model: ${model}`));
@@ -64,13 +73,18 @@ ${swarmSpec}
 4. **ACTIVE WORK (Open PRs)**:
 ${JSON.stringify(prs)}
 
+5. **OPEN ISSUES (Prioritize these first!)**:
+${JSON.stringify(issues)}
+
 ### YOUR OBJECTIVE:
 Analyze the current state of the project and identify the absolute NEXT meaningful step.
+You MUST prioritize delegating work for the open issues. If there are any open issues, your next task MUST be to solve one of them.
 Delegated work MUST be meaningful and advance the project towards the "Beautiful Swarms" vision.
 
 ### RULES:
 1. **CLAUDE.md AUDIT**: Read the "BACKLOG" and "CURRENT TASK" sections in CLAUDE.md first. 
 2. **NO DUPLICATION**: Do not delegate tasks that are already being worked on in open PRs.
+3. **PRIORITIZE ISSUES**: If there are Open Issues, you MUST pick one and instruct Jules to fix/implement it. Provide the issue number in the description so Jules can reference it or close it when done.
 3. **HIGH-DETAIL DELEGATION**: Your instructions for the sub-agent ("Jules") should be crystal clear.
     - **Goal**: What exactly should be achieved.
     - **Files to touch**: Specific paths based on the structure.
