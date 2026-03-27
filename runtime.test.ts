@@ -682,3 +682,27 @@ describe("Linear plugin", () => {
     expect(result).toContain("Linear integration requires setup");
   });
 });
+
+describe("Agency Agent plugin", () => {
+  test("plugin is properly registered as extension", async () => {
+    const { plugin } = await import("./src/plugins/agency-agent.ts");
+
+    expect(plugin.name).toBe("agency-agent");
+    expect(plugin.type).toBe("skill");
+    expect(typeof plugin.execute).toBe("function");
+  });
+
+  test("plugin validates required parameters", async () => {
+    const { plugin } = await import("./src/plugins/agency-agent.ts");
+
+    const result = await plugin.execute({ action: "delegate_task" });
+    expect(result).toContain("ERROR: 'message' parameter is required");
+  });
+
+  test("plugin returns error for unknown action", async () => {
+    const { plugin } = await import("./src/plugins/agency-agent.ts");
+
+    const result = await plugin.execute({ action: "unknown_action" });
+    expect(result).toContain("ERROR: Unknown action");
+  });
+});

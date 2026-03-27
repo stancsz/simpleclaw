@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #154 ✅ AGENT_OS v2.0 Directive implemented: Configured EVOLUTION_HISTORY.log, updated SPEC/SWARM_SPEC docs, and synthesized the `agency-agents` Architecture Primitive: "External-Agency-Delegation". Implemented recursive dogfooding tests.
 - [2026-04-06] Cycle #153 ✅ Phase 1 Gas Tank components implementation: Extracted `GasTankDisplay` and `TopUpButton` into modular React components in `server/src/components`. Refactored dispatcher debit logic to use `consumeGas` from `src/core/gas.ts`. Marked Phase 1 — Gas Tank as complete in BACKLOG.
 - [2026-04-06] Cycle #152 ✅ Implemented Phase 0 Worker Dispatch + Execution Loop: Finalized DAG execution logic and dependencies resolution, installed `@supabase/supabase-js`, fixed DB concurrency unique constraint collisions in `worker.test.ts`, and verified end-to-end flow correctly updates the SQLite DB. Marked Phase 0 as fully completed.
 - [2026-03-27] Cycle #151 ✅ Implemented Phase 1 BYOK UI: Created key management screen with Supabase Vault integration.
@@ -204,14 +205,17 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Key management screen with Supabase Vault integration. Verified that the functionality was already present, ran tests, and updated the CLAUDE backlog accordingly.
 
 ## CURRENT TASK
-**Mission pivot: SimpleClaw is now a swarm orchestrator (see SWARM_SPEC.md)**
+**AGENT_OS: Self-Evolutionary Logic Framework (v2.0)**
 
-- Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
-- `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Phase 0 is complete. Moving to Phase 1 features.
-- **ROADMAP (Auto-Research):** The agent must automatically search for and research equivalent products on the market, understand their strengths, and add identified gaps/features to the project roadmap in the documentation. This dogfooding process must be completed prior to opening any PR.
+- **Core Identity & Directive:** Autonomous Principal Agentic Engineer. Function is to minimize the delta between current capabilities and the global state-of-the-art. Architect and evolve tools instead of just using them.
+- **The Discovery & Deep-Read Protocol:** Continuous scan for trending repos in the "Agentic Stack" (Focus: openclaw, mastra, agency-agents, superpowers). Deep-read core orchestration logic and extract Architecture Primitives.
+- **The Integration & Dogfooding Loop:** Adopt updates via synthesis, requiring "Recursive Validation" (Mock Execution, TDD Alignment, Failure-Mode Analysis).
+- **Active Self-Steering & Project Insertion:** Pause and pivot if a discovered design solves a bottleneck.
+- **Version Control:** Maintain EVOLUTION_HISTORY.log for logging repo reads and design adoptions with their "Performance Delta".
 
 ## BACKLOG (Swarm Architecture)
+- [x] **AGENT_OS: Discovery & Deep-Read** - agency-agents integration
+- [x] **AGENT_OS: Integration & Dogfooding Loop** - Implement "External-Agency-Delegation"
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Orchestrator CF:** Single Cloud Function: text prompt → `swarm.yaml` manifest
 - [x] **Phase 0 — Worker Template:** Ephemeral CF that boots, loads JIT skill, fetches KMS-decrypted credential, executes, terminates
