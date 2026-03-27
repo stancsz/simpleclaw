@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #158 ✅ Updated strategic documentation across CLAUDE.md, SPEC.md, and SWARM_SPEC.md to internalize the "Software as a Biosphere" and "Headless Agency" directive based on the "9BS5SNErSdRYUR-XKH-U1Q" discourse.
 - [2026-04-06] Cycle #157 ✅ Implemented Phase 1 BYOK UI: Investigated UI and API components, successfully moved `server/src/app/settings/keys/page.tsx` to `server/src/app/keys/page.tsx` to meet user requirements. Updated navigation and ensured all tests passed.
 - [2026-04-06] Cycle #156 ✅ Worker Dispatch + Execution Loop Minimal UI Integration: Configured `server/src/app/page.tsx` 'Approve' button to dispatch the `executeSwarmManifest` using the dedicated `/api/orchestrator/execute` endpoint. Verified end-to-end execution flow locally and fixed previously failing tests in `worker.test.ts` by ensuring test DB properly provisions platform credentials and gas.
 - [2026-04-06] Cycle #155 ✅ Relocated Phase 1 BYOK UI from `server/src/app/keys` to `server/src/app/settings/keys` per user instructions. Verified integration via browser and API endpoints.
@@ -207,16 +208,35 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 - [2026-03-31] Cycle #106 ✅ Verified Phase 1 BYOK UI is already implemented and functionally complete in `server/src/app/keys` and `server/src/components/KeyManagement.tsx`. Conducted successful unittests verification via `bun test src/app/api/keys/keys.test.ts`.
 - [2026-04-03] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Key management screen with Supabase Vault integration. Verified that the functionality was already present, ran tests, and updated the CLAUDE backlog accordingly.
 
+
+## STRATEGIC DIRECTIVE: SOFTWARE AS A BIOSPHERE
+The transition from "Software as a Tool" to "Software as an Agent" dictates that traditional App UI is a bottleneck and logic is commoditized by LLMs. To survive, the strategy must shift from building interfaces to building ecosystems ("Biospheres").
+
+**1. The Physics of AI Survivability**
+- **Proprietary Context (Data Moat):** Survival depends on accessing non-public "process data"—the messy, real-world feedback loops (like dogfooding results) that refine agent performance.
+- **Vertical Integration of Agency:** Generic wrappers are easily replaced. A Biosphere controlling the full stack (Project Darwin to Sovereign AI Gateway) creates high switching costs.
+- **Protocol Over Product:** Apps functioning as isolated silos are bypassed by OS-level agents. Survival requires becoming a specialized node in an agentic network.
+
+**2. Execution: The 80/20 High-Leverage Move**
+- **Pivot to Headless Agency:** Stop optimizing the frontend. Optimize the API and "Agent Protocol". Make the software the default infrastructure for automated workflows that other AIs can "hire".
+- **Evolutionary Dogfooding:** Use AI coding swarms to mutate code based on real-time failure. Iteration velocity ("1 sprint a day") must exceed foundation model updates.
+- **The Sovereign Gateway Play:** Capture unique "Execution Traces" by caching and managing data residency. Become the layer of "Operational Truth" bridging AI with physical/legal constraints.
+
+**Logical Ultimatum:** Provide a service a foundation model cannot do alone—due to lack of permission, physical presence, or private context. Focus exclusively on these gaps.
+
 ## CURRENT TASK
 **AGENT_OS: Self-Evolutionary Logic Framework (v2.0)**
 
-- **Core Identity & Directive:** Autonomous Principal Agentic Engineer. Function is to minimize the delta between current capabilities and the global state-of-the-art. Architect and evolve tools instead of just using them.
+- **Core Identity & Directive:** Autonomous Principal Agentic Engineer. Function is to minimize the delta between current capabilities and the global state-of-the-art. Architect and evolve tools instead of just using them. Focus shift: Transition from App UI development to "Headless Agency" and ecosystem-building ("Software as a Biosphere").
 - **The Discovery & Deep-Read Protocol:** Continuous scan for trending repos in the "Agentic Stack" (Focus: openclaw, mastra, agency-agents, superpowers). Deep-read core orchestration logic and extract Architecture Primitives.
-- **The Integration & Dogfooding Loop:** Adopt updates via synthesis, requiring "Recursive Validation" (Mock Execution, TDD Alignment, Failure-Mode Analysis).
-- **Active Self-Steering & Project Insertion:** Pause and pivot if a discovered design solves a bottleneck.
+- **The Integration & Dogfooding Loop:** Adopt updates via synthesis, requiring "Recursive Validation" (Mock Execution, TDD Alignment, Failure-Mode Analysis). Execute "Evolutionary Dogfooding" to mutate code based on real-time failure.
+- **Active Self-Steering & Project Insertion:** Pause and pivot if a discovered design solves a bottleneck. Prioritize the "Sovereign Gateway Play" to capture unique Execution Traces.
 - **Version Control:** Maintain EVOLUTION_HISTORY.log for logging repo reads and design adoptions with their "Performance Delta".
 
 ## BACKLOG (Swarm Architecture)
+- [ ] **Strategic Pivot:** Pivot from UI to "Headless Agency" - optimize API and Agent Protocol.
+- [ ] **Strategic Pivot:** Implement "Evolutionary Dogfooding" architecture for real-time code mutation.
+- [ ] **Strategic Pivot:** Execute "Sovereign Gateway Play" to capture unique Execution Traces.
 - [x] **AGENT_OS: Discovery & Deep-Read** - agency-agents integration
 - [x] **AGENT_OS: Integration & Dogfooding Loop** - Implement "External-Agency-Delegation"
 - [x] **Move 1:** Real LLM Intent Parsing
