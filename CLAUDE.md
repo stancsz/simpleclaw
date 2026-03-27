@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-27] Cycle #151 ✅ Implemented Phase 1 BYOK UI: Created key management screen with Supabase Vault integration.
 - [2026-03-16 20:00] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created key management page with form and list components, integrated with Supabase Vault.
 - [2026-04-06] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Stripe integration and credit debit system. Integrated Stripe webhooks to handle topping up user credits, added a gas balance display and Top Up button to the UI, enforced gas balance checks before executing swarms via the orchestrator, and deducted credits via the dispatcher.
 - [2026-04-06] Cycle #150 ✅ Completed the final integration for Phase 0 Worker Dispatch + Execution Loop. Modified `server/src/app/page.tsx` to handle plan approvals via the core orchestrator API route directly (`/api/orchestrator` with `action: 'approve'`). Verified end-to-end execution scenarios where intent is parsed into a swarm manifest, passed through Plan-Diff-Approve, workers dispatched, executed in parallel, and task results dynamically pushed back to the local `ExecutionMonitor`.
