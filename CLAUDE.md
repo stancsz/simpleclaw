@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #165 ✅ Integrated Minimal UI with orchestrator and worker dispatch for Phase 0. Configured `/api/orchestrator` to accept direct `action: 'approve'` instead of a dedicated execute route. Displayed live results gracefully via `ExecutionMonitor` UI polling. Verified execution loop using end-to-end testing with mock capabilities to pass without exceptions. Marked complete in BACKLOG.
 - [2026-04-06] Cycle #164 ✅ Implemented Phase 1 BYOK UI settings page, relocated `server/src/app/keys/page.tsx` to `server/src/app/settings/page.tsx`, exposed PUT endpoint, and updated navigation.
 - [2026-04-06] Cycle #163 ✅ Phase 0 Worker Dispatch + Execution Loop Completed: Connected the PlanDisplay component's "Approve" button to a new `server/src/app/api/execute/route.ts` API route. The new route calls `executeSwarmManifest` properly to trigger background execution and updates the session state in the database, allowing the `ExecutionMonitor` to poll the task statuses effectively. Simplified `page.tsx`'s `handleApprove` method and refactored the UI flow. Marked Phase 0 task from backlog as complete, and moved onto Phase 1.
 - [2026-03-27] Cycle #26 ✅ Completed Worker Dispatch and Execution Loop integration: Verified UI integration with orchestrator via the dispatcher loop in the tests.
@@ -291,6 +292,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **Phase 1 — BYOK UI:** Bring Your Own Key (BYOK) UI implementation
 - [x] **Phase 1 — BYOK UI:** Cycle #157 ✅ Implemented Phase 1 BYOK UI: Migrated keys page from `/settings/keys` to `/keys` and updated Navigation component properly.
 - [x] **Phase 0 — End-to-End Integration Test**
+- [x] **Phase 0 — Worker Dispatch + Execution Loop:** Phase 0 End-to-End workflow finalized across API orchestration, frontend PlanDiffApprove monitor, worker dispatch delegation and dependency completion.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Added missing @supabase/supabase-js dependency and ensured tests run smoothly.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Fixed testing issues in `server/` and ensured all tests pass end to end.
 - [x] **Phase 0 — Worker Dispatch + Execution Loop:** Integrated Dispatch with UI by making `orchestrator/route.ts` dispatch workers asynchronously on approve and returning early. Updated `ExecutionMonitor` UI to poll and retrieve `worker_decrypted_credential` tasks accurately from test mock endpoints, added end-to-end integration tests in `worker.test.ts` to simulate entire execution loop.

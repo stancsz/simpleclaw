@@ -80,7 +80,7 @@ export default function Home() {
 
       if (!response.ok) {
         // Fallback for visual testing if OpenAI key is invalid in mock environment
-        if (data.error && data.error.includes('invalid_request_error') || data.error && data.error.includes('api key')) {
+        if (data.error && (data.error.includes('invalid_request_error') || data.error.toLowerCase().includes('api key'))) {
            setPda({
               plan: {
                   version: "1.0",

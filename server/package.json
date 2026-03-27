@@ -31,7 +31,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@happy-dom/global-registrator": "^20.8.8",
+    "@happy-dom/global-registrator": "^20.8.9",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.5.0",
