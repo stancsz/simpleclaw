@@ -481,12 +481,12 @@ describe("Worker Dispatch & Execution Loop", () => {
     process.env.DATABASE_URL = "sqlite://local_test_db.sqlite";
 
     // Create the physical DB and apply migrations
-    const testDb = new DBClient(process.env.DATABASE_URL);
+    const testDb1 = new DBClient(process.env.DATABASE_URL);
     const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
-    testDb.applyMigration(schema);
+    testDb1.applyMigration(schema);
 
     // Populate the session we expect
-    testDb.createSession("user_execute_test", { prompt: "test execute" }, manifest);
+    testDb1.createSession("user_execute_test", { prompt: "test execute" }, manifest);
 
     // Ensure mock credentials are set for this user in platformDbMock too (fallback may fail if not initialized)
     const kmsProvider2 = require("../security/kms").getKMSProvider();
@@ -494,9 +494,9 @@ describe("Worker Dispatch & Execution Loop", () => {
     platformDbMock.set("user_execute_test", { supabaseUrl: "https://mock.supabase.co", encryptedKey: encrypted2 });
 
     // We must manually grab the session ID since orchestrator handler will query it
-    // But since the DB is recreated, our original sessionId from `db` might not be in testDb.
+    // But since the DB is recreated, our original sessionId from `db` might not be in testDb1.
     // Let's grab the actual new session ID.
-    const testDbAny = testDb as any;
+    const testDbAny = testDb1 as any;
     const sessionRow = testDbAny.db.query("SELECT id FROM orchestrator_sessions LIMIT 1").get();
     const actualSessionId = sessionRow.id;
 
@@ -514,7 +514,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout to ensure worker finishes resolving
 
     // Verify state transition inside our physical test DB instance
-    const session = testDb.getSession(actualSessionId);
+    const session = testDb1.getSession(actualSessionId);
     expect(session.status).toBe("completed");
 
     // Clean up
@@ -561,11 +561,11 @@ describe("Worker Dispatch & Execution Loop", () => {
     const originalDbUrl = process.env.DATABASE_URL;
     process.env.DATABASE_URL = "sqlite://local_test_db_e2e_flow.sqlite";
     const fs = require('fs');
-    const testDb = new DBClient(process.env.DATABASE_URL);
+    const testDb2 = new DBClient(process.env.DATABASE_URL);
     const schema = fs.readFileSync("src/db/migrations/001_motherboard.sql", "utf-8");
-    testDb.applyMigration(schema);
+    testDb2.applyMigration(schema);
 
-    testDb.applyMigration(`
+    testDb2.applyMigration(`
       INSERT OR IGNORE INTO platform_users (user_id, supabase_url, encrypted_service_role)
       VALUES ('user_full_flow', 'https://mock.supabase.co', '${encryptedServiceRole}');
     `);
@@ -573,7 +573,7 @@ describe("Worker Dispatch & Execution Loop", () => {
     try {
         // Since we can't easily mock the llm module *after* it's loaded without jest.mock,
         // we will manually simulate the plan generation by directly inserting a session
-        const sessionId = testDb.createSession("user_full_flow", { prompt: "Run full test" }, manifest);
+        const sessionId = testDb2.createSession("user_full_flow", { prompt: "Run full test" }, manifest);
 
         // Simulated Approve Request
         const executeReq = {
@@ -616,7 +616,7 @@ describe("Worker Dispatch & Execution Loop", () => {
         // Wait for workers to finish
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        const testDbAny = testDb as any;
+        const testDbAny = testDb2 as any;
         const taskLogs = testDbAny.db.query("SELECT * FROM task_results WHERE session_id = ?").all(sessionId);
         expect(taskLogs.length).toBe(1);
         expect(taskLogs[0].status).toBe("success");

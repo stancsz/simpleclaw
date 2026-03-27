@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #152 ✅ Implemented Phase 0 Worker Dispatch + Execution Loop: Finalized DAG execution logic and dependencies resolution, installed `@supabase/supabase-js`, fixed DB concurrency unique constraint collisions in `worker.test.ts`, and verified end-to-end flow correctly updates the SQLite DB. Marked Phase 0 as fully completed.
 - [2026-03-27] Cycle #151 ✅ Implemented Phase 1 BYOK UI: Created key management screen with Supabase Vault integration.
 - [2026-03-16 20:00] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Created key management page with form and list components, integrated with Supabase Vault.
 - [2026-04-06] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Stripe integration and credit debit system. Integrated Stripe webhooks to handle topping up user credits, added a gas balance display and Top Up button to the UI, enforced gas balance checks before executing swarms via the orchestrator, and deducted credits via the dispatcher.
@@ -206,7 +207,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 
 - Architecture defined in `SWARM_SPEC.md` (updated v1.1 — KMS auth model documented)
 - `SPEC.md` rewritten to reflect swarm orchestrator mission
-- Core work: Finalizing Phase 1 features, including BYOK UI and real world Swarm capabilities.
+- Core work: Phase 0 is complete. Moving to Phase 1 features.
 - **ROADMAP (Auto-Research):** The agent must automatically search for and research equivalent products on the market, understand their strengths, and add identified gaps/features to the project roadmap in the documentation. This dogfooding process must be completed prior to opening any PR.
 
 ## BACKLOG (Swarm Architecture)
