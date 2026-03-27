@@ -23,7 +23,7 @@ export async function DELETE(
     }
 }
 
-export async function PATCH(
+export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
@@ -44,4 +44,11 @@ export async function PATCH(
         console.error("Error updating key:", error);
         return NextResponse.json({ error: "Failed to update key" }, { status: 500 });
     }
+}
+
+export async function PATCH(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    return PUT(req, { params });
 }

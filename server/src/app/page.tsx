@@ -142,7 +142,7 @@ export default function Home() {
           <Link href="/onboarding" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
             Onboarding
           </Link>
-          <Link href="/keys" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
+          <Link href="/settings" style={{ color: '#00E5CC', textDecoration: 'none', fontSize: '0.9rem' }}>
             Settings (BYOK)
           </Link>
           <div style={{ fontSize: '0.9rem', color: '#888' }}>Phase 0: Orchestrator Test</div>
@@ -171,7 +171,7 @@ export default function Home() {
                 <span style={{ color: '#ccc', fontSize: '0.9rem' }}>
                    Configured Keys: <strong style={{ color: '#00E5CC' }}>{keyCount !== null ? keyCount : '...'}</strong>
                 </span>
-                <Link href="/keys" style={{
+                <Link href="/settings" style={{
                   backgroundColor: '#00E5CC',
                   color: '#000',
                   border: 'none',

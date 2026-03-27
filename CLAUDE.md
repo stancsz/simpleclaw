@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #164 ✅ Implemented Phase 1 BYOK UI settings page, relocated `server/src/app/keys/page.tsx` to `server/src/app/settings/page.tsx`, exposed PUT endpoint, and updated navigation.
 - [2026-04-06] Cycle #163 ✅ Phase 0 Worker Dispatch + Execution Loop Completed: Connected the PlanDisplay component's "Approve" button to a new `server/src/app/api/execute/route.ts` API route. The new route calls `executeSwarmManifest` properly to trigger background execution and updates the session state in the database, allowing the `ExecutionMonitor` to poll the task statuses effectively. Simplified `page.tsx`'s `handleApprove` method and refactored the UI flow. Marked Phase 0 task from backlog as complete, and moved onto Phase 1.
 - [2026-03-27] Cycle #26 ✅ Completed Worker Dispatch and Execution Loop integration: Verified UI integration with orchestrator via the dispatcher loop in the tests.
 
