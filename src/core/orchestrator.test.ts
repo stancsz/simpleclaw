@@ -308,6 +308,137 @@ describe("Orchestrator Cloud Function (Mocked LLM DAG Cycle Test)", () => {
     });
 });
 
+describe("Gas Checks and Idempotency in Orchestrator", () => {
+    let testDbUrl: string;
+
+    beforeAll(() => {
+        testDbUrl = "sqlite://local_test_db_orchestrator_gas.sqlite";
+        const { DBClient } = require("../db/client");
+        const fs = require("fs");
+        const path = require("path");
+
+        const testDb = new DBClient(testDbUrl);
+        const schema = fs.readFileSync(path.join(__dirname, "../db/migrations/001_motherboard.sql"), "utf-8");
+        testDb.applyMigration(schema);
+
+        // Add additional schema if needed
+        testDb.applyMigration(`
+            CREATE TABLE IF NOT EXISTS gas_ledger (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                balance_credits INTEGER DEFAULT 0,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+    });
+
+    afterAll(() => {
+        const fs = require("fs");
+        try {
+             fs.unlinkSync("local_test_db_orchestrator_gas.sqlite");
+        } catch(e) {}
+    });
+
+    test("handles insufficient gas correctly", async () => {
+        const originalDbUrl = process.env.DATABASE_URL;
+        process.env.DATABASE_URL = testDbUrl;
+
+        const { DBClient } = require("../db/client");
+        const testDb = new DBClient(testDbUrl);
+        const user_id = "test_user_no_gas";
+
+        // Force balance to 0
+        testDb.db.run(`INSERT INTO gas_ledger (id, user_id, balance_credits) VALUES (?, ?, 0)`, ["uuid-1", user_id]);
+
+        const session_id = testDb.createSession(user_id, { prompt: "Test" }, {
+            version: "1.0",
+            intent_parsed: "Test",
+            skills_required: [],
+            credentials_required: [],
+            steps: []
+        });
+
+        const req = {
+            method: 'POST',
+            body: {
+                action: "approve",
+                user_id,
+                session_id
+            }
+        } as any;
+
+        let statusCode = 200;
+        let responseBody: any = null;
+
+        const res = {
+            set: () => {},
+            status: (code: number) => {
+                statusCode = code;
+                return res;
+            },
+            json: (body: any) => {
+                responseBody = body;
+            }
+        } as any;
+
+        await orchestratorHandler(req, res);
+
+        expect(statusCode).toBe(402);
+        expect(responseBody.error).toContain("Insufficient gas credits");
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
+    });
+
+    test("logs low gas balance warning", async () => {
+        const originalDbUrl = process.env.DATABASE_URL;
+        process.env.DATABASE_URL = testDbUrl;
+
+        const { DBClient } = require("../db/client");
+        const testDb = new DBClient(testDbUrl);
+        const user_id = "test_user_low_gas";
+
+        // Force balance to 50
+        testDb.db.run(`INSERT INTO gas_ledger (id, user_id, balance_credits) VALUES (?, ?, 50)`, ["uuid-2", user_id]);
+
+        const session_id = testDb.createSession(user_id, { prompt: "Test" }, {
+            version: "1.0",
+            intent_parsed: "Test",
+            skills_required: [],
+            credentials_required: [],
+            steps: []
+        });
+
+        const req = {
+            method: 'POST',
+            body: {
+                action: "approve",
+                user_id,
+                session_id
+            }
+        } as any;
+
+        let statusCode = 200;
+        const res = {
+            set: () => {},
+            status: (code: number) => { statusCode = code; return res; },
+            json: () => {}
+        } as any;
+
+        await orchestratorHandler(req, res);
+
+        expect(statusCode).toBe(200);
+
+        // Verify low balance warning
+        const logs = testDb.getAuditLogs(session_id);
+        const warningLog = logs.find((l: any) => l.event === "low_gas_balance_warning");
+        expect(warningLog).toBeDefined();
+
+        if (originalDbUrl) process.env.DATABASE_URL = originalDbUrl;
+        else delete process.env.DATABASE_URL;
+    });
+});
+
 describe("Manifest Validation Unit Tests", () => {
     test("accepts valid manifest", () => {
         const validManifest: SwarmManifest = {

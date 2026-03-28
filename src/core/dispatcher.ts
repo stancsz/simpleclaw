@@ -499,12 +499,6 @@ export async function executeSwarmManifest(
       db.updateSessionStatus(sessionId, "error");
   } else {
       db.updateSessionStatus(sessionId, "completed");
-
-      // Debit 1 Gas Credit after successful execution
-      const session = db.getSession(sessionId);
-      if (session && session.user_id) {
-          await consumeGas(session.user_id, 1, db);
-      }
   }
 
   return results;

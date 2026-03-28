@@ -25,6 +25,21 @@ export interface TaskResult {
     [key: string]: any;
 }
 
+export interface GasLedgerEntry {
+    id: string;
+    user_id: string;
+    balance_credits: number;
+    updated_at: string;
+}
+
+export interface StripeWebhookEvent {
+    id: string;
+    type: string;
+    data: {
+        object: any;
+    };
+}
+
 export interface SwarmManifest {
     version: string;
     intent_parsed: string;

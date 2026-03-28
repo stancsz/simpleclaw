@@ -4,6 +4,7 @@ import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
+import { consumeGas } from './gas';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -106,14 +107,34 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             return;
         }
 
+        // Low balance alert
+        if (gasBalance < 100) {
+            dbClient.writeAuditLog(session_id, 'low_gas_balance_warning', { balance: gasBalance });
+        }
+
         dbClient.updateSessionStatus(session_id, 'approved');
 
         // Execute asynchronously so UI can poll for results
-        executeSwarmManifest(manifest, session_id, dbClient).catch((err) => {
-            console.error('Error in asynchronous executeSwarmManifest:', err);
-            dbClient.updateSessionStatus(session_id, 'error');
-            dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: err.message || String(err) });
-        });
+        executeSwarmManifest(manifest, session_id, dbClient)
+            .then(async (results) => {
+                // Determine if execution was overall successful to merit a charge
+                const hasErrors = Object.values(results).some(res => res.status === "error");
+                if (!hasErrors) {
+                    // Use audit logs to prevent double-debiting (idempotency)
+                    const logs = dbClient.getAuditLogs(session_id);
+                    const alreadyConsumed = logs.some(log => log.event === 'gas_consumed_for_session');
+
+                    if (!alreadyConsumed) {
+                        await consumeGas(user_id, 1, dbClient);
+                        dbClient.writeAuditLog(session_id, 'gas_consumed_for_session', { amount: 1 });
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error('Error in asynchronous executeSwarmManifest:', err);
+                dbClient.updateSessionStatus(session_id, 'error');
+                dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: err.message || String(err) });
+            });
 
         res.status(200).json({
             status: 'dispatched',
