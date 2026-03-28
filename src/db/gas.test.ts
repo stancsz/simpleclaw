@@ -1,13 +1,12 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
-import { DBClient } from "../db/client";
+import { DBClient } from "./client";
 import {
   hasSufficientGas,
   consumeGas,
   addGasCredits,
   handleStripeWebhook,
-  stripe,
-  STRIPE_WEBHOOK_SECRET
-} from "./gas";
+  stripe
+} from "../core/gas";
 
 describe("Gas Ledger System", () => {
   let db: DBClient;
@@ -29,6 +28,12 @@ describe("Gas Ledger System", () => {
         session_id TEXT,
         event TEXT,
         metadata TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS transaction_log (
+        idempotency_key TEXT PRIMARY KEY,
+        status TEXT,
+        result TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -115,6 +120,101 @@ describe("Gas Ledger System", () => {
 
     } finally {
       // Restore
+      stripe.webhooks.constructEvent = originalConstructEvent;
+    }
+  });
+
+  test("handleStripeWebhook ensures idempotency to prevent duplicate credits", async () => {
+    const testStripeUserId = "test-idempotent-user";
+    const testPayload = {
+      id: "evt_idempotent_test",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_idempotent_test",
+          object: "checkout.session",
+          client_reference_id: testStripeUserId,
+          metadata: {
+            userId: testStripeUserId,
+            credits: "500"
+          }
+        }
+      }
+    };
+
+    const originalConstructEvent = stripe.webhooks.constructEvent;
+
+    try {
+      stripe.webhooks.constructEvent = (payload, sig, secret) => {
+        return testPayload as any;
+      };
+
+      // Ensure base balance is 10
+      expect(db.getGasBalance(testStripeUserId)).toBe(10);
+
+      // 1. Process for the first time
+      const success1 = handleStripeWebhook("mock_payload", "mock_sig", db);
+      expect(success1).toBe(true);
+
+      // Should be 10 + 500
+      let balance = db.getGasBalance(testStripeUserId);
+      expect(balance).toBe(510);
+
+      // 2. Process the exact same event again
+      const success2 = handleStripeWebhook("mock_payload", "mock_sig", db);
+      expect(success2).toBe(true); // Should return true to acknowledge but skip processing
+
+      // Balance should REMAIN 510, it should NOT add another 500
+      balance = db.getGasBalance(testStripeUserId);
+      expect(balance).toBe(510);
+
+    } finally {
+      // Restore
+      stripe.webhooks.constructEvent = originalConstructEvent;
+    }
+  });
+
+  test("handleStripeWebhook fails gracefully on missing metadata", async () => {
+    const testPayload = {
+      id: "evt_missing_meta",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_missing_meta",
+          object: "checkout.session",
+          // missing client_reference_id and metadata
+        }
+      }
+    };
+
+    const originalConstructEvent = stripe.webhooks.constructEvent;
+
+    try {
+      stripe.webhooks.constructEvent = (payload, sig, secret) => {
+        return testPayload as any;
+      };
+
+      // We expect console.error, but let's just check the return status
+      const success = handleStripeWebhook("mock_payload", "mock_sig", db);
+      expect(success).toBe(false);
+
+    } finally {
+      stripe.webhooks.constructEvent = originalConstructEvent;
+    }
+  });
+
+  test("handleStripeWebhook fails gracefully on bad signature", async () => {
+    const originalConstructEvent = stripe.webhooks.constructEvent;
+
+    try {
+      stripe.webhooks.constructEvent = (payload, sig, secret) => {
+        throw new Error("Invalid signature");
+      };
+
+      const success = handleStripeWebhook("mock_payload", "bad_sig", db);
+      expect(success).toBe(false);
+
+    } finally {
       stripe.webhooks.constructEvent = originalConstructEvent;
     }
   });

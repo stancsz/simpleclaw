@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #169 ✅ Implemented the Gas Tank backend: Added idempotency checks to Stripe webhook handling to prevent duplicate credit entries. Created comprehensive unit tests in `src/db/gas.test.ts` to cover balance updates, webhook parsing, error scenarios, and duplicate events. Marked 'Phase 1 — Gas Tank' as done in the BACKLOG.
 - [2026-04-06] Cycle #168 ✅ Connected UI to orchestrator engine: full Phase 0 e2e demo functional. Added shell skill and default text input to dashboard.
 - [2026-04-06] Cycle #167 ✅ Taking priority task: Integrating @jackwener/opencli into SimpleClaw to make sure the agent can use it.
 - [2026-04-06] Cycle #158 ✅ Updated strategic documentation across CLAUDE.md, SPEC.md, and SWARM_SPEC.md to internalize the "Software as a Biosphere" and "Headless Agency" directive based on the "9BS5SNErSdRYUR-XKH-U1Q" discourse.

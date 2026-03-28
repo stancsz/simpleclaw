@@ -72,6 +72,11 @@ export function handleStripeWebhook(payload: string | Buffer, signature: string,
     );
 
     if (event.type === 'checkout.session.completed') {
+      if (db.checkIdempotency(event.id)) {
+        console.log(`Duplicate Stripe webhook event detected and skipped: ${event.id}`);
+        return true;
+      }
+
       const session = event.data.object as Stripe.Checkout.Session;
 
       const userId = session.client_reference_id || session.metadata?.userId;
@@ -81,6 +86,7 @@ export function handleStripeWebhook(payload: string | Buffer, signature: string,
         const credits = parseInt(creditsStr, 10);
         if (!isNaN(credits)) {
            addGasCredits(userId, credits, db);
+           db.logTransaction(event.id, 'completed', { amount: credits });
            console.log(`Successfully added ${credits} gas to user ${userId}`);
            return true;
         }
