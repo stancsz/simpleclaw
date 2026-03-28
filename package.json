@@ -24,7 +24,7 @@
     "start:server": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=server",
     "start:hybrid": "bun run --allow-read=./workspace --allow-net=api.anthropic.com,mcp-gateway.internal --permission-deny-sys src/index.ts --mode=hybrid",
     "test": "bun test && cd server && bun test --preload ./setupTests.ts",
-    "test:integration": "bun scripts/test-integration.ts",
+    "test:integration": "bun test src/core/integration.test.ts",
     "test:plugins": "./scripts/test-plugins.sh",
     "heartbeat": "bun run scripts/heartbeat-simulator.ts",
     "electron:dev": "NODE_ENV=development electron .",

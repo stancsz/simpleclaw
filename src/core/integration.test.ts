@@ -141,15 +141,15 @@ describe("Swarm End-to-End Integration Pipeline", () => {
     const auditEvents = auditLogs.map((log: any) => log.event);
 
     expect(auditEvents).toContain("swarm_execution_started");
-    expect(auditEvents).toContain("worker_loading_skill");
+    expect(auditEvents).toContain("worker_skill_loaded");
     expect(auditEvents).toContain("worker_decrypted_credential");
     expect(auditEvents).toContain("worker_completed");
     expect(auditEvents).toContain("swarm_execution_completed");
 
     // Verify JIT skill loading from our test fixture
-    const skillLoadLog = auditLogs.find((log: any) => log.event === "worker_loading_skill");
+    const skillLoadLog = auditLogs.find((log: any) => log.event === "worker_skill_loaded");
     const skillLoadMeta = JSON.parse(skillLoadLog.metadata);
-    expect(skillLoadMeta.loaded_content_preview).toContain("github-fetch-issues");
+    expect(skillLoadMeta.skill_name).toContain("github-fetch-issues");
 
     // Verify KMS Credential Decryption Flow
     const decryptLog = auditLogs.find((log: any) => log.event === "worker_decrypted_credential");
