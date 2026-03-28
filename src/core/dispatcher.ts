@@ -514,5 +514,10 @@ export async function executeSwarmManifest(
       db.updateSessionStatus(sessionId, "completed");
   }
 
+  // Debit gas credits after execution completes
+  if (userId) {
+      await db.debitCredits(userId, 1);
+  }
+
   return results;
 }
