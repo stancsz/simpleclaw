@@ -434,6 +434,9 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
               assignee_id: { type: "string" },
               project_id: { type: "string" },
             } : {}),
+            ...(extension.name === "opencli" ? {
+              command: { type: "string" },
+            } : {}),
           },
           required: ["action"],
         },
@@ -442,7 +445,8 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
       approvalClass: extension.name === "browser" ? "network" : 
                     extension.name === "github" ? "network" :
                     extension.name === "gdrive" ? "network" :
-                    extension.name === "linear" ? "network" : "default",
+                    extension.name === "linear" ? "network" :
+                    extension.name === "opencli" ? "network" : "default",
       handler: async (args) => ({
         status: "completed",
         content: JSON.stringify(await extension.execute(args)),

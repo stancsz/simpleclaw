@@ -20,7 +20,7 @@ export async function loadPlugins() {
         const envVarName = `ENABLE_${pluginBaseName.toUpperCase()}`;
         
         // Default to true for core plugins, false for optional ones
-        const isCorePlugin = ["browser", "screencap", "github", "gdrive", "linear"].includes(pluginBaseName.toLowerCase());
+        const isCorePlugin = ["browser", "screencap", "github", "gdrive", "linear", "opencli"].includes(pluginBaseName.toLowerCase());
         const isEnabled = process.env[envVarName] === "true" || (isCorePlugin && process.env[envVarName] !== "false");
         
         if (!isEnabled) {
