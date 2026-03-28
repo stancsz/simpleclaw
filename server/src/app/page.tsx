@@ -7,7 +7,7 @@ import GasTankDisplay from '../components/GasTankDisplay';
 import type { PlanDiffApprove } from '@/../../src/core/types';
 import Link from 'next/link';
 import { generatePlan, executePlan } from '../lib/api-client';
-import KeyManager from './components/KeyManager';
+import KeyManager from '@/components/KeyManager';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('List files in current directory');
