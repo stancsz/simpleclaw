@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-17] Cycle #26 ✅ Verified Gas Tank database schema and basic debit logic are already fully implemented (including Stripe integration). No regressions introduced.
 - [2026-04-06] Cycle #170 ✅ Implemented the standard Skill System (SWARM_SPEC.md §11.1). Created the `Skill` interface in `src/core/types.ts` and `skill-loader.ts` to parse YAML frontmatter and support fetching from HTTP and local refs. Migrated `slack.md` and `github.md` skills to the new YAML frontmatter structure. Modified the `executeWorkerTask` function to utilize the skill loader to load, parse, and enforce skill credentials and allowed domains. Created comprehensive tests in `src/core/skill-loader.test.ts`. Marked 'Phase 1 — Custom Skill Uploader' in progress.
 - [2026-03-17] Cycle #26 ✅ Implemented Heartbeat system for Continuous Mode: added heartbeat_queue schema, webhook endpoint, scheduler, and tests
 - [2026-04-06] Cycle #169 ✅ Implemented the Gas Tank backend: Added idempotency checks to Stripe webhook handling to prevent duplicate credit entries. Created comprehensive unit tests in `src/db/gas.test.ts` to cover balance updates, webhook parsing, error scenarios, and duplicate events. Marked 'Phase 1 — Gas Tank' as done in the BACKLOG.
