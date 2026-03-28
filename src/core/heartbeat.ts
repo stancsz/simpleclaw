@@ -174,6 +174,68 @@ export function startHeartbeatScheduler(
   return intervalMs;
 }
 
+/**
+ * Heartbeat & Continuous Mode Operations (SWARM_SPEC.md §14)
+ *
+ * Local Simulation:
+ * The orchestrator HTTP handler calls `processPendingHeartbeats` asynchronously to
+ * simulate a cron job checking the heartbeat queue for any due executions.
+ *
+ * Production Transition (Supabase pg_cron):
+ * In a true sovereign production setup, this logic shifts entirely off the platform.
+ * The user's Supabase instance utilizes the `pg_cron` extension to run a scheduled
+ * SQL job every 30 minutes. That job fires a webhook (POST /api/swarms/heartbeat)
+ * which boots a new Orchestrator invocation specifically for that session.
+ * Thus, the `next_trigger` loop is maintained persistently in the Sovereign Motherboard,
+ * entirely decoupling execution scheduling from the platform's internal state.
+ */
+
+export async function scheduleHeartbeat(sessionId: string, db: any): Promise<void> {
+  const nextTrigger = new Date(Date.now() + 30 * 60000).toISOString().replace('T', ' ').replace('Z', '');
+  db.scheduleHeartbeat(sessionId, nextTrigger);
+  db.writeAuditLog(sessionId, "continuous_mode_enabled", { next_trigger: nextTrigger });
+}
+
+export async function processPendingHeartbeats(db: any): Promise<void> {
+  const pending = db.getPendingHeartbeats();
+  for (const heartbeat of pending) {
+    // Idempotency: Use transaction_log to ensure a specific heartbeat execution
+    // isn't fired multiple times if concurrent orchestrator triggers fire.
+    const idempotencyKey = `heartbeat_execution_${heartbeat.id}`;
+    if (db.checkIdempotency(idempotencyKey)) {
+        continue;
+    }
+
+    // Attempt to log the transaction first. If this was a real concurrent DB transaction,
+    // this acts as a lock.
+    db.createTransactionLogEntry(idempotencyKey, 'completed', { heartbeat_id: heartbeat.id });
+
+    db.updateHeartbeatStatus(heartbeat.id, "processing");
+    const session = db.getSession(heartbeat.session_id);
+    if (!session || !session.manifest) {
+      db.updateHeartbeatStatus(heartbeat.id, "error");
+      continue;
+    }
+
+    try {
+      // Import dynamically to avoid circular dependencies if any
+      const { executeSwarmManifest } = await import("./dispatcher");
+      await executeSwarmManifest(session.manifest, heartbeat.session_id, db);
+      db.updateHeartbeatStatus(heartbeat.id, "completed");
+      await rescheduleHeartbeat(heartbeat.session_id, db);
+    } catch (err: any) {
+      db.updateHeartbeatStatus(heartbeat.id, "error");
+      db.writeAuditLog(heartbeat.session_id, "continuous_mode_error", { error: err.message || String(err) });
+    }
+  }
+}
+
+export async function rescheduleHeartbeat(sessionId: string, db: any): Promise<void> {
+  const nextTrigger = new Date(Date.now() + 30 * 60000).toISOString().replace('T', ' ').replace('Z', '');
+  db.scheduleHeartbeat(sessionId, nextTrigger);
+  db.writeAuditLog(sessionId, "continuous_mode_rescheduled", { next_trigger: nextTrigger });
+}
+
 export function stopHeartbeatScheduler(): void {
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);

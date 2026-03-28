@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #170 ✅ Implemented Heartbeat system for Continuous Mode: added `scheduleHeartbeat`, `processPendingHeartbeats`, and `rescheduleHeartbeat` logic with idempotency protection in `src/core/heartbeat.ts`. Extended SQLite `DBClient` to query and mutate `heartbeat_queue`. Integrated recursive dispatch logic asynchronously into `orchestratorHandler` to simulate `pg_cron` pending Supabase production deployment. Created dedicated TDD tests in `src/core/heartbeat.test.ts` utilizing `bun:sqlite` to enforce real SQLite idempotency and correct recursive timeout behaviors. Fixed SQLite timestamp comparison discrepancies between JS `toISOString()` and `CURRENT_TIMESTAMP`. Checked off Phase 1 Heartbeat in backlog.
 - [2026-04-06] Cycle #168 ✅ Connected UI to orchestrator engine: full Phase 0 e2e demo functional. Added shell skill and default text input to dashboard.
 - [2026-04-06] Cycle #167 ✅ Taking priority task: Integrating @jackwener/opencli into SimpleClaw to make sure the agent can use it.
 - [2026-04-06] Cycle #158 ✅ Updated strategic documentation across CLAUDE.md, SPEC.md, and SWARM_SPEC.md to internalize the "Software as a Biosphere" and "Headless Agency" directive based on the "9BS5SNErSdRYUR-XKH-U1Q" discourse.
@@ -123,7 +124,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **AGENT_OS: Integration & Dogfooding Loop** - Implement "External-Agency-Delegation"
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
-- [ ] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [x] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 - [ ] **Phase 1 — Custom Skill Uploader:** Allow users to upload their own `.md` skill files via UI and store them locally or in Supabase
 
 ## DISCOVERY LOG

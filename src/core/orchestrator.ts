@@ -74,12 +74,19 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
     const session_id = body?.session_id;
     const action = body?.action;
 
+    const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
+
+    // Process Continuous Mode heartbeats asynchronously before handling new incoming requests
+    import('./heartbeat').then(({ processPendingHeartbeats }) => {
+        processPendingHeartbeats(dbClient).catch((err) => {
+            console.error('Error processing pending heartbeats:', err);
+        });
+    });
+
     if (!user_id || typeof user_id !== 'string') {
         res.status(400).json({ error: 'Missing or invalid "user_id" field in request body.' });
         return;
     }
-
-    const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
 
     if (action === 'approve' || action === 'execute') {
         if (!session_id || typeof session_id !== 'string') {

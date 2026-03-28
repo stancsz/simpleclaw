@@ -342,6 +342,44 @@ export class DBClient {
         this.writeAuditLog(userId, 'gas_consumed', { amount });
     }
   }
+
+  scheduleHeartbeat(sessionId: string, nextTrigger: string) {
+    if (this.isSupabase) {
+      console.warn("scheduleHeartbeat called in Supabase mode - using mock implementation.");
+      return;
+    }
+    if (this.db) {
+      const id = crypto.randomUUID();
+      this.db.run(
+        `INSERT INTO heartbeat_queue (id, session_id, next_trigger, status) VALUES (?, ?, ?, ?)`,
+        [id, sessionId, nextTrigger, 'pending']
+      );
+    }
+  }
+
+  getPendingHeartbeats(): any[] {
+    if (this.isSupabase) {
+      return [];
+    }
+    if (this.db) {
+      return this.db.query(
+        `SELECT * FROM heartbeat_queue WHERE status = 'pending' AND next_trigger <= CURRENT_TIMESTAMP ORDER BY next_trigger ASC`
+      ).all() as any[];
+    }
+    return [];
+  }
+
+  updateHeartbeatStatus(id: string, status: string) {
+    if (this.isSupabase) {
+      return;
+    }
+    if (this.db) {
+      this.db.run(
+        `UPDATE heartbeat_queue SET status = ? WHERE id = ?`,
+        [status, id]
+      );
+    }
+  }
 }
 
 export const getDbClient = () => {

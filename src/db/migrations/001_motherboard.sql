@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS transaction_log (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Heartbeat queue for Continuous Mode scheduled executions
 CREATE TABLE IF NOT EXISTS heartbeat_queue (
     id TEXT PRIMARY KEY,
     session_id TEXT,
