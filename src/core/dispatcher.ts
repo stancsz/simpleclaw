@@ -6,7 +6,7 @@ import { executeWorkerTask, type WorkerResult } from "../workers/template";
 import { executeGithubWorkerTask } from "../workers/github.worker";
 import { executeMockWorkerTask } from "../workers/mock-worker";
 import { executeDemoWorkerTask } from "../workers/demo-worker";
-import { consumeGas } from "./gas";
+import { debitCredits } from "../services/gasLedger";
 
 import {
   runAgentLoop,
@@ -337,6 +337,20 @@ export async function executeSwarmManifest(
   sessionId: string,
   db: DBClient
 ): Promise<Record<string, WorkerResult>> {
+
+  // Enforce gas check inside the dispatcher before execution starts
+  const session = db.getSession(sessionId);
+  const userId = session?.user_id;
+
+  if (userId) {
+    const gasBalance = db.getGasBalance(userId);
+    if (gasBalance <= 0) {
+      db.writeAuditLog(sessionId, "swarm_execution_failed", { error: "Insufficient gas credits" });
+      db.updateSessionStatus(sessionId, "error");
+      return { error: { status: "error", error: "Insufficient gas credits" } };
+    }
+  }
+
   if (!manifest) {
     db.writeAuditLog(sessionId, "swarm_execution_failed", { error: "Manifest is undefined" });
     db.updateSessionStatus(sessionId, "error");

@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach, afterEach, mock } from "bun:test";
 import { POST } from "./route";
 import { DBClient } from "../../../../../../src/db/client";
-import * as gas from "../../../../../../src/core/gas";
+import * as stripe from "../../../../../../src/services/stripe";
 
 describe("Stripe Webhook API Route", () => {
   let db: DBClient;
@@ -47,8 +47,8 @@ describe("Stripe Webhook API Route", () => {
 
   test("processes valid webhook and adds credits successfully", async () => {
     // Mock the handleStripeWebhook function
-    mock.module("../../../../../../src/core/gas", () => ({
-      ...gas,
+    mock.module("../../../../../../src/services/stripe", () => ({
+      ...stripe,
       handleStripeWebhook: () => true
     }));
 
@@ -72,13 +72,13 @@ describe("Stripe Webhook API Route", () => {
     expect(text).toBe("Webhook processed successfully");
 
     // Clean up mock
-    mock.module("../../../../../../src/core/gas", () => gas);
+    mock.module("../../../../../../src/services/stripe", () => stripe);
   });
 
   test("returns 400 when webhook handling fails (e.g. invalid signature)", async () => {
     // Mock the handleStripeWebhook function to return false
-    mock.module("../../../../../../src/core/gas", () => ({
-      ...gas,
+    mock.module("../../../../../../src/services/stripe", () => ({
+      ...stripe,
       handleStripeWebhook: () => false
     }));
 
@@ -101,6 +101,6 @@ describe("Stripe Webhook API Route", () => {
     expect(text).toBe("Webhook handling failed or unhandled event");
 
     // Clean up mock
-    mock.module("../../../../../../src/core/gas", () => gas);
+    mock.module("../../../../../../src/services/stripe", () => stripe);
   });
 });
