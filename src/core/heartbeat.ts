@@ -352,7 +352,9 @@ function escapeRegExp(value: string): string {
 
 import { DBClient } from "../db/client";
 
-export async function processHeartbeats(db: DBClient, baseUrl: string) {
+import { executeSwarmManifest } from "./dispatcher";
+
+export async function handleHeartbeat(db: DBClient) {
     const pending = db.getPendingHeartbeats();
 
     for (const heartbeat of pending) {
@@ -360,29 +362,52 @@ export async function processHeartbeats(db: DBClient, baseUrl: string) {
         db.updateHeartbeatStatus(heartbeat.id, 'processing');
 
         try {
-            const res = await fetch(`${baseUrl}/api/heartbeat?sessionId=${heartbeat.session_id}`, {
-                method: 'POST'
-            });
-
-            if (!res.ok) {
-                console.error(`Heartbeat failed for session ${heartbeat.session_id} with status ${res.status}`);
+            const session = db.getSession(heartbeat.session_id);
+            if (!session || !session.manifest) {
                 db.updateHeartbeatStatus(heartbeat.id, 'error');
-            } else {
-                db.updateHeartbeatStatus(heartbeat.id, 'completed');
+                continue;
             }
+
+            // Optional gas check logic if required by orchestrator policies,
+            // but we'll focus on the core execution here.
+
+            // Dispatch workers using the existing `executeSwarmManifest`
+            const results = await executeSwarmManifest(session.manifest, heartbeat.session_id, db);
+
+            // Set up the next trigger for recurring continuous mode (e.g., add 30 minutes)
+            const nextTriggerDate = new Date(Date.now() + 30 * 60 * 1000);
+            const nextTriggerStr = nextTriggerDate.toISOString().replace('T', ' ').replace('Z', '');
+
+            const hasErrors = Object.values(results).some(res => res.status === "error");
+            if (hasErrors) {
+                 db.updateHeartbeatStatus(heartbeat.id, 'failed');
+            } else {
+                 db.updateHeartbeatStatus(heartbeat.id, 'completed');
+                 // Only update the trigger for completed ones based on prompt instructions
+                 // "Updates heartbeat_queue status to 'completed' or 'failed', and sets the next next_trigger for recurring sessions"
+                 if (db.db) {
+                     db.db.run(
+                        `UPDATE heartbeat_queue SET next_trigger = ? WHERE id = ?`,
+                        [nextTriggerStr, heartbeat.id]
+                     );
+                     // Set to pending so it runs again later
+                     db.updateHeartbeatStatus(heartbeat.id, 'pending');
+                 }
+            }
+
         } catch (error) {
             console.error(`Error processing heartbeat for session ${heartbeat.session_id}:`, error);
-            db.updateHeartbeatStatus(heartbeat.id, 'error');
+            db.updateHeartbeatStatus(heartbeat.id, 'failed');
         }
     }
 }
 
 // Simple local polling loop for development purposes. In production this would be replaced by pg_cron.
-export function startLocalScheduler(db: DBClient, baseUrl: string, intervalMs: number = 60000) {
+export function startLocalScheduler(db: DBClient, intervalMs: number = 30000) {
     console.log(`Starting local heartbeat scheduler running every ${intervalMs}ms`);
 
     setInterval(() => {
-        processHeartbeats(db, baseUrl).catch(err => {
+        handleHeartbeat(db).catch(err => {
             console.error("Local scheduler loop error:", err);
         });
     }, intervalMs);

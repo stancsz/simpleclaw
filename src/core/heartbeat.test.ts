@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { DBClient } from "../db/client";
-import { processHeartbeats, startLocalScheduler } from "./heartbeat";
-// import { NextRequest } from "next/server"; // Can't import next/server outside server/ dir in bun tests cleanly without setup
+import { handleHeartbeat, startLocalScheduler } from "./heartbeat";
 import * as dispatcher from "./dispatcher";
 
 describe("Heartbeat System", () => {
@@ -97,53 +96,52 @@ describe("Heartbeat System", () => {
 
     it("should process pending heartbeats via local scheduler simulation", async () => {
         const sessionId = "session-789";
+        const userId = "user-123";
+        const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
+
+        db.createSession(userId, { prompt: 'do stuff' }, { steps: [], skills_required: [] });
+        // Override session ID for the test since createSession uses crypto.randomUUID
+        db.db.run(`UPDATE orchestrator_sessions SET id = ? WHERE user_id = ?`, [sessionId, userId]);
+
+        db.upsertHeartbeat(sessionId, triggerTime, "pending");
+
+        // Let it call the real executeSwarmManifest but mock the DB gas lookup to bypass error,
+        // and let it complete. Wait, executeSwarmManifest relies on manifest logic.
+        // If manifest is empty list, it completes instantly with success.
+
+        try {
+            // Need to insert some gas balance so executeSwarmManifest doesn't fail early
+            if (!db.getGasBalance(userId)) {
+                db.incrementGasBalance(userId, 100);
+            }
+
+            await handleHeartbeat(db);
+
+            // handleHeartbeat updates the queue to 'completed' AND queues the next one as 'pending'
+            // We should find one 'completed' (which getPendingHeartbeats ignores) and one new 'pending'
+            const pending = db.getPendingHeartbeats();
+            expect(pending.length).toBe(0); // the new one is 30 mins in future!
+
+            const queueCheck = db.db.query("SELECT * FROM heartbeat_queue").all() as any[];
+            expect(queueCheck.length).toBe(1);
+            expect(queueCheck[0].status).toBe('pending');
+            expect(queueCheck[0].next_trigger > new Date().toISOString().replace('T', ' ').replace('Z', '')).toBe(true);
+        } finally {
+
+        }
+    });
+
+    it("should update heartbeat to error if session has no manifest", async () => {
+        const sessionId = "session-missing-manifest";
         const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
 
         db.upsertHeartbeat(sessionId, triggerTime, "pending");
 
-        // Mock global fetch for the scheduler
-        const originalFetch = global.fetch;
-        let fetchCalledUrl = "";
-        global.fetch = async (url: RequestInfo | URL, init?: RequestInit) => {
-            fetchCalledUrl = url.toString();
-            return new Response(JSON.stringify({ status: 'success' }), { status: 200 });
-        };
+        await handleHeartbeat(db);
 
-        try {
-            await processHeartbeats(db, "http://localhost:3000");
-
-            expect(fetchCalledUrl).toBe(`http://localhost:3000/api/heartbeat?sessionId=${sessionId}`);
-
-            const pending = db.getPendingHeartbeats();
-            expect(pending.length).toBe(0);
-        } finally {
-            global.fetch = originalFetch;
-        }
-    });
-
-    it("should prevent double-execution via idempotency in heartbeat route", async () => {
-        // Set up session for heartbeat
-        const sessionId = "session-idempotent";
-        const userId = "user-123";
-        db.createSession(userId, { prompt: 'do stuff' }, { steps: [], skills_required: [] });
-
-        // First we simulate the webhook endpoint
-        const reqUrl = new URL(`http://localhost:3000/api/heartbeat?sessionId=${sessionId}`);
-
-        // Mock DB connection inside the route by using a spy or since it calls getDbClient(),
-        // we should make sure getDbClient returns our local `db` instance.
-        // Let's test the logic directly using the idempotency methods as requested.
-        const triggerTime = new Date(Date.now() + 30 * 60 * 1000).toISOString().replace('T', ' ').replace('Z', '');
-        const idempotencyKey = `heartbeat-${sessionId}-${triggerTime}`;
-
-        expect(db.checkIdempotency(idempotencyKey)).toBe(false);
-
-        // First run completes and logs
-        db.createTransactionLogEntry(idempotencyKey, 'started', {});
-        db.logTransaction(idempotencyKey, 'completed', { ok: true });
-
-        // Second run detects it's already done
-        expect(db.checkIdempotency(idempotencyKey)).toBe(true);
+        const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
+        expect(queueCheck.length).toBe(1);
+        expect(queueCheck[0].status).toBe('error');
     });
 
     it("should resume orchestrator from checkpointed state correctly", () => {

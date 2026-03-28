@@ -26,6 +26,7 @@
     "test": "bun test && cd server && bun test --preload ./setupTests.ts",
     "test:integration": "bun scripts/test-integration.ts",
     "test:plugins": "./scripts/test-plugins.sh",
+    "heartbeat": "bun run scripts/heartbeat-simulator.ts",
     "electron:dev": "NODE_ENV=development electron .",
     "electron:build": "npm run build:server && electron-builder",
     "build:server": "cd server && npm run build",
