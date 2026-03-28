@@ -10,7 +10,7 @@ import { generatePlan, executePlan } from '../lib/api-client';
 import KeyManager from './components/KeyManager';
 
 export default function Home() {
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState('List files in current directory');
   const [pda, setPda] = useState<PlanDiffApprove | null>(null);
   const [keyCount, setKeyCount] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
