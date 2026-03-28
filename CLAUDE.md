@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #26 ✅ Implemented Phase 1 BYOK UI: Verified that the UI components in Next.js Dashboard, integration with KMS via Supabase Vault, and API routes are fully implemented, and marked the backlog correctly. Tested APIs to ensure functionality.
 - [2026-04-06] Cycle #169 ✅ Implemented Phase 1 BYOK UI: Migrated key management UI from `/settings` to `/keys` and updated the `Navigation` component to match user requirements. Tested API functionality and passed unittests.
 - [2026-04-06] Cycle #168 ✅ Connected UI to orchestrator engine: full Phase 0 e2e demo functional. Added shell skill and default text input to dashboard.
 - [2026-04-06] Cycle #167 ✅ Taking priority task: Integrating @jackwener/opencli into SimpleClaw to make sure the agent can use it.
