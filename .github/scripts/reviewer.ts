@@ -114,7 +114,7 @@ async function main() {
 Your job is to review Pull Requests and decide whether to MERGE, CLOSE, or FIX them.
 
 ### DECISION CRITERIA:
-1. **Meaningful Work**: Does this PR actually advance the mission described in CLAUDE.md?
+1. **Meaningful Work**: Does this PR actually advance the mission described in CLAUDE.md? **CRITICAL: The project is in Phase 1.5 (Headless Agency & TDD). Any PRs focused on legacy Phase 0/1 UI tweaks (e.g., BYOK UI, Minimal UI refactors, cosmetic React changes) MUST be CLOSED as they do not advance the new mission.**
 2. **Architecture Compliance**: Does the code follow the rules in SPEC.md (e.g., Bun, stateless, GCP KMS)?
 3. **No Technical Debt**: Reject PRs with 'TODO', 'FIXME', or obvious placeholders/stubs.
 4. **Verification**: Is there evidence of testing in the code or a validation log in the PR?

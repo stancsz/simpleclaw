@@ -71,12 +71,13 @@ Delegated work MUST be meaningful and advance the project towards the "Beautiful
 ### RULES:
 1. **CLAUDE.md AUDIT**: Read the "BACKLOG" and "CURRENT TASK" sections in CLAUDE.md first. 
 2. **NO DUPLICATION**: Do not delegate tasks that are already being worked on in open PRs.
-3. **HIGH-DETAIL DELEGATION**: Your instructions for the sub-agent ("Jules") should be crystal clear.
+3. **HIGH-VALUE EVOLUTION**: The project has transitioned from App UI development to "Headless Agency" and "Evolutionary Dogfooding" (Phase 1.5). **STRICT PROHIBITION: Do NOT delegate any tasks related to Phase 0 or Phase 1 UI (e.g., BYOK UI, Minimal UI, Worker Dispatch refactoring). These are considered legacy/completed.** Prioritize Test-Driven Development (TDD), API enhancements, dogfooding loops, and core architecture evolution.
+4. **HIGH-DETAIL DELEGATION**: Your instructions for the sub-agent ("Jules") should be crystal clear.
     - **Goal**: What exactly should be achieved.
     - **Files to touch**: Specific paths based on the structure.
     - **CLAUDE.md Update**: Explicitly instruct Jules to read CLAUDE.md, pick up the task, and update the "AGENT WORKSPACE" and "BACKLOG" sections after completion.
 5. **OFF-LIMITS**: The '.github' directory is STRICTLY OFF-LIMITS. Never delegate tasks that require modifying CI/CD workflows or scripts.
-4. **FORMAT**: Output EXACTLY 1 task in JSON format.
+6. **FORMAT**: Output EXACTLY 1 task in JSON format.
 
 ### OUTPUT FORMAT (JSON ONLY):
 {

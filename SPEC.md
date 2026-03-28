@@ -156,20 +156,26 @@ Workers act as the ephemeral "muscle" of the system. Their lifecycle guarantees 
 ## 🗺️ Roadmap
 
 ### Phase 0 — Proof of Concept (Weeks 1–4)
-- [ ] Single Cloud Function that accepts a text prompt and returns a `swarm.yaml` plan
-- [ ] Hardcoded single-skill Worker execution (Shopify read)
-- [ ] Basic Supabase Motherboard schema (v0)
-- [ ] KMS credential encryption/decryption flow
-- [ ] Minimal UI: text input → plan display → approve button
+- [x] Single Cloud Function that accepts a text prompt and returns a `swarm.yaml` plan
+- [x] Hardcoded single-skill Worker execution (Shopify read)
+- [x] Basic Supabase Motherboard schema (v0)
+- [x] KMS credential encryption/decryption flow
+- [x] Minimal UI: text input → plan display → approve button
 
 ### Phase 1 — Self-Service MVP (Weeks 5–10)
 - [ ] GitHub + Google OAuth login
 - [ ] Guided Supabase onboarding (one-click managed setup)
-- [ ] BYOK key management UI (Supabase Vault integration)
-- [ ] Plan-Diff-Approve UI
+- [x] BYOK key management UI (Supabase Vault integration)
+- [x] Plan-Diff-Approve UI
 - [ ] Standard Library: 10 Skills (Shopify, Slack, Google Sheets, Gmail, Linear)
-- [ ] Gas Tank + Stripe integration
-- [ ] Real-time execution monitor
+- [x] Gas Tank + Stripe integration
+- [x] Real-time execution monitor
+
+### Phase 1.5 — Headless Agency & Evolutionary Dogfooding
+- [ ] Implement "Evolutionary Dogfooding" loop (mutate code based on real-time failure)
+- [ ] Shift architecture focus to Headless Agency and API-first protocols
+- [ ] Refactor and enhance Test-Driven Development (TDD) coverage across all orchestrator and worker components
+- [ ] Implement the "Sovereign Gateway Play" to capture unique Execution Traces
 
 ### Phase 2 — Scheduling & Continuous Mode (Weeks 11–16)
 - [ ] Cron + webhook trigger system
