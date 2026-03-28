@@ -434,10 +434,7 @@ async function buildCapabilityDefinitions(mode: RuntimeMode): Promise<Capability
               assignee_id: { type: "string" },
               project_id: { type: "string" },
             } : {}),
-            ...(extension.name === "opencli" ? {
-              command: { type: "string" },
-            } : {}),
-            ...(extension.name === "interview" ? {
+                        ...(extension.name === "interview" ? {
               section: { type: "string" },
               question: { type: "string" },
             } : {}),
