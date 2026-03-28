@@ -40,3 +40,41 @@ export async function createCheckoutSession(userId: string, credits: number, ori
     return null;
   }
 }
+
+export function handleStripeWebhook(payload: string | Buffer, signature: string, db: import('../db/client').DBClient): boolean {
+  try {
+    const event = stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      STRIPE_WEBHOOK_SECRET
+    );
+
+    if (event.type === 'checkout.session.completed') {
+      if (db.checkIdempotency(event.id)) {
+        console.log(`Duplicate Stripe webhook event detected and skipped: ${event.id}`);
+        return true;
+      }
+
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      const userId = session.client_reference_id || session.metadata?.userId;
+      const creditsStr = session.metadata?.credits;
+
+      if (userId && creditsStr) {
+        const credits = parseInt(creditsStr, 10);
+        if (!isNaN(credits)) {
+           // To avoid circular dependency, use gasLedger db method directly
+           db.incrementGasBalance(userId, credits);
+           db.logTransaction(event.id, 'completed', { amount: credits });
+           console.log(`Successfully added ${credits} gas to user ${userId}`);
+           return true;
+        }
+      }
+      console.error("Missing userId or credits in session metadata for gas topup");
+    }
+    return false;
+  } catch (err: any) {
+    console.error("Webhook signature verification failed:", err.message);
+    return false;
+  }
+}

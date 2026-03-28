@@ -4,7 +4,7 @@ import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
-import { consumeGas } from './gas';
+import { debitCredits } from '../services/gasLedger';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -103,6 +103,8 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         // Check for sufficient gas before execution
         const gasBalance = dbClient.getGasBalance(user_id);
         if (gasBalance <= 0) {
+            dbClient.writeAuditLog(session_id, 'swarm_execution_failed', { error: 'Insufficient gas credits' });
+            dbClient.updateSessionStatus(session_id, 'error');
             res.status(402).json({ error: 'Insufficient gas credits. Please purchase more credits to execute this swarm.' });
             return;
         }
@@ -134,7 +136,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
                     const alreadyConsumed = logs.some(log => log.event === 'gas_consumed_for_session');
 
                     if (!alreadyConsumed) {
-                        await consumeGas(user_id, 1, dbClient);
+                        await debitCredits(user_id, 1, dbClient);
                         dbClient.writeAuditLog(session_id, 'gas_consumed_for_session', { amount: 1 });
                     }
                 }
