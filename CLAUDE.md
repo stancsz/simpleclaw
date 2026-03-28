@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-17] Cycle #26 ✅ Implemented Heartbeat system for Continuous Mode: added heartbeat_queue schema, webhook endpoint, scheduler, and tests
 - [2026-04-06] Cycle #169 ✅ Implemented the Gas Tank backend: Added idempotency checks to Stripe webhook handling to prevent duplicate credit entries. Created comprehensive unit tests in `src/db/gas.test.ts` to cover balance updates, webhook parsing, error scenarios, and duplicate events. Marked 'Phase 1 — Gas Tank' as done in the BACKLOG.
 - [2026-04-06] Cycle #168 ✅ Connected UI to orchestrator engine: full Phase 0 e2e demo functional. Added shell skill and default text input to dashboard.
 - [2026-04-06] Cycle #167 ✅ Taking priority task: Integrating @jackwener/opencli into SimpleClaw to make sure the agent can use it.
@@ -124,7 +125,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **AGENT_OS: Integration & Dogfooding Loop** - Implement "External-Agency-Delegation"
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
-- [ ] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [x] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 - [ ] **Phase 1 — Custom Skill Uploader:** Allow users to upload their own `.md` skill files via UI and store them locally or in Supabase
 - [x] **Phase 1 — Gas Tank:** Stripe integration and credit debit system for the orchestrator.
 

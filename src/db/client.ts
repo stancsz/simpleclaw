@@ -342,6 +342,49 @@ export class DBClient {
         this.writeAuditLog(userId, 'gas_consumed', { amount });
     }
   }
+
+  upsertHeartbeat(sessionId: string, nextTrigger: string, status: string = 'pending') {
+    if (this.isSupabase) {
+        console.warn("upsertHeartbeat called in Supabase mode.");
+        return;
+    }
+    if (this.db) {
+        const row = this.db.query(`SELECT id FROM heartbeat_queue WHERE session_id = ?`).get(sessionId) as any;
+        if (row) {
+            this.db.run(
+                `UPDATE heartbeat_queue SET next_trigger = ?, status = ? WHERE id = ?`,
+                [nextTrigger, status, row.id]
+            );
+        } else {
+            const id = crypto.randomUUID();
+            this.db.run(
+                `INSERT INTO heartbeat_queue (id, session_id, next_trigger, status) VALUES (?, ?, ?, ?)`,
+                [id, sessionId, nextTrigger, status]
+            );
+        }
+    }
+  }
+
+  getPendingHeartbeats(): any[] {
+    if (this.isSupabase) return [];
+    if (this.db) {
+        return this.db.query(`SELECT * FROM heartbeat_queue WHERE status = 'pending' AND next_trigger <= CURRENT_TIMESTAMP ORDER BY next_trigger ASC`).all() as any[];
+    }
+    return [];
+  }
+
+  updateHeartbeatStatus(id: string, status: string) {
+    if (this.isSupabase) {
+        console.warn("updateHeartbeatStatus called in Supabase mode.");
+        return;
+    }
+    if (this.db) {
+        this.db.run(
+            `UPDATE heartbeat_queue SET status = ? WHERE id = ?`,
+            [status, id]
+        );
+    }
+  }
 }
 
 export const getDbClient = () => {

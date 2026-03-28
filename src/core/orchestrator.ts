@@ -114,6 +114,15 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
         dbClient.updateSessionStatus(session_id, 'approved');
 
+        // Setup heartbeat for continuous mode if schedule exists
+        if (manifest.schedule) {
+            // Calculate next trigger (30 mins from now)
+            const nextTriggerDate = new Date(Date.now() + 30 * 60 * 1000);
+            const nextTriggerStr = nextTriggerDate.toISOString().replace('T', ' ').replace('Z', '');
+            dbClient.upsertHeartbeat(session_id, nextTriggerStr, 'pending');
+            dbClient.writeAuditLog(session_id, 'continuous_mode_enabled', { schedule: manifest.schedule, next_trigger: nextTriggerStr });
+        }
+
         // Execute asynchronously so UI can poll for results
         executeSwarmManifest(manifest, session_id, dbClient)
             .then(async (results) => {
