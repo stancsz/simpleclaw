@@ -35,19 +35,31 @@ export async function POST(req: NextRequest) {
         db.upsertHeartbeat(sessionId, nextTriggerStr, 'pending');
         db.writeAuditLog(sessionId, 'heartbeat_triggered', { next_trigger: nextTriggerStr });
 
+        // Prevent double execution (idempotency check using heartbeat status updating)
+        // Check transaction log in case duplicate webhook firing
+        const idempotencyKey = `heartbeat-${sessionId}-${nextTriggerStr}`;
+        if (db.checkIdempotency(idempotencyKey)) {
+            return Response.json({ status: "success", message: "Idempotent request, already executed" }, { status: 200 });
+        }
+        db.createTransactionLogEntry(idempotencyKey, 'started', {});
+
         // Execute asynchronously
         executeSwarmManifest(session.manifest, sessionId, db)
             .then(async (results) => {
                 const hasErrors = Object.values(results).some(res => res.status === "error");
                 if (!hasErrors) {
+                    const logs = db.getAuditLogs(sessionId);
+                    const runId = `gas_consumed_for_heartbeat_${Date.now()}`;
                     await consumeGas(userId, 1, db);
-                    db.writeAuditLog(sessionId, 'gas_consumed_for_heartbeat', { amount: 1 });
+                    db.writeAuditLog(sessionId, runId, { amount: 1 });
                 }
+                db.logTransaction(idempotencyKey, 'completed', results);
             })
             .catch((err) => {
                 console.error('Error in asynchronous heartbeat executeSwarmManifest:', err);
                 db.updateSessionStatus(sessionId, 'error');
                 db.writeAuditLog(sessionId, 'heartbeat_execution_failed', { error: err.message || String(err) });
+                db.logTransaction(idempotencyKey, 'failed', { error: err.message || String(err) });
             });
 
         return Response.json({ status: "success", message: "Heartbeat triggered execution" }, { status: 200 });
