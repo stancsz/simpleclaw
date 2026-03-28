@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [Current Date] Cycle #28 ✅ Implemented Phase 2 Heartbeat: Continuous Mode with local simulator and tests.
 - [2026-04-06] Cycle #172 ✅ Implemented Phase 1 Gas Tank backend: Migrated Stripe integration and gas ledger DB logic to dedicated files in `src/services/` (`stripe.ts` and `gasLedger.ts`). Added comprehensive tests and removed obsolete core files.
 - [2026-03-28] Cycle #171 ✅ Created the Create Checkout Session endpoint for the Gas Tank Stripe Integration. No regressions introduced.
 - [2026-03-17] Cycle #26 ✅ Verified Gas Tank database schema and basic debit logic are already fully implemented (including Stripe integration). No regressions introduced.
