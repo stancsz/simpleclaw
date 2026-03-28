@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { getDbClient } from "@/../../src/db/client";
 import { executeSwarmManifest } from "@/../../src/core/dispatcher";
-import { debitCredits } from "@/../../src/services/gasLedger";
 
 export async function POST(req: NextRequest) {
     try {
@@ -50,7 +49,7 @@ export async function POST(req: NextRequest) {
                 if (!hasErrors) {
                     const logs = db.getAuditLogs(sessionId);
                     const runId = `gas_consumed_for_heartbeat_${Date.now()}`;
-                    await debitCredits(userId, 1, db);
+                    await db.debitCredits(userId, 1);
                     db.writeAuditLog(sessionId, runId, { amount: 1 });
                 }
                 db.logTransaction(idempotencyKey, 'completed', results);

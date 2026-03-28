@@ -2,6 +2,8 @@
 // Use dynamic import or fallback type since we can't use bun:sqlite in Next.js edge/node runtime directly
 // import { Database } from 'bun:sqlite';
 
+export const MIN_CREDIT_PURCHASE = 1000;
+
 export class DBClient {
   private db: any | null = null;
   private isSupabase = false;
@@ -341,6 +343,29 @@ export class DBClient {
         );
         this.writeAuditLog(userId, 'gas_consumed', { amount });
     }
+  }
+
+  // Gas ledger higher-level methods
+  async hasSufficientGas(userId: string): Promise<boolean> {
+    const balance = this.getGasBalance(userId);
+    return balance > 0;
+  }
+
+  async debitCredits(userId: string, amount: number = 1): Promise<boolean> {
+    const balance = this.getGasBalance(userId);
+    if (balance >= amount) {
+      this.decrementGasBalance(userId, amount);
+      return true;
+    }
+    return false;
+  }
+
+  getBalance(userId: string): number {
+      return this.getGasBalance(userId);
+  }
+
+  async addGasCredits(userId: string, amount: number): Promise<void> {
+    this.incrementGasBalance(userId, amount);
   }
 
   upsertHeartbeat(sessionId: string, nextTrigger: string, status: string = 'pending') {

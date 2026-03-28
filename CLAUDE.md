@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-04-06] Cycle #175 ✅ Implemented Phase 1 Gas Tank backend with Stripe integration and credit debit logic directly into `src/db/client.ts` to adhere to Sovereign AI Database principles. Refactored Stripe integration to `src/core/stripe.ts` and ensured proper coverage. Reverted the `src/services` misdirection.
 - [2026-04-06] Cycle #174 ✅ Implemented Phase 2 Heartbeat: Continuous Mode with local simulator and comprehensive tests. The heartbeat system now processes pending sessions via `handleHeartbeat`, dispatches workers using existing execution engine, and automatically schedules next triggers for recurring sessions.
 - [2026-04-06] Cycle #172 ✅ Implemented Phase 1 Gas Tank backend: Migrated Stripe integration and gas ledger DB logic to dedicated files in `src/services/` (`stripe.ts` and `gasLedger.ts`). Added comprehensive tests and removed obsolete core files.
 - [2026-03-28] Cycle #171 ✅ Created the Create Checkout Session endpoint for the Gas Tank Stripe Integration. No regressions introduced.

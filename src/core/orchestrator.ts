@@ -4,7 +4,6 @@ import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
-import { debitCredits } from '../services/gasLedger';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -136,7 +135,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
                     const alreadyConsumed = logs.some(log => log.event === 'gas_consumed_for_session');
 
                     if (!alreadyConsumed) {
-                        await debitCredits(user_id, 1, dbClient);
+                        await dbClient.debitCredits(user_id, 1);
                         dbClient.writeAuditLog(session_id, 'gas_consumed_for_session', { amount: 1 });
                     }
                 }

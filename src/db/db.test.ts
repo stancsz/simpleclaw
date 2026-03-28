@@ -137,4 +137,32 @@ describe("Database Client Tests (SQLite Local)", () => {
         const missingSecret = dbClient.simulateReadSecret("missing_id");
         expect(missingSecret).toBeNull();
     });
+
+    test("Gas Ledger operations", async () => {
+        const userId = "test_gas_user_123";
+
+        // Initial balance should be 10 (free credits given on first fetch for test)
+        const initialBalance = dbClient.getBalance(userId);
+        expect(initialBalance).toBe(10);
+
+        const hasGas = await dbClient.hasSufficientGas(userId);
+        expect(hasGas).toBe(true);
+
+        // Add 500 credits
+        await dbClient.addGasCredits(userId, 500);
+        const addedBalance = dbClient.getBalance(userId);
+        expect(addedBalance).toBe(510);
+
+        // Debit 1 credit
+        const debitSuccess = await dbClient.debitCredits(userId, 1);
+        expect(debitSuccess).toBe(true);
+        const currentBalance = dbClient.getBalance(userId);
+        expect(currentBalance).toBe(509);
+
+        // Debit 1000 credits (should fail)
+        const failedDebit = await dbClient.debitCredits(userId, 1000);
+        expect(failedDebit).toBe(false);
+        const finalBalance = dbClient.getBalance(userId);
+        expect(finalBalance).toBe(509);
+    });
 });

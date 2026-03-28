@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getDbClient } from '@/../../src/db/client';
-import { createCheckoutSession } from '@/../../src/services/stripe';
-import { MIN_CREDIT_PURCHASE } from '@/../../src/services/gasLedger';
+import { getDbClient, MIN_CREDIT_PURCHASE } from '@/../../src/db/client';
+import { createCheckoutSession } from '@/../../src/core/stripe';
 
 export async function GET(req: NextRequest) {
   try {

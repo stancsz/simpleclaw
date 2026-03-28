@@ -168,7 +168,7 @@ Workers act as the ephemeral "muscle" of the system. Their lifecycle guarantees 
 - [x] BYOK key management UI (Supabase Vault integration)
 - [x] Plan-Diff-Approve UI
 - [ ] Standard Library: 10 Skills (Shopify, Slack, Google Sheets, Gmail, Linear)
-- [x] Gas Tank + Stripe integration
+- [x] Gas Tank + Stripe integration (Gas Ledger in Sovereign Motherboard `gas_ledger` schema, integrated directly into `src/db/client.ts` as `hasSufficientGas`, `debitCredits`, `getBalance` and integrated into dispatcher pipeline, Stripe handler in `src/core/stripe.ts` providing checkout operations, and idempotency guarantees using Stripe webhooks)
 - [x] Real-time execution monitor
 
 ### Phase 1.5 — Headless Agency & Evolutionary Dogfooding

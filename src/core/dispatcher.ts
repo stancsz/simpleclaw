@@ -6,7 +6,6 @@ import { executeWorkerTask, type WorkerResult } from "../workers/template";
 import { executeGithubWorkerTask } from "../workers/github.worker";
 import { executeMockWorkerTask } from "../workers/mock-worker";
 import { executeDemoWorkerTask } from "../workers/demo-worker";
-import { debitCredits } from "../services/gasLedger";
 
 import {
   runAgentLoop,

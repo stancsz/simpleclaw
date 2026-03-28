@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { handleStripeWebhook } from '@/../../src/services/stripe';
+import { handleStripeWebhook } from '@/../../src/core/stripe';
 import { getDbClient } from '@/../../src/db/client';
 
 export async function POST(req: NextRequest) {
