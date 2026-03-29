@@ -72,6 +72,17 @@ cp .env.example .env
 bun run start
 ```
 
+### 2. Testing
+To run the standard test suite:
+```bash
+bun run test
+```
+
+To run the full end-to-end swarm orchestration integration test (simulating the entire pipeline from plan generation to worker execution and Motherboard state updates):
+```bash
+bun run test:integration:workflow
+```
+
 ### 2. Deployment
 Ready to go live? Check our [Setup & Deployment Guide](docs/setup_guide.md).
 
