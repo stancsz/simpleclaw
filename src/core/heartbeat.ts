@@ -458,3 +458,25 @@ export async function processAllHeartbeats(db: DBClient) {
     }
 }
 
+export function verifyMotherboardIntegrity(db: DBClient): { status: string, version: string, missing_tables: string[] } {
+    const missing_tables: string[] = [];
+
+    try {
+        // Test heartbeat_queue table exists
+        const result = (db as any).db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='heartbeat_queue'").get();
+        if (!result) {
+            missing_tables.push('heartbeat_queue');
+        }
+    } catch (e) {
+        // If query fails, likely using a mock DB or table doesn't exist in a different SQL dialect
+        if (!(db as any).isSupabase) {
+            missing_tables.push('heartbeat_queue');
+        }
+    }
+
+    if (missing_tables.length > 0) {
+        return { status: 'error', version: '1.0', missing_tables };
+    }
+
+    return { status: 'ok', version: '1.0', missing_tables: [] };
+}

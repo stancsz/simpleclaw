@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { DBClient } from "../db/client";
-import { handleHeartbeat, scheduleHeartbeat, processAllHeartbeats } from "./heartbeat";
+import { handleHeartbeat, scheduleHeartbeat, processAllHeartbeats, verifyMotherboardIntegrity } from "./heartbeat";
 import { startLocalScheduler } from "./heartbeat-local";
 import * as dispatcher from "./dispatcher";
 
@@ -229,5 +229,20 @@ describe("Heartbeat System", () => {
         expect(session.status).toBe("active");
         expect(session.context.prompt).toBe("run task every hour");
         expect(session.manifest.steps[0].id).toBe("step1");
+    });
+
+    it("should verify motherboard integrity when heartbeat_queue table exists", () => {
+        const result = verifyMotherboardIntegrity(db);
+        expect(result.status).toBe("ok");
+        expect(result.missing_tables.length).toBe(0);
+    });
+
+    it("should fail motherboard integrity when heartbeat_queue table is missing", () => {
+        // Drop the table to simulate missing schema
+        db.db.run("DROP TABLE IF EXISTS heartbeat_queue");
+
+        const result = verifyMotherboardIntegrity(db);
+        expect(result.status).toBe("error");
+        expect(result.missing_tables).toContain("heartbeat_queue");
     });
 });
