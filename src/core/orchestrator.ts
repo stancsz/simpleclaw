@@ -4,6 +4,7 @@ import { SwarmManifest, Task, PlanDiffApprove } from './types';
 import { parseIntentToManifest } from './llm';
 import { DBClient } from '../db/client';
 import { executeSwarmManifest } from './dispatcher';
+import { createHeartbeat } from './heartbeat';
 
 export function validateManifest(manifest: SwarmManifest, availableSkills: string[]): boolean {
     const stepIds = new Set(manifest.steps.map(s => s.id));
@@ -117,11 +118,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
         // Setup heartbeat for continuous mode if schedule exists
         if (manifest.schedule) {
-            // Calculate next trigger (30 mins from now)
-            const nextTriggerDate = new Date(Date.now() + 30 * 60 * 1000);
-            const nextTriggerStr = nextTriggerDate.toISOString().replace('T', ' ').replace('Z', '');
-            dbClient.upsertHeartbeat(session_id, nextTriggerStr, 'pending');
-            dbClient.writeAuditLog(session_id, 'continuous_mode_enabled', { schedule: manifest.schedule, next_trigger: nextTriggerStr });
+            createHeartbeat(dbClient, session_id, 30);
         }
 
         // Execute asynchronously so UI can poll for results

@@ -144,6 +144,91 @@ describe("Heartbeat System", () => {
         expect(queueCheck[0].status).toBe('error');
     });
 
+    it("should update heartbeat to error if session is missing entirely", async () => {
+        const sessionId = "non-existent-session";
+        const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
+
+        db.upsertHeartbeat(sessionId, triggerTime, "pending");
+
+        await handleHeartbeat(db);
+
+        const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
+        expect(queueCheck.length).toBe(1);
+        expect(queueCheck[0].status).toBe('error');
+    });
+
+    it("should process multiple heartbeats correctly even if one fails", async () => {
+        const sessionId1 = "session-valid";
+        const sessionId2 = "session-invalid";
+        const userId = "user-123";
+        const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
+
+        // Valid session
+        db.createSession(userId, { prompt: 'do stuff' }, { steps: [], skills_required: [] });
+        db.db.run(`UPDATE orchestrator_sessions SET id = ? WHERE user_id = ?`, [sessionId1, userId]);
+        if (!db.getGasBalance(userId)) {
+            db.incrementGasBalance(userId, 100);
+        }
+        db.upsertHeartbeat(sessionId1, triggerTime, "pending");
+
+        // Invalid session
+        db.upsertHeartbeat(sessionId2, triggerTime, "pending");
+
+        await handleHeartbeat(db);
+
+        // Check valid session
+        const queueCheck1 = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId1) as any[];
+        expect(queueCheck1.length).toBe(1);
+        expect(queueCheck1[0].status).toBe('pending');
+        expect(queueCheck1[0].next_trigger > new Date().toISOString().replace('T', ' ').replace('Z', '')).toBe(true);
+
+        // Check invalid session
+        const queueCheck2 = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId2) as any[];
+        expect(queueCheck2.length).toBe(1);
+        expect(queueCheck2[0].status).toBe('error');
+    });
+
+    it("should handle idempotency and prevent double execution", async () => {
+        const sessionId = "session-idempotent";
+        const userId = "user-123";
+        const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
+
+        db.createSession(userId, { prompt: 'do stuff' }, { steps: [], skills_required: [] });
+        db.db.run(`UPDATE orchestrator_sessions SET id = ? WHERE user_id = ?`, [sessionId, userId]);
+        db.incrementGasBalance(userId, 100);
+        db.upsertHeartbeat(sessionId, triggerTime, "pending");
+
+        // Pretend this heartbeat was already completed
+        const idempotencyKey = `heartbeat-${sessionId}-${triggerTime}`;
+        db.logTransaction(idempotencyKey, 'completed', {});
+
+        await handleHeartbeat(db);
+
+        const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
+        expect(queueCheck.length).toBe(1);
+        expect(queueCheck[0].status).toBe('completed');
+    });
+
+    it("should fail heartbeat if gas balance is zero", async () => {
+        const sessionId = "session-no-gas";
+        const userId = "user-broke";
+        const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
+
+        db.createSession(userId, { prompt: 'do stuff' }, { steps: [], skills_required: [] });
+        db.db.run(`UPDATE orchestrator_sessions SET id = ? WHERE user_id = ?`, [sessionId, userId]);
+
+        // Ensure user exists but with 0 balance
+        db.db.run(`INSERT INTO gas_ledger (id, user_id, balance_credits) VALUES (?, ?, ?)`, [crypto.randomUUID(), userId, 0]);
+
+        db.upsertHeartbeat(sessionId, triggerTime, "pending");
+
+        await handleHeartbeat(db);
+
+        const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
+        expect(queueCheck.length).toBe(1);
+        expect(queueCheck[0].status).toBe('failed');
+    });
+
     it("should resume orchestrator from checkpointed state correctly", () => {
         const sessionId = "session-resume";
         const userId = "user-123";
