@@ -1,106 +1,100 @@
-import { test, expect, describe, beforeEach, afterEach, mock } from "bun:test";
+import { test, expect, describe, mock, afterEach } from "bun:test";
 import { POST } from "./route";
-import { DBClient } from "../../../../../../src/db/client";
-import * as stripe from "../../../../../../src/core/payments";
+
+// Global Mocks for next/server and internal dependencies
+mock.module("next/server", () => {
+  return {
+    NextResponse: {
+      json: (body: any, init?: any) => {
+        return { body, status: init?.status || 200 };
+      }
+    }
+  };
+});
+
+let handleStripeWebhookMock: ReturnType<typeof mock>;
+mock.module("../../../../../../src/core/payments", () => {
+  handleStripeWebhookMock = mock((payload: any, sig: any, db: any) => {
+    if (sig === "valid_sig") return true;
+    return false;
+  });
+  return {
+    handleStripeWebhook: handleStripeWebhookMock
+  };
+});
+
+mock.module("../../../../../../src/db/client", () => {
+  return {
+    getDbClient: () => ({ mockDbClient: true })
+  };
+});
 
 describe("Stripe Webhook API Route", () => {
-  let db: DBClient;
-
-  beforeEach(() => {
-    db = new DBClient("sqlite://:memory:");
-    db.applyMigration(`
-      CREATE TABLE IF NOT EXISTS gas_ledger (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        balance_credits INTEGER DEFAULT 0,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id TEXT PRIMARY KEY,
-        session_id TEXT,
-        event TEXT,
-        metadata TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Set Stripe webhook secret environment variable for the test
-    process.env.STRIPE_WEBHOOK_SECRET = "whsec_mock";
-  });
-
   afterEach(() => {
-    mock.restore();
-    delete process.env.STRIPE_WEBHOOK_SECRET;
+    handleStripeWebhookMock.mockClear();
   });
 
-  test("returns 400 when stripe-signature header is missing", async () => {
-    const req = new Request("http://localhost/api/stripe/webhook", {
-      method: "POST",
-      body: "{}",
-    });
-
-    const res = await POST(req as any);
-    expect(res.status).toBe(400);
-    const text = await res.text();
-    expect(text).toBe("Missing stripe signature");
-  });
-
-  test("processes valid webhook and adds credits successfully", async () => {
-    // Mock the handleStripeWebhook function
-    mock.module("../../../../../../src/core/payments", () => ({
-      ...stripe,
-      handleStripeWebhook: () => true
-    }));
-
-    // We must re-import the module to use the mock
-    const { POST } = require("./route");
-
-    const req = new Request("http://localhost/api/stripe/webhook", {
-      method: "POST",
+  test("returns 400 if stripe-signature is missing", async () => {
+    // Create a mock request object manually that behaves like NextRequest
+    const req = {
+      text: async () => "{}",
       headers: {
-        "stripe-signature": "valid_signature",
-      },
-      body: JSON.stringify({
-        id: "evt_test",
-        type: "checkout.session.completed",
-      }),
-    });
+        get: (name: string) => null
+      }
+    } as any;
 
-    const res = await POST(req as any);
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Missing stripe-signature header' });
+  });
+
+  test("calls handleStripeWebhook and returns 200 on success", async () => {
+    const payload = '{"id":"evt_123"}';
+    const req = {
+      text: async () => payload,
+      headers: {
+        get: (name: string) => name === 'stripe-signature' ? 'valid_sig' : null
+      }
+    } as any;
+
+    const res = await POST(req);
+
+    expect(handleStripeWebhookMock).toHaveBeenCalledTimes(1);
+    expect(handleStripeWebhookMock.mock.calls[0][0]).toBe(payload);
+    expect(handleStripeWebhookMock.mock.calls[0][1]).toBe('valid_sig');
+    expect(handleStripeWebhookMock.mock.calls[0][2]).toEqual({ mockDbClient: true });
+
     expect(res.status).toBe(200);
-    const text = await res.text();
-    expect(text).toBe("Webhook processed successfully");
-
-    // Clean up mock
-    mock.module("../../../../../../src/core/payments", () => stripe);
+    expect(res.body).toEqual({ received: true });
   });
 
-  test("returns 400 when webhook handling fails (e.g. invalid signature)", async () => {
-    // Mock the handleStripeWebhook function to return false
-    mock.module("../../../../../../src/core/payments", () => ({
-      ...stripe,
-      handleStripeWebhook: () => false
-    }));
-
-    const { POST } = require("./route");
-
-    const req = new Request("http://localhost/api/stripe/webhook", {
-      method: "POST",
+  test("returns 400 if handleStripeWebhook returns false", async () => {
+    const payload = '{"id":"evt_123"}';
+    const req = {
+      text: async () => payload,
       headers: {
-        "stripe-signature": "invalid_signature",
-      },
-      body: JSON.stringify({
-        id: "evt_test",
-        type: "checkout.session.completed",
-      }),
-    });
+        get: (name: string) => name === 'stripe-signature' ? 'invalid_sig' : null
+      }
+    } as any;
 
-    const res = await POST(req as any);
+    const res = await POST(req);
+
     expect(res.status).toBe(400);
-    const text = await res.text();
-    expect(text).toBe("Webhook handling failed or unhandled event");
+    expect(res.body).toEqual({ error: 'Webhook handler failed' });
+  });
 
-    // Clean up mock
-    mock.module("../../../../../../src/core/payments", () => stripe);
+  test("catches errors and returns 400", async () => {
+    // Force an error to be thrown by returning a request with a text() method that throws
+    const req = {
+      text: async () => { throw new Error("Network error") },
+      headers: {
+        get: (name: string) => 'valid_sig'
+      }
+    } as any;
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Webhook Error' });
   });
 });

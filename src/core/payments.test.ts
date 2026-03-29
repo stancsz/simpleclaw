@@ -1,6 +1,7 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { DBClient } from "../db/client";
-import { handleStripeWebhook, stripe } from "./payments";
+import { handleStripeWebhook } from "./payments";
+import { stripe } from "./stripe";
 
 describe("Stripe Service", () => {
   let db: DBClient;
