@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS orchestrator_sessions (
     status TEXT DEFAULT 'active',
     context TEXT,
     manifest TEXT,
+    continuous_mode INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

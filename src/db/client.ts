@@ -59,12 +59,34 @@ export class DBClient {
 
     if (this.db) {
       this.db.run(
-        `INSERT INTO orchestrator_sessions (id, user_id, context, manifest, status) VALUES (?, ?, ?, ?, 'active')`,
+        `INSERT INTO orchestrator_sessions (id, user_id, context, manifest, status, continuous_mode) VALUES (?, ?, ?, ?, 'active', 0)`,
         [sessionId, userId, JSON.stringify(context), JSON.stringify(manifest)]
       );
       this.writeAuditLog(sessionId, 'intent_received', { status: 'active' });
     }
     return sessionId;
+  }
+
+  setContinuousMode(sessionId: string, continuousMode: boolean) {
+    if (this.isSupabase) {
+      // Direct Supabase updates would go here in prod
+      console.warn("Mock setContinuousMode Supabase - assuming success.");
+      return;
+    }
+    if (this.db) {
+      this.db.run(
+        `UPDATE orchestrator_sessions SET continuous_mode = ? WHERE id = ?`,
+        [continuousMode ? 1 : 0, sessionId]
+      );
+    }
+  }
+
+  getActiveContinuousSessions(): any[] {
+    if (this.isSupabase) return [];
+    if (this.db) {
+      return this.db.query(`SELECT id FROM orchestrator_sessions WHERE continuous_mode = 1 AND status != 'completed' AND status != 'error' AND status != 'rejected'`).all() as any[];
+    }
+    return [];
   }
 
   updateSessionStatus(sessionId: string, status: string) {

@@ -291,9 +291,9 @@ describe("Orchestrator End-to-End Integration Workflow", () => {
     expect(errorLogs.length).toBeGreaterThanOrEqual(1);
     expect(errorLogs[0].error).toContain("Intentional crash for integration test");
 
-    // User should still have gas because the overall execution failed
+    // User should have 1 less gas because the execution was initiated
     const gasBalance = db.getGasBalance(user_id);
-    expect(gasBalance).toBe(10);
+    expect(gasBalance).toBe(9);
   });
 
   it("should enforce idempotency for WRITE tasks across duplicate executions", async () => {

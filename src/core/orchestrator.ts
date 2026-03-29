@@ -83,6 +83,8 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
 
     const dbClient = new DBClient(process.env.DATABASE_URL || 'sqlite://local.db');
 
+    const continuous_mode = body?.continuous_mode;
+
     if (action === 'approve' || action === 'execute') {
         if (!session_id || typeof session_id !== 'string') {
             res.status(400).json({ error: 'Missing or invalid "session_id" field for execution.' });
@@ -112,7 +114,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         dbClient.updateSessionStatus(session_id, 'approved');
 
         // Setup heartbeat for continuous mode if schedule exists
-        if (manifest.schedule) {
+        if (manifest.schedule || continuous_mode === true) {
             await scheduleHeartbeat(session_id, 30, dbClient);
         }
 

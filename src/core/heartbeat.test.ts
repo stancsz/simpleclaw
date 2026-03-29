@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { DBClient } from "../db/client";
-import { handleHeartbeat, scheduleHeartbeat, processHeartbeat, startLocalScheduler } from "./heartbeat";
+import { handleHeartbeat, scheduleHeartbeat, processAllHeartbeats, startLocalScheduler } from "./heartbeat";
 import * as dispatcher from "./dispatcher";
 
 describe("Heartbeat System", () => {
@@ -62,7 +62,7 @@ describe("Heartbeat System", () => {
         expect(queueCheck[0].next_trigger > new Date().toISOString().replace('T', ' ').replace('Z', '')).toBe(true);
     });
 
-    it("should process a specific pending heartbeat via processHeartbeat", async () => {
+    it("should process a specific pending heartbeat via handleHeartbeat", async () => {
         const sessionId = "session-789";
         const userId = "user-123";
         const triggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
@@ -83,9 +83,9 @@ describe("Heartbeat System", () => {
                 db.incrementGasBalance(userId, 100);
             }
 
-            await processHeartbeat(sessionId, db);
+            await handleHeartbeat(sessionId, db);
 
-            // processHeartbeat updates the queue to 'completed' AND queues the next one as 'pending'
+            // handleHeartbeat updates the queue to 'completed' AND queues the next one as 'pending'
             // We should find one 'completed' (which getPendingHeartbeats ignores) and one new 'pending'
             const pending = db.getPendingHeartbeats();
             expect(pending.length).toBe(0); // the new one is 30 mins in future!
@@ -99,12 +99,12 @@ describe("Heartbeat System", () => {
         }
     });
 
-    it("should do nothing in processHeartbeat if heartbeat is not pending or due", async () => {
+    it("should do nothing in handleHeartbeat if heartbeat is not pending or due", async () => {
         const sessionId = "session-future";
         const triggerTime = new Date(Date.now() + 10000).toISOString().replace('T', ' ').replace('Z', ''); // future
         db.upsertHeartbeat(sessionId, triggerTime, "pending");
 
-        await processHeartbeat(sessionId, db);
+        await handleHeartbeat(sessionId, db);
 
         // Should still be pending
         const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
@@ -119,7 +119,7 @@ describe("Heartbeat System", () => {
 
         db.upsertHeartbeat(sessionId, triggerTime, "pending");
 
-        await handleHeartbeat(db);
+        await processAllHeartbeats(db);
 
         const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
         expect(queueCheck.length).toBe(1);
@@ -132,7 +132,7 @@ describe("Heartbeat System", () => {
 
         db.upsertHeartbeat(sessionId, triggerTime, "pending");
 
-        await handleHeartbeat(db);
+        await processAllHeartbeats(db);
 
         const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
         expect(queueCheck.length).toBe(1);
@@ -156,7 +156,7 @@ describe("Heartbeat System", () => {
         // Invalid session
         db.upsertHeartbeat(sessionId2, triggerTime, "pending");
 
-        await handleHeartbeat(db);
+        await processAllHeartbeats(db);
 
         // Check valid session
         const queueCheck1 = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId1) as any[];
@@ -184,7 +184,7 @@ describe("Heartbeat System", () => {
         const idempotencyKey = `heartbeat-${sessionId}-${triggerTime}`;
         db.logTransaction(idempotencyKey, 'completed', {});
 
-        await handleHeartbeat(db);
+        await processAllHeartbeats(db);
 
         const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
         expect(queueCheck.length).toBe(1);
@@ -204,7 +204,7 @@ describe("Heartbeat System", () => {
 
         db.upsertHeartbeat(sessionId, triggerTime, "pending");
 
-        await handleHeartbeat(db);
+        await processAllHeartbeats(db);
 
         const queueCheck = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
         expect(queueCheck.length).toBe(1);

@@ -356,13 +356,14 @@ import { executeSwarmManifest } from "./dispatcher";
 
 export async function scheduleHeartbeat(sessionId: string, intervalMinutes: number, providedDb?: DBClient): Promise<void> {
     const db = providedDb || new DBClient();
+    db.setContinuousMode(sessionId, true);
     const nextTriggerDate = new Date(Date.now() + intervalMinutes * 60 * 1000);
     const nextTriggerStr = nextTriggerDate.toISOString().replace('T', ' ').replace('Z', '');
     db.upsertHeartbeat(sessionId, nextTriggerStr, 'pending');
     db.writeAuditLog(sessionId, 'continuous_mode_enabled', { interval_minutes: intervalMinutes, next_trigger: nextTriggerStr });
 }
 
-export async function processHeartbeat(sessionId: string, providedDb?: DBClient): Promise<void> {
+export async function handleHeartbeat(sessionId: string, providedDb?: DBClient): Promise<void> {
     const db = providedDb || new DBClient();
 
     // Check if there is a pending heartbeat for this session that is due
@@ -446,11 +447,11 @@ export async function processHeartbeat(sessionId: string, providedDb?: DBClient)
     }
 }
 
-export async function handleHeartbeat(db: DBClient) {
+export async function processAllHeartbeats(db: DBClient) {
     const pending = db.getPendingHeartbeats();
 
     for (const heartbeat of pending) {
-        await processHeartbeat(heartbeat.session_id, db);
+        await handleHeartbeat(heartbeat.session_id, db);
     }
 }
 
@@ -459,7 +460,7 @@ export function startLocalScheduler(db: DBClient, intervalMs: number = 30000) {
     console.log(`Starting local heartbeat scheduler running every ${intervalMs}ms`);
 
     setInterval(() => {
-        handleHeartbeat(db).catch(err => {
+        processAllHeartbeats(db).catch(err => {
             console.error("Local scheduler loop error:", err);
         });
     }, intervalMs);
