@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [Current Date] Cycle #27 ✅ Created `heartbeat.integration.test.ts` to fully validate the Phase 2 Continuous Mode Heartbeat system end-to-end. Checked that `scheduleHeartbeat` accurately schedules future runs, `processHeartbeat` processes execution correctly against gas constraints, and idempotency successfully prevents duplicate runs. Refactored both integration tests and unit tests to use the actual `001_motherboard.sql` database migration schema instead of a mock schema array.
 - [2026-04-06] Cycle #177 ✅ Re-architected Phase 2 Heartbeat: Transformed `createHeartbeat` to `scheduleHeartbeat` and `handleHeartbeat` internals to `processHeartbeat` allowing execution per session ID, per SWARM_SPEC.md. Added unit tests and integrated with the orchestrator route and `server/src/app/api/heartbeat/route.ts` endpoint. Marked 'Phase 2 — Heartbeat' as completed.
 - [Current Date] Cycle #26 ✅ Implemented Phase 2 Heartbeat logic: Updated `handleHeartbeat` to correctly calculate `next_trigger` with a 30-minute interval and ensure continuous processing by queueing the next heartbeat correctly. Updated `server/src/app/api/heartbeat/route.ts` to fully utilize the backend processing loop. Added unit tests for missing session and edge cases. Checked off Phase 2 — Heartbeat in BACKLOG.
 - [2026-03-29 05:29] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Verified Stripe webhook integration, implemented `gas_ledger` debiting for the Swarm Dispatcher (`executeSwarmManifest`), created low-balance notifications for the Gas Ledger API, and ensured end-to-end testing coverage using a suite of integration tests.
@@ -139,6 +140,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
+- [x] **Phase 2 — Heartbeat:** Enable recurring swarm executions via a 30-minute heartbeat mechanism
 - [~] **Phase 1 — Custom Skill Uploader:** Allow users to upload their own `.md` skill files via UI and store them locally or in Supabase (Backend Skill Loader implemented ✅, UI upload pending)
 - [x] **Phase 1 — Gas Tank:** Stripe integration and credit debit system for the orchestrator. (Done)
 
