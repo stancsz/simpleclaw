@@ -111,6 +111,11 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
             return;
         }
 
+        const currentGasBalance = dbClient.getGasBalance(user_id);
+        if (currentGasBalance < 100) {
+            dbClient.writeAuditLog(session_id, 'low_gas_balance_warning', { balance: currentGasBalance });
+        }
+
         dbClient.updateSessionStatus(session_id, 'approved');
 
         // Setup heartbeat for continuous mode if schedule exists
@@ -189,7 +194,7 @@ export const orchestratorHandler = async (req: ff.Request, res: ff.Response) => 
         const write_operations = manifest.steps.filter(s => s.action_type === 'WRITE').length;
         const read_operations = manifest.steps.filter(s => s.action_type === 'READ').length;
 
-        const context = { prompt, availableSkills };
+        const context = { prompt, availableSkills, continuous_mode: !!manifest.schedule };
         const newSessionId = dbClient.createSession(user_id, context, manifest);
 
         const pda: PlanDiffApprove = {

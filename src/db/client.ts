@@ -60,9 +60,10 @@ export class DBClient {
     }
 
     if (this.db) {
+      const continuousMode = context.continuous_mode ? 1 : 0;
       this.db.run(
-        `INSERT INTO orchestrator_sessions (id, user_id, context, manifest, status, continuous_mode) VALUES (?, ?, ?, ?, 'active', 0)`,
-        [sessionId, userId, JSON.stringify(context), JSON.stringify(manifest)]
+        `INSERT INTO orchestrator_sessions (id, user_id, context, manifest, status, continuous_mode) VALUES (?, ?, ?, ?, 'active', ?)`,
+        [sessionId, userId, JSON.stringify(context), JSON.stringify(manifest), continuousMode]
       );
       this.writeAuditLog(sessionId, 'intent_received', { status: 'active' });
     }

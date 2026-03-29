@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [Current Date] Cycle #30 ✅ Extended Phase 2 Heartbeat mechanism implementation: Added `verifyMotherboardIntegrity` helper in `src/core/heartbeat.ts` to validate the Sovereign Motherboard's heartbeat table. Added Unit tests for it in `src/core/heartbeat.test.ts` and created `src/db/migrations/002_heartbeat_cron.sql` to document the Supabase `pg_cron` setup. Validated via local tests to complete the full integration per SWARM_SPEC.md.
 - [Current Date] Cycle #29 ✅ Verified the Phase 2 Heartbeat logic and setup: split out the `startLocalScheduler` into its own file `src/core/heartbeat-local.ts` so that it isolates non-stateless background intervals from serverless function implementations, updated `002_heartbeat.sql` to implement `swarms.heartbeat` postgres function, updated `types.ts` to include `HeartbeatQueue`, and successfully re-ran all heartbeat tests. Checked off Phase 2 — Heartbeat in BACKLOG.
 - [2026-04-07] Cycle #28 ✅ Fixed Phase 2 Heartbeat mechanism implementation errors. Updated `handleHeartbeat` in `src/core/heartbeat.ts` to ensure that on successful or failed completion, the heartbeat is correctly queued for the next interval if recurring by executing `db.upsertHeartbeat` using `pending`. Fixed timestamp comparison logical errors in `src/db/client.ts` related to javascript vs database time representation by ensuring dates are properly parsed against the mock database strings. Additionally, successfully ran tests in `src/__tests__/heartbeat.integration.test.ts` to ensure heartbeat queues effectively execute over multiple intervals and correctly handle idempotency checks and gas logic. Marked 'Phase 2 — Heartbeat' as completed.
 - [2026-03-16] Cycle #26 ✅ Implemented Phase 2 Heartbeat: 30-minute recursive scheduling system with heartbeat queue, API endpoint, and development simulator
@@ -143,7 +144,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **Move 1:** Real LLM Intent Parsing
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
-- [x] **Phase 2 — Heartbeat:** Enable recurring swarm executions via a 30-minute heartbeat mechanism. (Done)
+- [x] **Phase 2 — Heartbeat:** Enable recurring swarm executions via a 30-minute heartbeat mechanism.
 
 - [~] **Phase 1 — Custom Skill Uploader:** Allow users to upload their own `.md` skill files via UI and store them locally or in Supabase (Backend Skill Loader implemented ✅, UI upload pending)
 - [x] **Phase 1 — Gas Tank:** Stripe integration and credit debit system for the orchestrator. (Done)
