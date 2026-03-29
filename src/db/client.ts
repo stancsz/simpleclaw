@@ -415,7 +415,9 @@ export class DBClient {
   getPendingHeartbeats(): any[] {
     if (this.isSupabase) return [];
     if (this.db) {
-        return this.db.query(`SELECT * FROM heartbeat_queue WHERE status = 'pending' AND next_trigger <= CURRENT_TIMESTAMP ORDER BY next_trigger ASC`).all() as any[];
+        // Use Javascript string comparison to emulate datetime comparison reliably across timezone quirks
+        const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+        return this.db.query(`SELECT * FROM heartbeat_queue WHERE status = 'pending' AND next_trigger <= ? ORDER BY next_trigger ASC`).all(now) as any[];
     }
     return [];
   }

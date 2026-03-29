@@ -14,6 +14,16 @@ describe("Heartbeat Integration", () => {
         const path = require('path');
         const migrationSql = fs.readFileSync(path.join(__dirname, '../db/migrations/001_motherboard.sql'), 'utf8');
         db.applyMigration(migrationSql);
+
+        try {
+            const heartbeatSql = fs.readFileSync(path.join(__dirname, '../db/migrations/002_heartbeat.sql'), 'utf8');
+            db.applyMigration(heartbeatSql);
+        } catch(e) {}
+
+        try {
+            const gasTankSql = fs.readFileSync(path.join(__dirname, '../db/migrations/002_gas_tank.sql'), 'utf8');
+            db.applyMigration(gasTankSql);
+        } catch(e) {}
     });
 
     afterEach(() => {
@@ -67,7 +77,7 @@ describe("Heartbeat Integration", () => {
         // Actually the executeWorkerTask will call the opencode worker or github worker, let's just make sure it does not fail the execution badly
         // Or we can just use processHeartbeat and check the queue states
 
-        await handleHeartbeat(db);
+        await handleHeartbeat(sessionId, db);
 
         // It should have completed the heartbeat and scheduled a new one
         const allHeartbeats = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ? ORDER BY created_at DESC").all(sessionId) as any[];
@@ -116,7 +126,7 @@ describe("Heartbeat Integration", () => {
         const pastTriggerTime = new Date(Date.now() - 1000).toISOString().replace('T', ' ').replace('Z', '');
         db.db.run(`UPDATE heartbeat_queue SET next_trigger = ? WHERE session_id = ?`, [pastTriggerTime, sessionId]);
 
-        await handleHeartbeat(db);
+        await handleHeartbeat(sessionId, db);
 
         // Should be failed
         const allHeartbeats = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
@@ -156,7 +166,7 @@ describe("Heartbeat Integration", () => {
         const idempotencyKey = `heartbeat-${hq.session_id}-${hq.next_trigger}`;
         db.logTransaction(idempotencyKey, 'completed', {});
 
-        await handleHeartbeat(db);
+        await handleHeartbeat(sessionId, db);
 
         const allHeartbeats = db.db.query("SELECT * FROM heartbeat_queue WHERE session_id = ?").all(sessionId) as any[];
 
