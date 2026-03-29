@@ -19,6 +19,7 @@ steps:
       - "shopify_api_key"
     depends_on: []
     action_type: "READ"
+    engine: "opencode"
 
   - id: "step-2"
     description: "Cross-reference Google Sheets for inventory levels"
@@ -30,6 +31,7 @@ steps:
     depends_on:
       - "step-1"
     action_type: "READ"
+    engine: "opencode"
 
   - id: "step-3"
     description: "Post Slack digest summarizing the findings"
@@ -41,3 +43,4 @@ steps:
     depends_on:
       - "step-2"
     action_type: "WRITE"
+    engine: "opencode"
