@@ -2,7 +2,7 @@ import { DBClient } from "../db/client";
 import type { Task, ExecutionContext } from "../core/types";
 import * as fs from "fs";
 import { getKMSProvider } from "../security/kms";
-import { OpenCodeExecutionEngine } from "../core/execution-engine";
+import { registry } from "../core/delegation";
 import { createClient } from "@supabase/supabase-js";
 import { loadSkillFromRef } from "../core/skill-loader";
 
@@ -170,8 +170,11 @@ export async function executeWorkerTask(
       userId: resolvedUserId
     };
 
-    // Instantiate appropriate engine. For now, we use OpenCodeExecutionEngine
-    const engine = new OpenCodeExecutionEngine();
+    // Instantiate appropriate engine adapter. Default to opencode if none specified
+    const engineName = task.engine || "opencode";
+    db.writeAuditLog(sessionId, "worker_delegating_task", { task_id: task.id, engine: engineName });
+
+    const engine = registry.get(engineName);
     const mockOutput = await engine.execute(task, context);
 
     // 6. Log result to Sovereign Motherboard (Supabase)

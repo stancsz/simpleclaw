@@ -191,7 +191,7 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
     };
 
     // Mock execution engine to simulate task failure for 'fail-step-1'
-    const executionEngineModule = require("./execution-engine");
+    const executionEngineModule = require("../engines/opencode");
     const originalExecute = executionEngineModule.OpenCodeExecutionEngine.prototype.execute;
 
     executionEngineModule.OpenCodeExecutionEngine.prototype.execute = async function(task: any, context: any) {
@@ -245,7 +245,7 @@ describe("Dispatcher - Worker Dispatch & Execution Loop", () => {
 
     let attemptCount = 0;
 
-    const executionEngineModule = require("./execution-engine");
+    const executionEngineModule = require("../engines/opencode");
     const originalExecute = executionEngineModule.OpenCodeExecutionEngine.prototype.execute;
 
     executionEngineModule.OpenCodeExecutionEngine.prototype.execute = async function(task: any, context: any) {
