@@ -518,7 +518,8 @@ export async function executeSwarmManifest(
   // we do it here if calling executeSwarmManifest directly and avoiding orchestrator
   // Wait, if orchestrator does it, and we do it here, we get double billing for orchestrator runs.
   // Actually, orchestrator uses audit logs to prevent double billing but let's check it.
-  if (userId && !hasErrors) {
+  // We debit gas even if there are partial errors, because execution was initiated.
+  if (userId) {
       const logs = db.getAuditLogs(sessionId);
       const alreadyConsumed = logs.some((log: any) => log.event === 'gas_consumed_for_session');
       if (!alreadyConsumed) {

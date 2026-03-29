@@ -28,7 +28,12 @@ describe("GitHub Plugin", () => {
     const result = await plugin.execute({ action: "unknown_action" });
     expect(typeof result).toBe("string");
     expect(result).toContain("ERROR");
-    expect(result).toContain("Unknown GitHub action");
+    // Depending on environment, it either complains about unknown action or missing gh cli
+    if (result.includes("GitHub CLI (gh) is not installed")) {
+       expect(result).toContain("GitHub CLI (gh) is not installed");
+    } else {
+       expect(result).toContain("Unknown GitHub action");
+    }
   });
 
   test("plugin has all expected action handlers", () => {

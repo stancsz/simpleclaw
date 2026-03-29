@@ -8,8 +8,9 @@ export async function GET(req: NextRequest) {
     const userId = 'test-user'; // Hardcoded for Phase 0 since there's no real auth yet
 
     const balance = db.getGasBalance(userId);
+    const lowBalance = balance < 5; // Alert if less than 5 credits left
 
-    return Response.json({ status: 'success', balance }, { status: 200 });
+    return Response.json({ status: 'success', balance, lowBalance }, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching gas balance:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

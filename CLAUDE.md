@@ -9,6 +9,7 @@ It dispatches ephemeral Cloud Functions (Workers/Sub-Agents) that receive creden
 **Engineering summary:** [`SPEC.md`](./SPEC.md)
 
 ## AGENT WORKSPACE (MODIFIABLE BY AGENT)
+- [2026-03-29 05:29] Cycle #26 ✅ Implemented Phase 1 Gas Tank: Verified Stripe webhook integration, implemented `gas_ledger` debiting for the Swarm Dispatcher (`executeSwarmManifest`), created low-balance notifications for the Gas Ledger API, and ensured end-to-end testing coverage using a suite of integration tests.
 - [Current Date] Cycle #26 ✅ Created comprehensive integration test suite for swarm orchestration workflow. Tested intent parsing, Motherboard session creation, worker dispatch, execution logging, failure handling, and WRITE task idempotency.
 - [2026-04-06] Cycle #176 ✅ Implemented the Harness Toll business model via Gas Tank and Stripe integration. Relocated `src/core/stripe.ts` to `src/core/payments.ts` per specification. Updated `executeSwarmManifest` in `src/core/dispatcher.ts` to actively deduct gas credits upon successful swarm execution and explicitly block executions if zero balance. Created `PAYMENTS.md` to document architecture. Refined test suites in `src/core/dispatcher.test.ts` and `src/core/payments.test.ts`. Checked off Phase 1 — Gas Tank in BACKLOG.
 - [2026-04-06] Cycle #175 ✅ Implemented Phase 1 Gas Tank backend with Stripe integration and credit debit logic directly into `src/db/client.ts` to adhere to Sovereign AI Database principles. Refactored Stripe integration to `src/core/stripe.ts` and ensured proper coverage. Reverted the `src/services` misdirection.
@@ -137,7 +138,7 @@ The transition from "Software as a Tool" to "Software as an Agent" dictates that
 - [x] **Phase 0 — Sub-Agent Integration:** Sub-Agent Delegation Engine integrated to delegate executions externally (e.g. opencode).
 - [x] **Phase 1 — Heartbeat:** Continuous Mode via `pg_cron` + 30-minute recursive heartbeat
 - [~] **Phase 1 — Custom Skill Uploader:** Allow users to upload their own `.md` skill files via UI and store them locally or in Supabase (Backend Skill Loader implemented ✅, UI upload pending)
-- [x] **Phase 1 — Gas Tank:** Stripe integration and credit debit system for the orchestrator.
+- [x] **Phase 1 — Gas Tank:** Stripe integration and credit debit system for the orchestrator. (Done)
 
 ## DISCOVERY LOG
 - The project is currently Bun-centric for the core engine.
